@@ -1,0 +1,58 @@
+# Этот workflow задаёт базовый CI для MVP-монорепозитория.
+# Роль файла: автоматизировать контроль качества backend и мобильного клиента в pull request/push.
+# Основные функции: запуск lint и unit-тестов для сервисов, а также flutter analyze для mobile-приложения.
+# Связи: использует npm-скрипты из package.json и структуру apps/mobile, services/*.
+# Важно при изменении: сохранять быстрый фидбек и падение пайплайна при ошибках качества.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend lint + tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+  mobile:
+    name: Flutter analyze
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        working-directory: apps/mobile
+        run: flutter pub get
+
+      - name: Flutter analyze
+        working-directory: apps/mobile
+        run: flutter analyze
