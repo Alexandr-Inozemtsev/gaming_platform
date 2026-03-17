@@ -1,7 +1,9 @@
+/**
+ * Назначение файла: сохранить TypeScript-точку входа пакета rules-engine.
+ * Роль в проекте: документировать контракт библиотеки и поддерживать совместимость структуры репозитория.
+ * Основные функции: описывать поддерживаемые коды игр для MVP и служить ориентиром для будущей типизации.
+ * Связи с другими файлами: runtime-реализация находится в services/rules-engine/src/index.mjs.
+ * Важно при изменении: синхронизировать типы с фактической реализацией в index.mjs.
+ */
+
 export type GameCode = 'tile_placement_demo' | 'roll_and_write_demo';
-
-const supportedGames: GameCode[] = ['tile_placement_demo', 'roll_and_write_demo'];
-
-export const isSupportedGame = (game: string): game is GameCode => {
-  return supportedGames.includes(game as GameCode);
-};
