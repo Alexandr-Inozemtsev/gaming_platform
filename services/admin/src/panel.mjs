@@ -1,0 +1,17 @@
+/**
+ * Назначение файла: реализовать минимальную in-memory админ-панель MVP.
+ * Роль в проекте: предоставить операции login(admin), просмотр репортов, бан и мут пользователей.
+ * Основные функции: проверка admin-логина, чтение таблицы репортов, применение санкций.
+ * Связи с другими файлами: подключается к данным API через переданные зависимости.
+ * Важно при изменении: не хранить реальные секреты и не усложнять контракт админ-функций.
+ */
+
+export const createAdminPanel = ({ moderationApi, adminPassword = 'local_admin_password' }) => ({
+  login: ({ username, password }) => {
+    if (username !== 'admin' || password !== adminPassword) throw new Error('INVALID_ADMIN_CREDENTIALS');
+    return { ok: true, role: 'admin' };
+  },
+  reportsTable: () => moderationApi.listReports(),
+  ban: ({ userId, reason }) => moderationApi.ban({ userId, reason }),
+  mute: ({ userId, reason }) => moderationApi.mute({ userId, reason })
+});

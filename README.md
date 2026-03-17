@@ -63,3 +63,7 @@ flutter run
 ## Команды из корня
 - `npm run lint` — минимальные проверки качества backend-пакетов
 - `npm test` — unit-тесты всех backend-пакетов
+
+## Backend MVP (Prompt C)
+Подробности реализации backend-ядра: `docs/backend.md`.
+

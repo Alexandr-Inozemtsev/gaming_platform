@@ -17,3 +17,13 @@
 - `color.card = #141B2D`
 - `color.accent = #6EE7FF`
 - `font.family = Inter` (при отсутствии — системный шрифт)
+
+## Минимальный ASCII-макет (Prompt C)
+```text
+[GAME ROOM] Board | Action bar | Log | Chat
+```
+
+## Токены Prompt C
+- `shadow.card = soft`
+- `typography.h1 = 22`
+- `typography.body = 14`
