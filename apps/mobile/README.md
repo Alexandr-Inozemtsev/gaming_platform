@@ -1,40 +1,61 @@
 # Мобильное приложение (Flutter)
 
-Этот модуль содержит каркас мобильного клиента для MVP платформы настольных игр.
+## Назначение
+Этот модуль содержит MVP-клиент TabletopPlatform с экранами, состоянием, интеграцией API/WebSocket и переключением языка.
 
-## Минимальный ASCII-макет (Prompt B)
+## Параметры окружения
+- `API_BASE_URL=http://localhost:3000`
+- `WS_URL=ws://localhost:3001`
+- `REGION_MODE=global|ru_by`
+- `LANG=ru` (по умолчанию)
+
+## Экраны MVP
+- Onboarding (минимально в welcome-потоке)
+- Auth (login/register)
+- Home
+- Catalog
+- Game Room
+- Store (Games/Skins)
+- Profile
+- Settings (язык + privacy блок)
+
+## ASCII-макеты
 ```text
-[STORE] Games tab | Skins tab | Inventory btn
+HOME:
++-------------------------+
+| Continue: Match #1      |
+| [Play] [Create Room]    |
+| Store teaser: new skins |
++-------------------------+
+
+STORE:
++-------------------------+
+| [Games] [Skins]         |
+| Game Pack: Buy (sandbox)|
+| Dice Skin: Try/Buy      |
++-------------------------+
+
+ROOM:
++-------------------------+
+| Board area (zoom/pan)   |
+| Log | Chat | Actions    |
++-------------------------+
 ```
 
-## Токены дизайна для следующего шага UI
-- `color.text = #E6EAF2`
-- `radius.card = 16`
-- `spacing.base = 8`
+## Дизайн-токены
+См. `lib/theme/tokens.dart`.
 
-## Ранее зафиксированные токены
-- `color.bg = #0B1020`
-- `color.card = #141B2D`
-- `color.accent = #6EE7FF`
-- `font.family = Inter` (при отсутствии — системный шрифт)
-
-## Минимальный ASCII-макет (Prompt C)
-```text
-[GAME ROOM] Board | Action bar | Log | Chat
-```
-
-## Токены Prompt C
-- `shadow.card = soft`
-- `typography.h1 = 22`
-- `typography.body = 14`
-
-
-## Минимальный ASCII-макет (Prompt D)
+## Prompt D / Settings
 ```text
 [SETTINGS] Privacy • Block list • Report
 ```
 
-## Токены Prompt D
-- `color.danger = #FF5C7A`
-- `color.ok = #4EE59A`
-- `font.mono = SFMono` (или системный)
+## Запуск
+```bash
+flutter doctor
+flutter pub get
+flutter run
+```
+
+## i18n
+RU/EN переключаются в Settings.

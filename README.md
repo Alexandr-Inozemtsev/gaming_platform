@@ -70,3 +70,6 @@ flutter run
 
 ## Security (Prompt D)
 Подробности по безопасности MVP: `docs/security.md`.
+
+## Mobile MVP
+Подробности мобильного клиента: `docs/mobile.md`.
