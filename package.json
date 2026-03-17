@@ -1,0 +1,14 @@
+{
+  "name": "tabletopplatform-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "lint": "node scripts/lint-services.mjs",
+    "test": "npm run test --workspaces --if-present",
+    "format": "echo \"Форматирование через Prettier будет доступно после установки зависимостей\"",
+    "format:check": "echo \"Проверка форматирования через Prettier будет доступна после установки зависимостей\""
+  }
+}
