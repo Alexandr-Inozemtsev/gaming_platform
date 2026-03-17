@@ -52,14 +52,14 @@ test('HTTP: повторный moveId возвращает 409 Conflict', async 
     handler,
     method: 'POST',
     path: `/matches/${match.json.id}/move`,
-    body: { playerId: r1.json.id, action: 'place', moveId: 'dup-1' }
+    body: { playerId: r1.json.id, action: 'place', moveId: 'dup-1', payload: { row: 0, col: 0 } }
   });
 
   const repeated = await invoke({
     handler,
     method: 'POST',
     path: `/matches/${match.json.id}/move`,
-    body: { playerId: r2.json.id, action: 'place', moveId: 'dup-1' }
+    body: { playerId: r2.json.id, action: 'place', moveId: 'dup-1', payload: { row: 0, col: 1 } }
   });
 
   assert.equal(repeated.status, 409);
@@ -81,7 +81,7 @@ test('HTTP: ход не в свой ход возвращает 403', async () =
     handler,
     method: 'POST',
     path: `/matches/${match.json.id}/move`,
-    body: { playerId: r2.json.id, action: 'place', moveId: 'wrong-turn-1' }
+    body: { playerId: r2.json.id, action: 'place', moveId: 'wrong-turn-1', payload: { row: 0, col: 0 } }
   });
 
   assert.equal(badMove.status, 403);

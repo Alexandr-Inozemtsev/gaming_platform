@@ -73,3 +73,6 @@ flutter run
 
 ## Mobile MVP
 Подробности мобильного клиента: `docs/mobile.md`.
+
+## MVP Games
+Описание правил и ботов: `docs/games.md`.

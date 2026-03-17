@@ -14,6 +14,8 @@ class AppTokens {
   static const Color accent = Color(0xFF6EE7FF);
   static const Color danger = Color(0xFFFF5C7A);
   static const Color ok = Color(0xFF4EE59A);
+  static const Color boardGridLine = Color(0xFF22304D);
+  static const Color boardHighlight = Color(0xFF6EE7FF);
 
   static const String fontFamily = 'Inter';
 

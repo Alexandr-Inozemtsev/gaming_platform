@@ -1,10 +1,11 @@
-// Назначение файла: собрать MVP Flutter-приложение в одном месте (навигация, состояние, экраны, базовая интеграция API/WS).
-// Роль в проекте: быть исполняемой точкой входа mobile-клиента TabletopPlatform для сценариев onboarding/auth/home/catalog/room/store/profile/settings.
-// Основные функции: инициализация AppState, переключение вкладок с fade-анимацией, пульсация "твой ход", i18n RU/EN и sandbox purchase.
-// Связи с другими файлами: использует theme/tokens.dart, services/api_client.dart, services/ws_client.dart и i18n/strings.dart.
-// Важно при изменении: не смешивать UI-логику и сетевой слой; все сетевые ошибки обрабатывать мягко, чтобы MVP оставался интерактивным офлайн.
+// Назначение файла: собрать мобильный MVP-клиент с экранами, состоянием, API/WebSocket и игровыми досками двух демо-игр.
+// Роль в проекте: быть основной точкой входа Flutter-приложения и связывать UX-сценарии auth/home/catalog/room/store/settings.
+// Основные функции: управление AppState, i18n RU/EN, room flow, board widgets для tile/roll-write, локальные боты easy/normal.
+// Связи с другими файлами: использует i18n/strings.dart, services/api_client.dart, services/ws_client.dart и theme/tokens.dart.
+// Важно при изменении: держать сетевую логику в AppState/сервисах и не переносить сервер-правила напрямую в UI без синхронизации с backend.
 
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -16,9 +17,7 @@ import 'theme/tokens.dart';
 const String apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
 const String wsUrl = String.fromEnvironment('WS_URL', defaultValue: 'ws://localhost:3001');
 
-void main() {
-  runApp(const TabletopApp());
-}
+void main() => runApp(const TabletopApp());
 
 class AppState extends ChangeNotifier {
   AppState()
@@ -33,12 +32,25 @@ class AppState extends ChangeNotifier {
   bool authorized = false;
   String? userId;
   List<dynamic> games = const [];
+
   String? roomId;
+  String currentGameId = 'tile_placement_demo';
+  String botLevel = 'easy';
+
+  List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
+  String selectedTile = 'A';
+  int? previewRow;
+  int? previewCol;
+
+  List<int> dice = [3, 2];
+  List<List<int>> rollSheet = List.generate(5, (_) => List.filled(5, 0));
+
   final List<String> roomLog = [];
   final List<String> chat = [];
   bool yourTurn = true;
 
   StreamSubscription<Map<String, dynamic>>? _wsSub;
+  final Random _random = Random(7);
 
   String t(String key) => AppStrings.t(lang, key);
 
@@ -62,6 +74,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setBotLevel(String level) {
+    botLevel = level;
+    notifyListeners();
+  }
+
+  void setCurrentGame(String gameId) {
+    currentGameId = gameId;
+    _resetBoards();
+    notifyListeners();
+  }
+
   Future<void> loginOrRegister(String email, String password, {required bool register}) async {
     final result = register ? await api.register(email, password) : await api.login(email, password);
     userId = (result['user']?['id'] ?? result['id'])?.toString();
@@ -71,22 +94,157 @@ class AppState extends ChangeNotifier {
 
   Future<void> createPrivateRoom(String gameId) async {
     if (userId == null) return;
+    currentGameId = gameId;
+    _resetBoards();
     final result = await api.createMatch(gameId, [userId!, '${userId!}_bot']);
     roomId = result['id']?.toString();
-    roomLog.add('Room created: $roomId');
+    roomLog.add('Room created: $roomId, game: $gameId');
     tab = 2;
     notifyListeners();
   }
 
-  void sendChat(String text) {
-    chat.add(text);
-    ws.send({'type': 'chat.message', 'text': text, 'roomId': roomId});
+  void updatePreview(int? row, int? col) {
+    previewRow = row;
+    previewCol = col;
     notifyListeners();
   }
 
-  void applyLocalMove() {
-    yourTurn = !yourTurn;
-    roomLog.add(yourTurn ? 'Turn switched: your turn' : 'Turn switched: opponent');
+  void confirmTilePlacement(int row, int col) {
+    if (!yourTurn || currentGameId != 'tile_placement_demo') return;
+    if (tileGrid[row][col] != null) return;
+    tileGrid[row][col] = selectedTile;
+    roomLog.add('Tile placed: [$row,$col] = $selectedTile');
+    yourTurn = false;
+    _botTurn();
+    notifyListeners();
+  }
+
+  void toggleTileSymbol() {
+    selectedTile = selectedTile == 'A' ? 'B' : 'A';
+    notifyListeners();
+  }
+
+  void markRollCell(int row, int col) {
+    if (!yourTurn || currentGameId != 'roll_and_write_demo') return;
+    if (rollSheet[row][col] == 1) return;
+    final expected = dice[0] + dice[1];
+    if (row + col + 2 != expected) {
+      roomLog.add('Illegal move: dice rule violation');
+      notifyListeners();
+      return;
+    }
+    rollSheet[row][col] = 1;
+    roomLog.add('Sheet marked: [$row,$col], dice=$expected');
+    yourTurn = false;
+    _botTurn();
+    notifyListeners();
+  }
+
+  void _botTurn() {
+    if (botLevel == 'easy') {
+      _applyRandomBotMove();
+    } else {
+      _applyHeuristicBotMove();
+    }
+    yourTurn = true;
+  }
+
+  void _applyRandomBotMove() {
+    if (currentGameId == 'tile_placement_demo') {
+      for (int r = 0; r < 4; r += 1) {
+        for (int c = 0; c < 4; c += 1) {
+          if (tileGrid[r][c] == null) {
+            tileGrid[r][c] = 'B';
+            roomLog.add('Bot($botLevel) placed at [$r,$c]');
+            return;
+          }
+        }
+      }
+      return;
+    }
+
+    final expected = dice[0] + dice[1];
+    for (int r = 0; r < 5; r += 1) {
+      for (int c = 0; c < 5; c += 1) {
+        if (rollSheet[r][c] == 0 && r + c + 2 == expected) {
+          rollSheet[r][c] = 1;
+          _rerollDice();
+          roomLog.add('Bot($botLevel) marked [$r,$c]');
+          return;
+        }
+      }
+    }
+  }
+
+  void _applyHeuristicBotMove() {
+    if (currentGameId == 'tile_placement_demo') {
+      int? bestR;
+      int? bestC;
+      int bestScore = -1;
+      for (int r = 0; r < 4; r += 1) {
+        for (int c = 0; c < 4; c += 1) {
+          if (tileGrid[r][c] != null) continue;
+          final score = _tilePotentialScore(r, c, 'B');
+          if (score > bestScore) {
+            bestScore = score;
+            bestR = r;
+            bestC = c;
+          }
+        }
+      }
+      if (bestR != null && bestC != null) {
+        tileGrid[bestR][bestC] = 'B';
+        roomLog.add('Bot(normal) placed at [$bestR,$bestC], score=$bestScore');
+      }
+      return;
+    }
+
+    final expected = dice[0] + dice[1];
+    int? bestR;
+    int? bestC;
+    int bestCenterScore = -1;
+    for (int r = 0; r < 5; r += 1) {
+      for (int c = 0; c < 5; c += 1) {
+        if (rollSheet[r][c] != 0 || r + c + 2 != expected) continue;
+        final centerScore = 10 - ((r - 2).abs() + (c - 2).abs());
+        if (centerScore > bestCenterScore) {
+          bestCenterScore = centerScore;
+          bestR = r;
+          bestC = c;
+        }
+      }
+    }
+    if (bestR != null && bestC != null) {
+      rollSheet[bestR][bestC] = 1;
+      _rerollDice();
+      roomLog.add('Bot(normal) marked [$bestR,$bestC], h=$bestCenterScore');
+    }
+  }
+
+  int _tilePotentialScore(int row, int col, String symbol) {
+    int score = 1;
+    const dirs = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1]
+    ];
+    for (final d in dirs) {
+      final nr = row + d[0];
+      final nc = col + d[1];
+      if (nr >= 0 && nr < 4 && nc >= 0 && nc < 4 && tileGrid[nr][nc] == symbol) score += 1;
+    }
+    return score;
+  }
+
+  void _rerollDice() {
+    dice = [1 + _random.nextInt(6), 1 + _random.nextInt(6)];
+  }
+
+  void sendChat(String text) {
+    if (text.trim().isEmpty) return;
+    chat.add(text);
+    ws.send({'type': 'chat.message', 'text': text, 'roomId': roomId});
     notifyListeners();
   }
 
@@ -95,6 +253,15 @@ class AppState extends ChangeNotifier {
     await api.purchaseSandbox(userId!, 'dice_skin_001');
     roomLog.add('Sandbox purchase completed');
     notifyListeners();
+  }
+
+  void _resetBoards() {
+    tileGrid = List.generate(4, (_) => List.filled(4, null));
+    rollSheet = List.generate(5, (_) => List.filled(5, 0));
+    dice = [3, 2];
+    yourTurn = true;
+    previewRow = null;
+    previewCol = null;
   }
 
   @override
@@ -107,7 +274,6 @@ class AppState extends ChangeNotifier {
 
 class TabletopApp extends StatefulWidget {
   const TabletopApp({super.key});
-
   @override
   State<TabletopApp> createState() => _TabletopAppState();
 }
@@ -125,14 +291,12 @@ class _TabletopAppState extends State<TabletopApp> {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: state,
-      builder: (context, _) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'TabletopPlatform',
-          theme: AppTheme.build(),
-          home: state.authorized ? MainShell(state: state) : AuthScreen(state: state)
-        );
-      }
+      builder: (context, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'TabletopPlatform',
+        theme: AppTheme.build(),
+        home: state.authorized ? MainShell(state: state) : AuthScreen(state: state)
+      )
     );
   }
 }
@@ -140,7 +304,6 @@ class _TabletopAppState extends State<TabletopApp> {
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.state});
   final AppState state;
-
   @override
   State<AuthScreen> createState() => _AuthScreenState();
 }
@@ -153,37 +316,23 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(AppTokens.s24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppTokens.s16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(register ? widget.state.t('auth.register') : widget.state.t('auth.login'),
-                        style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: AppTokens.s12),
-                    TextField(controller: email, decoration: InputDecoration(labelText: widget.state.t('auth.email'))),
-                    const SizedBox(height: AppTokens.s12),
-                    TextField(controller: password, decoration: InputDecoration(labelText: widget.state.t('auth.password'))),
-                    const SizedBox(height: AppTokens.s16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        await widget.state.loginOrRegister(email.text.trim(), password.text.trim(), register: register);
-                      },
-                      child: Text(register ? widget.state.t('auth.register') : widget.state.t('auth.login'))
-                    ),
-                    TextButton(
-                      onPressed: () => setState(() => register = !register),
-                      child: Text(register ? widget.state.t('auth.login') : widget.state.t('auth.register'))
-                    )
-                  ]
-                )
-              )
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppTokens.s16),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(register ? widget.state.t('auth.register') : widget.state.t('auth.login')),
+                TextField(controller: email, decoration: InputDecoration(labelText: widget.state.t('auth.email'))),
+                TextField(controller: password, decoration: InputDecoration(labelText: widget.state.t('auth.password'))),
+                const SizedBox(height: AppTokens.s12),
+                FilledButton(
+                  onPressed: () => widget.state.loginOrRegister(email.text.trim(), password.text.trim(), register: register),
+                  child: Text(register ? widget.state.t('auth.register') : widget.state.t('auth.login'))
+                ),
+                TextButton(onPressed: () => setState(() => register = !register), child: Text(register ? 'Login' : 'Register'))
+              ])
             )
           )
         )
@@ -198,15 +347,7 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      HomeScreen(state: state),
-      CatalogScreen(state: state),
-      RoomScreen(state: state),
-      StoreScreen(state: state),
-      ProfileScreen(state: state),
-      SettingsScreen(state: state)
-    ];
-
+    final pages = [HomeScreen(state: state), CatalogScreen(state: state), RoomScreen(state: state), StoreScreen(state: state), ProfileScreen(state: state), SettingsScreen(state: state)];
     return Scaffold(
       appBar: AppBar(title: const Text('TabletopPlatform')),
       body: AnimatedSwitcher(
@@ -233,7 +374,6 @@ class MainShell extends StatelessWidget {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, required this.state});
   final AppState state;
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -241,23 +381,17 @@ class HomeScreen extends StatelessWidget {
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(AppTokens.s16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(state.t('home.continue')),
-              const SizedBox(height: AppTokens.s12),
-              Row(children: [
-                FilledButton(onPressed: () => state.setTab(2), child: Text(state.t('home.play'))),
-                const SizedBox(width: AppTokens.s12),
-                OutlinedButton(
-                  onPressed: () => state.createPrivateRoom('tile_placement_demo'),
-                  child: Text(state.t('home.createRoom'))
-                )
-              ]),
-              const SizedBox(height: AppTokens.s12),
-              Text(state.t('home.teaser'), style: Theme.of(context).textTheme.bodySmall)
-            ]
-          )
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(state.t('home.continue')),
+            const SizedBox(height: AppTokens.s12),
+            Row(children: [
+              FilledButton(onPressed: () => state.setTab(2), child: Text(state.t('home.play'))),
+              const SizedBox(width: AppTokens.s12),
+              OutlinedButton(onPressed: () => state.createPrivateRoom(state.currentGameId), child: Text(state.t('home.createRoom')))
+            ]),
+            const SizedBox(height: AppTokens.s12),
+            Text(state.t('home.teaser'))
+          ])
         )
       )
     );
@@ -267,25 +401,33 @@ class HomeScreen extends StatelessWidget {
 class CatalogScreen extends StatelessWidget {
   const CatalogScreen({super.key, required this.state});
   final AppState state;
-
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(AppTokens.s16),
-      itemCount: state.games.length,
-      itemBuilder: (_, i) {
-        final game = state.games[i] as Map<String, dynamic>;
-        return Card(
-          child: ListTile(
-            title: Text(game['title']?.toString() ?? game['id'].toString()),
-            subtitle: Text(game['id'].toString()),
-            trailing: FilledButton(
-              onPressed: () => state.createPrivateRoom(game['id'].toString()),
-              child: Text(state.t('home.createRoom'))
+      children: [
+        Wrap(spacing: 8, children: [
+          ChoiceChip(label: const Text('easy'), selected: state.botLevel == 'easy', onSelected: (_) => state.setBotLevel('easy')),
+          ChoiceChip(label: const Text('normal'), selected: state.botLevel == 'normal', onSelected: (_) => state.setBotLevel('normal'))
+        ]),
+        const SizedBox(height: 8),
+        ...state.games.map((raw) {
+          final game = raw as Map<String, dynamic>;
+          return Card(
+            child: ListTile(
+              title: Text(game['title']?.toString() ?? game['id'].toString()),
+              subtitle: Text(game['id'].toString()),
+              trailing: FilledButton(
+                onPressed: () {
+                  state.setCurrentGame(game['id'].toString());
+                  state.createPrivateRoom(game['id'].toString());
+                },
+                child: const Text('Join')
+              )
             )
-          )
-        );
-      }
+          );
+        })
+      ]
     );
   }
 }
@@ -293,14 +435,12 @@ class CatalogScreen extends StatelessWidget {
 class RoomScreen extends StatefulWidget {
   const RoomScreen({super.key, required this.state});
   final AppState state;
-
   @override
   State<RoomScreen> createState() => _RoomScreenState();
 }
 
 class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
-    ..repeat(reverse: true);
+  late final AnimationController pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
   final chat = TextEditingController();
 
   @override
@@ -311,128 +451,167 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final s = widget.state;
     return Padding(
       padding: const EdgeInsets.all(AppTokens.s16),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Card(
-              child: Center(
-                child: AnimatedBuilder(
-                  animation: pulse,
-                  builder: (_, __) {
-                    final opacity = widget.state.yourTurn ? (0.45 + pulse.value * 0.55) : 0.3;
-                    return Container(
-                      width: 220,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppTokens.accent.withOpacity(opacity),
-                        borderRadius: BorderRadius.circular(AppTokens.radiusCard)
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(widget.state.t('room.yourTurn'))
-                    );
-                  }
-                )
+      child: Column(children: [
+        Expanded(
+          flex: 2,
+          child: Card(
+            child: Column(children: [
+              const SizedBox(height: 8),
+              Text(s.currentGameId),
+              Expanded(child: s.currentGameId == 'tile_placement_demo' ? TileBoardWidget(state: s) : RollWriteBoardWidget(state: s))
+            ])
+          )
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Row(children: [
+            Expanded(child: Card(child: ListView(padding: const EdgeInsets.all(8), children: s.roomLog.map((e) => Text('• $e')).toList()))),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Card(
+                child: Column(children: [
+                  Expanded(child: ListView(padding: const EdgeInsets.all(8), children: s.chat.map((e) => Text('💬 $e')).toList())),
+                  Row(children: [
+                    Expanded(child: TextField(controller: chat)),
+                    IconButton(onPressed: () { s.sendChat(chat.text); chat.clear(); }, icon: const Icon(Icons.send))
+                  ])
+                ])
               )
             )
-          ),
-          const SizedBox(height: AppTokens.s12),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Card(
-                    child: ListView(
-                      padding: const EdgeInsets.all(AppTokens.s12),
-                      children: widget.state.roomLog.map((e) => Text('• $e')).toList()
-                    )
-                  )
-                ),
-                const SizedBox(width: AppTokens.s12),
-                Expanded(
-                  child: Card(
-                    child: Column(children: [
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.all(AppTokens.s12),
-                          children: widget.state.chat.map((e) => Text('💬 $e')).toList()
-                        )
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(AppTokens.s8),
-                        child: Row(children: [
-                          Expanded(child: TextField(controller: chat, decoration: const InputDecoration(hintText: 'chat'))),
-                          IconButton(
-                            onPressed: () {
-                              widget.state.sendChat(chat.text);
-                              chat.clear();
-                            },
-                            icon: const Icon(Icons.send)
-                          )
-                        ])
-                      )
-                    ])
-                  )
-                )
-              ]
-            )
-          ),
-          const SizedBox(height: AppTokens.s8),
-          Row(children: [
-            FilledButton(onPressed: widget.state.applyLocalMove, child: const Text('Action')),
-            const SizedBox(width: AppTokens.s12),
-            Text(widget.state.roomId == null ? 'no room' : 'Room: ${widget.state.roomId}')
           ])
-        ]
-      )
+        ),
+        const SizedBox(height: 8),
+        AnimatedBuilder(
+          animation: pulse,
+          builder: (_, __) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTokens.boardHighlight.withOpacity(s.yourTurn ? 0.4 + pulse.value * 0.4 : 0.2),
+              borderRadius: BorderRadius.circular(AppTokens.radiusButton)
+            ),
+            child: Text(s.t('room.yourTurn'))
+          )
+        )
+      ])
     );
+  }
+}
+
+class TileBoardWidget extends StatelessWidget {
+  const TileBoardWidget({super.key, required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Draggable<String>(
+          data: state.selectedTile,
+          feedback: Material(color: Colors.transparent, child: _tileCell(state.selectedTile, highlight: true)),
+          child: _tileCell(state.selectedTile, highlight: true)
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton(onPressed: state.toggleTileSymbol, child: const Text('Switch'))
+      ]),
+      Expanded(
+        child: GridView.builder(
+          shrinkWrap: true,
+          itemCount: 16,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4),
+          itemBuilder: (_, i) {
+            final r = i ~/ 4;
+            final c = i % 4;
+            final isPreview = state.previewRow == r && state.previewCol == c;
+            return DragTarget<String>(
+              onWillAcceptWithDetails: (_) {
+                state.updatePreview(r, c);
+                return true;
+              },
+              onLeave: (_) => state.updatePreview(null, null),
+              onAcceptWithDetails: (_) {
+                state.updatePreview(null, null);
+                state.confirmTilePlacement(r, c);
+              },
+              builder: (_, __, ___) => GestureDetector(
+                onTap: () => state.confirmTilePlacement(r, c),
+                child: _tileCell(state.tileGrid[r][c], highlight: isPreview)
+              )
+            );
+          }
+        )
+      )
+    ]);
+  }
+
+  Widget _tileCell(String? value, {required bool highlight}) {
+    return Container(
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: highlight ? AppTokens.boardHighlight.withOpacity(0.25) : AppTokens.card,
+        border: Border.all(color: AppTokens.boardGridLine),
+        borderRadius: BorderRadius.circular(8)
+      ),
+      alignment: Alignment.center,
+      child: Text(value ?? '', style: const TextStyle(fontSize: 18))
+    );
+  }
+}
+
+class RollWriteBoardWidget extends StatelessWidget {
+  const RollWriteBoardWidget({super.key, required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Text('Dice: [${state.dice[0]}][${state.dice[1]}]'),
+      Expanded(
+        child: GridView.builder(
+          itemCount: 25,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5),
+          itemBuilder: (_, i) {
+            final r = i ~/ 5;
+            final c = i % 5;
+            final canMark = state.rollSheet[r][c] == 0 && r + c + 2 == state.dice[0] + state.dice[1];
+            return GestureDetector(
+              onTap: () => state.markRollCell(r, c),
+              child: Container(
+                margin: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: canMark ? AppTokens.boardHighlight.withOpacity(0.25) : AppTokens.card,
+                  border: Border.all(color: AppTokens.boardGridLine),
+                  borderRadius: BorderRadius.circular(6)
+                ),
+                alignment: Alignment.center,
+                child: Text(state.rollSheet[r][c] == 1 ? 'X' : '')
+              )
+            );
+          }
+        )
+      )
+    ]);
   }
 }
 
 class StoreScreen extends StatelessWidget {
   const StoreScreen({super.key, required this.state});
   final AppState state;
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: Column(
-        children: [
-          const TabBar(tabs: [Tab(text: 'Games'), Tab(text: 'Skins')]),
-          Expanded(
-            child: TabBarView(
-              children: [
-                _StoreCard(title: 'Game Pack', action: state.t('store.buy'), onPressed: state.sandboxPurchase),
-                _StoreCard(title: 'Dice Skin', action: state.t('store.buy'), onPressed: state.sandboxPurchase)
-              ]
-            )
-          )
-        ]
-      )
-    );
-  }
-}
-
-class _StoreCard extends StatelessWidget {
-  const _StoreCard({required this.title, required this.action, required this.onPressed});
-  final String title;
-  final String action;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppTokens.s16),
-      child: Card(
-        child: ListTile(
-          title: Text(title),
-          subtitle: const Text('sandbox item'),
-          trailing: FilledButton(onPressed: onPressed, child: Text(action))
+      child: Column(children: [
+        const TabBar(tabs: [Tab(text: 'Games'), Tab(text: 'Skins')]),
+        Expanded(
+          child: TabBarView(children: [
+            ListTile(title: const Text('Game Pack'), trailing: FilledButton(onPressed: state.sandboxPurchase, child: Text(state.t('store.buy')))),
+            ListTile(title: const Text('Dice Skin'), trailing: FilledButton(onPressed: state.sandboxPurchase, child: Text(state.t('store.buy'))))
+          ])
         )
-      )
+      ])
     );
   }
 }
@@ -440,24 +619,19 @@ class _StoreCard extends StatelessWidget {
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.state});
   final AppState state;
-
   @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('${state.t('profile.title')}: ${state.userId ?? 'guest'}'));
-  }
+  Widget build(BuildContext context) => Center(child: Text('${state.t('profile.title')}: ${state.userId ?? 'guest'}'));
 }
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key, required this.state});
   final AppState state;
-
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(AppTokens.s16),
       children: [
-        Text(state.t('settings.title'), style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: AppTokens.s12),
+        Text(state.t('settings.title')),
         Text('${state.t('settings.lang')}: ${state.lang.toUpperCase()}'),
         Wrap(
           spacing: AppTokens.s8,
@@ -465,7 +639,7 @@ class SettingsScreen extends StatelessWidget {
               .map((l) => ChoiceChip(label: Text(l.toUpperCase()), selected: state.lang == l, onSelected: (_) => state.setLang(l)))
               .toList()
         ),
-        const SizedBox(height: AppTokens.s16),
+        const SizedBox(height: 12),
         const Text('[SETTINGS] Privacy • Block list • Report')
       ]
     );
