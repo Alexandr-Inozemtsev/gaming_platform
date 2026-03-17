@@ -1,25 +1,45 @@
+# Этот файл описывает локальную инфраструктуру MVP через Docker Compose.
+# Роль файла: поднимать Postgres и Redis для всех backend-сервисов в монорепозитории.
+# Основные функции: запуск контейнеров, проброс портов, healthcheck и подключение init.sql.
+# Связи: использует переменные из .env/.env.example и SQL-инициализацию из infra/init.sql.
+# Важно при изменении: сохранять совместимость портов с сервисами и не добавлять сюда секреты прод-окружения.
 services:
   postgres:
     image: postgres:16-alpine
     container_name: tabletop_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: tabletop
-      POSTGRES_PASSWORD: tabletop
-      POSTGRES_DB: tabletop
+      POSTGRES_DB: ${POSTGRES_DB:-tabletop}
+      POSTGRES_USER: ${POSTGRES_USER:-tabletop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tabletop_dev}
+      REGION_MODE: ${REGION_MODE:-global}
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-tabletop} -d ${POSTGRES_DB:-tabletop}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
     container_name: tabletop_redis
     restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
 volumes:
   postgres_data:

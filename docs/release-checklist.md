@@ -1,9 +1,9 @@
-# MVP Release Checklist
+# Чеклист релиза MVP
 
 - [ ] `npm run lint`
-- [ ] `npm run format:check`
 - [ ] `npm test`
-- [ ] `docker compose up -d` in `infra/` succeeds
-- [ ] Flutter environment validated (`flutter doctor`)
-- [ ] MVP games list matches product scope
-- [ ] Region mode and language flags documented
+- [ ] `cd infra && docker compose up -d`
+- [ ] Проверены healthcheck контейнеров (`docker compose ps`)
+- [ ] Выполнен `flutter analyze` в `apps/mobile`
+- [ ] Значения `REGION_MODE` и языки интерфейса согласованы с продуктовой задачей
+- [ ] Шаблоны окружения обновлены без хранения секретов

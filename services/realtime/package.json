@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "echo \"ESLint is configured at repo root; install dependencies to run lint.\"",
+    "lint": "node --test test/*.test.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }

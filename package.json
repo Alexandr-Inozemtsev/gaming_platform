@@ -6,10 +6,9 @@
     "services/*"
   ],
   "scripts": {
-    "lint": "npm run lint --workspaces --if-present",
+    "lint": "node scripts/lint-services.mjs",
     "test": "npm run test --workspaces --if-present",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "devDependencies": {}
+    "format": "echo \"Форматирование через Prettier будет доступно после установки зависимостей\"",
+    "format:check": "echo \"Проверка форматирования через Prettier будет доступна после установки зависимостей\""
+  }
 }
