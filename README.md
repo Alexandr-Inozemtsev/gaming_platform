@@ -67,3 +67,6 @@ flutter run
 ## Backend MVP (Prompt C)
 Подробности реализации backend-ядра: `docs/backend.md`.
 
+
+## Security (Prompt D)
+Подробности по безопасности MVP: `docs/security.md`.

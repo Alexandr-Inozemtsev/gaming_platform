@@ -1,9 +1,9 @@
 /**
- * Назначение файла: предоставить HTTP-обработчик с обязательными endpoint'ами MVP API.
- * Роль в проекте: связывать REST-маршруты с in-memory приложением createApiApp().
- * Основные функции: парсинг JSON, маршрутизация /auth, /games, /matches, /store, /inventory, /reports, /admin.
- * Связи с другими файлами: использует app.mjs и может запускаться через createHttpServer().
- * Важно при изменении: сохранять контракты endpoint'ов и коды ошибок для тестов/клиента.
+ * Назначение файла: предоставить HTTP-обработчик с обязательными endpoint'ами MVP API и security-политиками.
+ * Роль в проекте: связывать REST-маршруты с in-memory приложением createApiApp() и отдавать корректные HTTP коды ошибок.
+ * Основные функции: парсинг JSON, маршрутизация endpoint'ов, проверка REQUIRE_TLS_IN_PROD, единый error handling.
+ * Связи с другими файлами: использует app.mjs, в том числе класс HttpError и настройки безопасности.
+ * Важно при изменении: не нарушать контракты endpoint'ов и соответствие кодов ошибок acceptance-критериям.
  */
 
 import http from 'node:http';
@@ -29,8 +29,16 @@ export const createHttpHandler = (deps = {}) => {
       const url = new URL(req.url, 'http://localhost');
       const method = req.method;
 
+      const isProd = process.env.NODE_ENV === 'production';
+      const proto = req.headers['x-forwarded-proto'] ?? 'http';
+      if (isProd && app.securityConfig.REQUIRE_TLS_IN_PROD && proto !== 'https') {
+        return send(res, 426, { error: 'TLS_REQUIRED' });
+      }
+
       if (method === 'POST' && url.pathname === '/auth/register') return send(res, 201, app.auth.register(await parseBody(req)));
-      if (method === 'POST' && url.pathname === '/auth/login') return send(res, 200, app.auth.login(await parseBody(req)));
+      if (method === 'POST' && url.pathname === '/auth/login') {
+        return send(res, 200, app.auth.login({ ...(await parseBody(req)), ip: req.socket.remoteAddress ?? 'local' }));
+      }
       if (method === 'POST' && url.pathname === '/auth/refresh') return send(res, 200, app.auth.refresh(await parseBody(req)));
       if (method === 'POST' && url.pathname === '/auth/logoutAll') return send(res, 200, app.auth.logoutAll(await parseBody(req)));
 
@@ -42,7 +50,11 @@ export const createHttpHandler = (deps = {}) => {
       if (method === 'GET' && /^\/matches\/[^/]+$/.test(url.pathname)) return send(res, 200, app.matches.getById(url.pathname.split('/')[2]));
       if (method === 'POST' && /^\/matches\/[^/]+\/move$/.test(url.pathname)) {
         const matchId = url.pathname.split('/')[2];
-        return send(res, 200, app.matches.move({ matchId, ...(await parseBody(req)) }));
+        return send(
+          res,
+          200,
+          app.matches.move({ matchId, ...(await parseBody(req)), ip: req.socket.remoteAddress ?? 'local' })
+        );
       }
 
       if (method === 'POST' && url.pathname === '/store/purchase-sandbox') return send(res, 200, app.store.purchaseSandbox(await parseBody(req)));
@@ -54,6 +66,9 @@ export const createHttpHandler = (deps = {}) => {
 
       return send(res, 404, { error: 'NOT_FOUND' });
     } catch (error) {
+      if (typeof error?.status === 'number') {
+        return send(res, error.status, { error: error.code ?? 'HTTP_ERROR', details: error.details ?? null });
+      }
       return send(res, 400, { error: error.message ?? 'BAD_REQUEST' });
     }
   };
