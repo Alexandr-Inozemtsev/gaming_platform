@@ -53,3 +53,11 @@
 - `shadow.card=soft`
 - `typography.h1=22`
 - `typography.body=14`
+
+## Security-обновления (Prompt D)
+- Access/Refresh/logoutAll поддерживаются в auth-слое.
+- Включена строгая DTO-валидация на входах API-операций.
+- Добавлена идемпотентность ходов по `moveId`.
+- Добавлен rate-limit для login и move.
+- Включён server-authoritative RNG (клиентские очки игнорируются).
+- Ведутся security-логи подозрительных действий.

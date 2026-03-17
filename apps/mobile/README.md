@@ -27,3 +27,14 @@
 - `shadow.card = soft`
 - `typography.h1 = 22`
 - `typography.body = 14`
+
+
+## Минимальный ASCII-макет (Prompt D)
+```text
+[SETTINGS] Privacy • Block list • Report
+```
+
+## Токены Prompt D
+- `color.danger = #FF5C7A`
+- `color.ok = #4EE59A`
+- `font.mono = SFMono` (или системный)
