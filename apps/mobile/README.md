@@ -1,14 +1,19 @@
-# Mobile app (Flutter)
+# Мобильное приложение (Flutter)
 
-MVP Flutter client shell for TabletopPlatform.
+Этот модуль содержит каркас мобильного клиента для MVP платформы настольных игр.
 
-## Planned home layout
+## Минимальный ASCII-макет (Prompt B)
+```text
+[STORE] Games tab | Skins tab | Inventory btn
 ```
-[HOME] Continue • Play • Create • Store • Profile
-```
 
-## Design tokens
+## Токены дизайна для следующего шага UI
+- `color.text = #E6EAF2`
+- `radius.card = 16`
+- `spacing.base = 8`
+
+## Ранее зафиксированные токены
 - `color.bg = #0B1020`
 - `color.card = #141B2D`
 - `color.accent = #6EE7FF`
-- `font.family = Inter` (fallback: system font)
+- `font.family = Inter` (при отсутствии — системный шрифт)
