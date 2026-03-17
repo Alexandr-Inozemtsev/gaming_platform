@@ -59,3 +59,17 @@ flutter run
 
 ## i18n
 RU/EN переключаются в Settings.
+
+
+## Prompt F: ASCII
+```text
+TILE:
+[Grid] tap cell -> place tile -> confirm
+
+R&W:
+Dice: [3][2]  Sheet: tap to mark
+```
+
+## Prompt F токены
+- `board.gridLine = #22304D`
+- `board.highlight = #6EE7FF`

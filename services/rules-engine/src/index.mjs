@@ -1,76 +1,15 @@
 /**
- * Назначение файла: реализовать минимальное ядро правил для MVP-игр платформы настолок.
- * Роль в проекте: быть единой точкой детерминированной игровой логики для API и realtime.
- * Основные функции: validateMove(), applyMove(), computeScore(), rng(seed).
- * Связи с другими файлами: используется в services/api/src/app.mjs и тестах services/rules-engine/test/*.mjs.
- * Важно при изменении: сохранять детерминизм и обратную совместимость формата состояния матча.
+ * Назначение файла: реализовать детерминированный rules-engine для двух MVP-игр и ботов.
+ * Роль в проекте: быть сервер-авторитетным источником правил, валидации и подсчёта очков для API/realtime.
+ * Основные функции: schema state для tile/roll-write, validateMove/applyMove/computeScore/rng, генерация легальных ходов для ботов.
+ * Связи с другими файлами: используется в services/api/src/app.mjs и тестах services/rules-engine/test/index.test.mjs.
+ * Важно при изменении: не ломать формат gameState и сохранять полную детерминированность по seed.
  */
 
 export const SUPPORTED_GAMES = ['tile_placement_demo', 'roll_and_write_demo'];
 
 /**
- * Проверяем ход до применения, чтобы API мог отклонить неверные действия ещё до изменения состояния.
- */
-export const validateMove = (state, move) => {
-  if (!state || state.status !== 'active') return { ok: false, reason: 'MATCH_NOT_ACTIVE' };
-  if (!move || typeof move.playerId !== 'string' || typeof move.action !== 'string') {
-    return { ok: false, reason: 'INVALID_MOVE_SHAPE' };
-  }
-  if (state.currentPlayer !== move.playerId) return { ok: false, reason: 'NOT_YOUR_TURN' };
-  if (!['place', 'roll', 'write', 'pass'].includes(move.action)) {
-    return { ok: false, reason: 'UNKNOWN_ACTION' };
-  }
-  return { ok: true };
-};
-
-/**
- * Применяем ход иммутабельно, чтобы упростить снапшоты и диагностику состояния на сервере.
- */
-export const applyMove = (state, move) => {
-  const check = validateMove(state, move);
-  if (!check.ok) {
-    return { state, accepted: false, reason: check.reason };
-  }
-
-  const nextMoveNumber = state.moveNumber + 1;
-  const nextLog = [...state.log, { ...move, moveNumber: nextMoveNumber }];
-
-  const nextScores = { ...state.scores };
-  nextScores[move.playerId] = (nextScores[move.playerId] ?? 0) + (move.points ?? 1);
-
-  const currentIndex = state.players.indexOf(state.currentPlayer);
-  const nextCurrentPlayer = state.players[(currentIndex + 1) % state.players.length];
-  const shouldFinish = nextMoveNumber >= state.maxMoves;
-
-  const nextState = {
-    ...state,
-    moveNumber: nextMoveNumber,
-    currentPlayer: shouldFinish ? state.currentPlayer : nextCurrentPlayer,
-    log: nextLog,
-    scores: nextScores,
-    status: shouldFinish ? 'finished' : 'active',
-    winner: shouldFinish ? computeScore({ ...state, scores: nextScores, status: 'finished' }).winner : null
-  };
-
-  return { state: nextState, accepted: true };
-};
-
-/**
- * Считаем счёт через проход по словарю очков, что достаточно для MVP и прозрачно для тестов.
- */
-export const computeScore = (state) => {
-  const entries = Object.entries(state.scores ?? {});
-  if (entries.length === 0) return { winner: null, leaderboard: [] };
-
-  const leaderboard = entries
-    .map(([playerId, score]) => ({ playerId, score }))
-    .sort((a, b) => b.score - a.score);
-
-  return { winner: leaderboard[0].playerId, leaderboard };
-};
-
-/**
- * Линейный конгруэнтный генератор выбран из-за простоты, скорости и повторяемости по seed.
+ * Генератор псевдослучайных чисел с фиксируемым seed нужен для воспроизводимости матчей и ботов.
  */
 export const rng = (seed = 1) => {
   let x = Math.abs(Math.trunc(seed)) || 1;
@@ -78,4 +17,210 @@ export const rng = (seed = 1) => {
     x = (1664525 * x + 1013904223) % 4294967296;
     return x / 4294967296;
   };
+};
+
+/**
+ * Инициализируем специфичное состояние игры, чтобы API не дублировал правила в нескольких местах.
+ */
+export const createInitialGameState = (gameId, players, seed = 1) => {
+  if (gameId === 'tile_placement_demo') {
+    return {
+      gameId,
+      size: 4,
+      grid: Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => null)),
+      hands: Object.fromEntries(players.map((p, idx) => [p, idx % 2 === 0 ? 'A' : 'B'])),
+      seed,
+      turn: 0
+    };
+  }
+
+  if (gameId === 'roll_and_write_demo') {
+    const r = rng(seed);
+    return {
+      gameId,
+      size: 5,
+      sheet: Object.fromEntries(players.map((p) => [p, Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => 0))])),
+      dice: [1 + Math.floor(r() * 6), 1 + Math.floor(r() * 6)],
+      seed,
+      turn: 0
+    };
+  }
+
+  throw new Error('UNSUPPORTED_GAME');
+};
+
+const inBounds = (size, row, col) => row >= 0 && col >= 0 && row < size && col < size;
+
+const scoreTilePlacement = (grid, row, col, symbol) => {
+  const dirs = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1]
+  ];
+  let points = 1;
+  for (const [dr, dc] of dirs) {
+    const nr = row + dr;
+    const nc = col + dc;
+    if (inBounds(grid.length, nr, nc) && grid[nr][nc] === symbol) points += 1;
+  }
+  return points;
+};
+
+const nextPlayer = (players, current) => players[(players.indexOf(current) + 1) % players.length];
+
+/**
+ * Возвращаем легальные ходы для бота, чтобы easy/normal использовали единый источник правды.
+ */
+export const legalMoves = (state, playerId) => {
+  if (state.status !== 'active' || state.currentPlayer !== playerId) return [];
+
+  if (state.gameState.gameId === 'tile_placement_demo') {
+    const moves = [];
+    for (let r = 0; r < state.gameState.size; r += 1) {
+      for (let c = 0; c < state.gameState.size; c += 1) {
+        if (state.gameState.grid[r][c] === null) {
+          moves.push({ action: 'place', payload: { row: r, col: c } });
+        }
+      }
+    }
+    return moves;
+  }
+
+  const sum = state.gameState.dice[0] + state.gameState.dice[1];
+  const moves = [];
+  for (let r = 0; r < state.gameState.size; r += 1) {
+    for (let c = 0; c < state.gameState.size; c += 1) {
+      if (state.gameState.sheet[playerId][r][c] === 0 && r + c + 2 === sum) {
+        moves.push({ action: 'write', payload: { row: r, col: c } });
+      }
+    }
+  }
+  return moves;
+};
+
+/**
+ * Валидация хода проверяет общие и игровые ограничения, чтобы нелегальные ходы отвергались сервером.
+ */
+export const validateMove = (state, move) => {
+  if (!state || state.status !== 'active') return { ok: false, reason: 'MATCH_NOT_ACTIVE' };
+  if (!move || typeof move.playerId !== 'string' || typeof move.action !== 'string') {
+    return { ok: false, reason: 'INVALID_MOVE_SHAPE' };
+  }
+  if (state.currentPlayer !== move.playerId) return { ok: false, reason: 'NOT_YOUR_TURN' };
+
+  if (state.gameState.gameId === 'tile_placement_demo') {
+    if (move.action !== 'place') return { ok: false, reason: 'UNKNOWN_ACTION' };
+    const row = move.payload?.row;
+    const col = move.payload?.col;
+    if (!Number.isInteger(row) || !Number.isInteger(col)) return { ok: false, reason: 'INVALID_COORDS' };
+    if (!inBounds(state.gameState.size, row, col)) return { ok: false, reason: 'OUT_OF_BOUNDS' };
+    if (state.gameState.grid[row][col] !== null) return { ok: false, reason: 'CELL_OCCUPIED' };
+    return { ok: true };
+  }
+
+  if (move.action !== 'write') return { ok: false, reason: 'UNKNOWN_ACTION' };
+  const row = move.payload?.row;
+  const col = move.payload?.col;
+  if (!Number.isInteger(row) || !Number.isInteger(col)) return { ok: false, reason: 'INVALID_COORDS' };
+  if (!inBounds(state.gameState.size, row, col)) return { ok: false, reason: 'OUT_OF_BOUNDS' };
+  if (state.gameState.sheet[move.playerId][row][col] !== 0) return { ok: false, reason: 'CELL_OCCUPIED' };
+  const sum = state.gameState.dice[0] + state.gameState.dice[1];
+  if (row + col + 2 !== sum) return { ok: false, reason: 'DICE_RULE_VIOLATION' };
+  return { ok: true };
+};
+
+/**
+ * Подсчёт очков делается по gameState, чтобы результат не зависел от клиентских данных.
+ */
+export const computeScore = (state) => {
+  if (state.gameState.gameId === 'tile_placement_demo') {
+    const scores = Object.fromEntries(state.players.map((p) => [p, 0]));
+    for (let r = 0; r < state.gameState.size; r += 1) {
+      for (let c = 0; c < state.gameState.size; c += 1) {
+        const cell = state.gameState.grid[r][c];
+        if (cell) scores[cell.owner] += scoreTilePlacement(state.gameState.grid, r, c, cell.symbol);
+      }
+    }
+    const leaderboard = Object.entries(scores)
+      .map(([playerId, score]) => ({ playerId, score }))
+      .sort((a, b) => b.score - a.score);
+    return { winner: leaderboard[0]?.playerId ?? null, leaderboard };
+  }
+
+  const scores = Object.fromEntries(state.players.map((p) => [p, 0]));
+  for (const p of state.players) {
+    for (let r = 0; r < state.gameState.size; r += 1) {
+      for (let c = 0; c < state.gameState.size; c += 1) {
+        scores[p] += state.gameState.sheet[p][r][c];
+      }
+    }
+  }
+  const leaderboard = Object.entries(scores)
+    .map(([playerId, score]) => ({ playerId, score }))
+    .sort((a, b) => b.score - a.score);
+  return { winner: leaderboard[0]?.playerId ?? null, leaderboard };
+};
+
+/**
+ * Применение хода обновляет gameState, логи, очерёдность и при необходимости завершает матч.
+ */
+export const applyMove = (state, move) => {
+  const check = validateMove(state, move);
+  if (!check.ok) return { state, accepted: false, reason: check.reason };
+
+  const nextMoveNumber = state.moveNumber + 1;
+  const nextState = structuredClone(state);
+  nextState.moveNumber = nextMoveNumber;
+  nextState.log.push({ ...move, moveNumber: nextMoveNumber });
+
+  if (state.gameState.gameId === 'tile_placement_demo') {
+    const { row, col } = move.payload;
+    nextState.gameState.grid[row][col] = { owner: move.playerId, symbol: nextState.gameState.hands[move.playerId] };
+  } else {
+    const { row, col } = move.payload;
+    nextState.gameState.sheet[move.playerId][row][col] = 1;
+    const r = rng(nextState.gameState.seed + nextMoveNumber);
+    nextState.gameState.dice = [1 + Math.floor(r() * 6), 1 + Math.floor(r() * 6)];
+  }
+
+  nextState.currentPlayer = nextPlayer(nextState.players, state.currentPlayer);
+  nextState.gameState.turn += 1;
+
+  const legalLeft = legalMoves(nextState, nextState.currentPlayer).length;
+  const boardFull = nextState.gameState.gameId === 'tile_placement_demo'
+    ? nextState.gameState.grid.flat().every((c) => c !== null)
+    : nextState.players.every((p) => nextState.gameState.sheet[p].flat().every((c) => c !== 0));
+
+  if (boardFull || legalLeft === 0 || nextMoveNumber >= state.maxMoves) {
+    const score = computeScore(nextState);
+    nextState.status = 'finished';
+    nextState.winner = score.winner;
+    nextState.scores = Object.fromEntries(score.leaderboard.map((s) => [s.playerId, s.score]));
+  }
+
+  return { state: nextState, accepted: true };
+};
+
+/**
+ * Бот easy выбирает случайный легальный ход, бот normal выбирает ход с лучшей мгновенной оценкой.
+ */
+export const chooseBotMove = (state, playerId, level = 'easy') => {
+  const moves = legalMoves(state, playerId);
+  if (moves.length === 0) return null;
+  if (level === 'easy') return moves[0];
+
+  let best = moves[0];
+  let bestScore = -Infinity;
+  for (const move of moves) {
+    const simulated = applyMove(state, { ...move, playerId, moveId: `bot_${move.action}_${Date.now()}` });
+    if (!simulated.accepted) continue;
+    const board = computeScore(simulated.state).leaderboard;
+    const me = board.find((x) => x.playerId === playerId)?.score ?? 0;
+    if (me > bestScore) {
+      bestScore = me;
+      best = move;
+    }
+  }
+  return best;
 };
