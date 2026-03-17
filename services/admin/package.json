@@ -1,0 +1,10 @@
+{
+  "name": "@tabletopplatform/admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "echo \"ESLint is configured at repo root; install dependencies to run lint.\"",
+    "test": "node --test test/*.test.mjs"
+  }
+}
