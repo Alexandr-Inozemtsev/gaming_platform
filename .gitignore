@@ -1,0 +1,9 @@
+node_modules/
+coverage/
+.dist/
+dist/
+.dart_tool/
+.idea/
+.vscode/
+.DS_Store
+*.log
