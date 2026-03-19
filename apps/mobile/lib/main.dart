@@ -16,6 +16,10 @@ import 'theme/tokens.dart';
 
 const String apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
 const String wsUrl = String.fromEnvironment('WS_URL', defaultValue: 'ws://localhost:3001');
+const String stunUrlsRaw = String.fromEnvironment('STUN_URLS', defaultValue: '');
+const String turnUrlsRaw = String.fromEnvironment('TURN_URLS', defaultValue: '');
+const String turnUsername = String.fromEnvironment('TURN_USERNAME', defaultValue: '');
+const String turnCredential = String.fromEnvironment('TURN_CREDENTIAL', defaultValue: '');
 
 void main() => runApp(const TabletopApp());
 
@@ -37,6 +41,12 @@ class AppState extends ChangeNotifier {
   List<dynamic> myVariants = const [];
   String? appliedSkinSku;
   String? lastVariantLink;
+  bool videoOverlayVisible = false;
+  bool cameraEnabled = false;
+  bool micEnabled = false;
+  bool mediaPermissionGranted = false;
+  String videoStatus = 'idle';
+  final List<String> videoParticipants = [];
 
   String? roomId;
   String currentGameId = 'tile_placement_demo';
@@ -65,6 +75,10 @@ class AppState extends ChangeNotifier {
     await ws.connect();
     _wsSub = ws.events.listen((event) {
       roomLog.add('WS: ${event['type'] ?? 'event'}');
+      final eventType = event['type']?.toString() ?? '';
+      if (eventType.startsWith('video.')) {
+        videoStatus = 'signaling:${eventType.split('.').last}';
+      }
       notifyListeners();
     });
     games = await api.games();
@@ -110,6 +124,14 @@ class AppState extends ChangeNotifier {
     final result = await api.createMatch(gameId, [userId!, '${userId!}_bot']);
     roomId = result['id']?.toString();
     roomLog.add('Room created: $roomId, game: $gameId');
+    videoParticipants
+      ..clear()
+      ..addAll([userId!, '${userId!}_bot']);
+    videoOverlayVisible = false;
+    cameraEnabled = false;
+    micEnabled = false;
+    mediaPermissionGranted = false;
+    videoStatus = 'ready';
     tab = 3;
     notifyListeners();
   }
@@ -319,6 +341,53 @@ class AppState extends ChangeNotifier {
     if (text.trim().isEmpty) return;
     chat.add(text);
     ws.send({'type': 'chat.message', 'text': text, 'roomId': roomId});
+    notifyListeners();
+  }
+
+  bool get isRtcConfigured => stunUrlsRaw.trim().isNotEmpty || turnUrlsRaw.trim().isNotEmpty;
+
+  String get rtcConfigWarning {
+    if (isRtcConfigured) return '';
+    return 'STUN/TURN не настроены: укажите STUN_URLS или TURN_URLS, TURN_USERNAME, TURN_CREDENTIAL.';
+  }
+
+  void grantMediaPermission() {
+    mediaPermissionGranted = true;
+    notifyListeners();
+  }
+
+  void toggleVideoOverlay() {
+    videoOverlayVisible = !videoOverlayVisible;
+    notifyListeners();
+  }
+
+  void toggleCamera() {
+    if (!mediaPermissionGranted) return;
+    cameraEnabled = !cameraEnabled;
+    if (roomId != null && userId != null && videoParticipants.length > 1) {
+      ws.sendVideoOffer(
+        roomId: roomId!,
+        fromUserId: userId!,
+        targetUserId: videoParticipants.last,
+        sdp: cameraEnabled ? 'offer-camera-on' : 'offer-camera-off'
+      );
+    }
+    videoStatus = cameraEnabled ? 'camera_on' : 'camera_off';
+    notifyListeners();
+  }
+
+  void toggleMic() {
+    if (!mediaPermissionGranted) return;
+    micEnabled = !micEnabled;
+    videoStatus = micEnabled ? 'mic_on' : 'mic_off';
+    notifyListeners();
+  }
+
+  void hangupVideo() {
+    cameraEnabled = false;
+    micEnabled = false;
+    videoOverlayVisible = false;
+    videoStatus = 'hangup';
     notifyListeners();
   }
 
@@ -663,50 +732,139 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final s = widget.state;
-    return Padding(
-      padding: const EdgeInsets.all(AppTokens.s16),
-      child: Column(children: [
-        Expanded(
-          flex: 2,
-          child: Card(
-            child: Column(children: [
-              const SizedBox(height: 8),
-              Text(s.currentGameId),
-              Expanded(child: s.currentGameId == 'tile_placement_demo' ? TileBoardWidget(state: s) : RollWriteBoardWidget(state: s))
-            ])
-          )
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: Row(children: [
-            Expanded(child: Card(child: ListView(padding: const EdgeInsets.all(8), children: s.roomLog.map((e) => Text('• $e')).toList()))),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Card(
-                child: Column(children: [
-                  Expanded(child: ListView(padding: const EdgeInsets.all(8), children: s.chat.map((e) => Text('💬 $e')).toList())),
-                  Row(children: [
-                    Expanded(child: TextField(controller: chat)),
-                    IconButton(onPressed: () { s.sendChat(chat.text); chat.clear(); }, icon: const Icon(Icons.send))
-                  ])
-                ])
-              )
+    return Stack(children: [
+      Padding(
+        padding: const EdgeInsets.all(AppTokens.s16),
+        child: Column(children: [
+          Expanded(
+            flex: 2,
+            child: Card(
+              child: Column(children: [
+                const SizedBox(height: 8),
+                Text(s.currentGameId),
+                Expanded(child: s.currentGameId == 'tile_placement_demo' ? TileBoardWidget(state: s) : RollWriteBoardWidget(state: s))
+              ])
             )
-          ])
-        ),
-        const SizedBox(height: 8),
-        AnimatedBuilder(
-          animation: pulse,
-          builder: (_, __) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: s.activeBoardHighlight.withOpacity(s.yourTurn ? 0.4 + pulse.value * 0.4 : 0.2),
-              borderRadius: BorderRadius.circular(AppTokens.radiusButton)
-            ),
-            child: Text(s.t('room.yourTurn'))
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Row(children: [
+              Expanded(child: Card(child: ListView(padding: const EdgeInsets.all(8), children: s.roomLog.map((e) => Text('• $e')).toList()))),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Card(
+                  child: Column(children: [
+                    Expanded(child: ListView(padding: const EdgeInsets.all(8), children: s.chat.map((e) => Text('💬 $e')).toList())),
+                    Row(children: [
+                      Expanded(child: TextField(controller: chat)),
+                      IconButton(onPressed: () { s.sendChat(chat.text); chat.clear(); }, icon: const Icon(Icons.send))
+                    ])
+                  ])
+                )
+              )
+            ])
+          ),
+          const SizedBox(height: 8),
+          AnimatedBuilder(
+            animation: pulse,
+            builder: (_, __) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: s.activeBoardHighlight.withOpacity(s.yourTurn ? 0.4 + pulse.value * 0.4 : 0.2),
+                borderRadius: BorderRadius.circular(AppTokens.radiusButton)
+              ),
+              child: Text(s.t('room.yourTurn'))
+            )
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+              onPressed: s.toggleVideoOverlay,
+              icon: const Icon(Icons.videocam),
+              label: Text(s.t('video.openOverlay'))
+            )
+          )
+        ])
+      ),
+      if (s.videoOverlayVisible) VideoOverlayWidget(state: s)
+    ]);
+  }
+}
+
+class VideoOverlayWidget extends StatelessWidget {
+  const VideoOverlayWidget({super.key, required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final warning = state.rtcConfigWarning;
+    return Positioned.fill(
+      child: Container(
+        color: AppTokens.videoOverlayBg,
+        padding: const EdgeInsets.all(12),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(state.t('video.title')),
+                if (warning.isNotEmpty)
+                  Text(
+                    warning,
+                    style: const TextStyle(color: AppTokens.editorWarning)
+                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: state.videoParticipants.take(4).map((id) {
+                    return Container(
+                      width: 120,
+                      height: 80,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppTokens.card.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(AppTokens.videoTileRadius)
+                      ),
+                      child: Text(id)
+                    );
+                  }).toList()
+                ),
+                const SizedBox(height: 8),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  OutlinedButton(
+                    onPressed: state.mediaPermissionGranted
+                        ? state.toggleCamera
+                        : () {
+                            state.grantMediaPermission();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(state.t('video.permissionGranted')))
+                            );
+                          },
+                    child: Text(state.cameraEnabled ? state.t('video.cameraOn') : state.t('video.cameraOff'))
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: state.mediaPermissionGranted
+                        ? state.toggleMic
+                        : () {
+                            state.grantMediaPermission();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(state.t('video.permissionGranted')))
+                            );
+                          },
+                    child: Text(state.micEnabled ? state.t('video.micOn') : state.t('video.micOff'))
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(onPressed: state.hangupVideo, child: Text(state.t('video.hangup')))
+                ]),
+                Text('status: ${state.videoStatus}')
+              ])
+            )
           )
         )
-      ])
+      )
     );
   }
 }

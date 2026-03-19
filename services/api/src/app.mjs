@@ -104,7 +104,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     MATCH_STATE_SNAPSHOT_EVERY_N_MOVES: Number(config.MATCH_STATE_SNAPSHOT_EVERY_N_MOVES ?? 1),
     REQUIRE_TLS_IN_PROD: String(config.REQUIRE_TLS_IN_PROD ?? 'true') === 'true',
     MATCH_STORE_FILE: config.MATCH_STORE_FILE ?? path.join(process.cwd(), '.data', 'matches.json'),
-    REGION_MODE: config.REGION_MODE ?? 'global'
+    REGION_MODE: config.REGION_MODE ?? 'global',
+    VIDEO_POLICY: config.VIDEO_POLICY ?? 'invite_only'
   };
 
   const state = {
@@ -272,6 +273,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         bot: botLevel ? { enabled: true, playerId: players[1], level: botLevel } : { enabled: false }
       };
       state.matches.push(match);
+      gateway?.configurePrivateRoom?.(match.id, players);
       persistMatches();
       gateway?.emitMatchState(match.id, toSerializableMatch(match));
       return toSerializableMatch(match);

@@ -86,3 +86,9 @@ Dice: [3][2]  Sheet: tap to mark
 
 - `editor.warning = #FFB020`
 - `editor.sectionTitle = 18`
+
+## Prompt I
+`[Video Overlay] [Cam off] [Mic on] [Hang up]`
+
+- `video.overlayBg = rgba(0,0,0,0.35)`
+- `video.tileRadius = 12`
