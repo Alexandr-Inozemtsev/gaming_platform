@@ -68,6 +68,12 @@ const assertArray = (value, field, { min = 1 } = {}) => {
   if (!Array.isArray(value) || value.length < min) throw new HttpError(400, 'VALIDATION_ERROR', { field });
 };
 
+const assertNumber = (value, field, { min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY } = {}) => {
+  if (typeof value !== 'number' || Number.isNaN(value) || value < min || value > max) {
+    throw new HttpError(400, 'VALIDATION_ERROR', { field });
+  }
+};
+
 const createTokens = (userId) => ({
   accessToken: `access.${userId}.${Date.now()}`,
   refreshToken: `refresh.${userId}.${Date.now()}`
@@ -107,6 +113,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     matches: [],
     inventory: new Map(),
     purchases: [],
+    gameVariants: [],
     skuCatalog: [
       { sku: 'game.tile_pack', title: 'Tile Placement License', type: 'GAME_LICENSE', priceSandbox: 4.99, isNew: true },
       { sku: 'game.roll_pack', title: 'Roll&Write License', type: 'GAME_LICENSE', priceSandbox: 4.99, isNew: false },
@@ -141,6 +148,40 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     { id: 'tile_placement_demo', title: 'Tile Placement Demo', langs: ['ru', 'en'] },
     { id: 'roll_and_write_demo', title: 'Roll & Write Demo', langs: ['ru', 'en'] }
   ];
+
+  const applyVariantToInitialState = ({ gameId, players, seed, variant }) => {
+    const initialState = createInitialGameState(gameId, players, seed);
+    if (!variant) return initialState;
+    const nextState = structuredClone(initialState);
+    if (typeof variant.boardSize === 'number') {
+      if (gameId === 'tile_placement_demo') {
+        nextState.size = variant.boardSize;
+        nextState.grid = Array.from({ length: variant.boardSize }, () => Array.from({ length: variant.boardSize }, () => null));
+      } else if (gameId === 'roll_and_write_demo') {
+        nextState.size = variant.boardSize;
+        nextState.sheet = Object.fromEntries(
+          players.map((p) => [p, Array.from({ length: variant.boardSize }, () => Array.from({ length: variant.boardSize }, () => 0))])
+        );
+      }
+    }
+    return nextState;
+  };
+
+  const validateVariantPayload = ({ gameId, boardSize, winCondition, scoringMultipliers, turnTimer }) => {
+    assertString(gameId, 'gameId');
+    if (!SUPPORTED_GAMES.includes(gameId)) throw new HttpError(400, 'UNSUPPORTED_GAME');
+    assertNumber(boardSize, 'boardSize', { min: 3, max: 8 });
+    assertString(winCondition, 'winCondition', { min: 3 });
+    if (typeof scoringMultipliers !== 'object' || scoringMultipliers === null) {
+      throw new HttpError(400, 'VALIDATION_ERROR', { field: 'scoringMultipliers' });
+    }
+    for (const [key, value] of Object.entries(scoringMultipliers)) {
+      if (typeof key !== 'string' || !key.length) throw new HttpError(400, 'VALIDATION_ERROR', { field: 'scoringMultipliers.key' });
+      assertNumber(value, `scoringMultipliers.${key}`, { min: 0.1, max: 10 });
+    }
+    if (turnTimer !== undefined && turnTimer !== null) assertNumber(turnTimer, 'turnTimer', { min: 5, max: 300 });
+    return { ok: true };
+  };
 
   const addSecurityLog = (kind, payload) => state.securityLogs.push({ id: newId('seclog'), kind, payload, ts: nowIso() });
 
@@ -198,25 +239,36 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   };
 
   const matches = {
-    create: ({ gameId, players, botLevel = null }) => {
+    create: ({ gameId, players, botLevel = null, variantId = null }) => {
       assertString(gameId, 'gameId');
       assertArray(players, 'players', { min: 2 });
       if (!SUPPORTED_GAMES.includes(gameId)) throw new HttpError(400, 'UNSUPPORTED_GAME');
+      const variant = variantId ? state.gameVariants.find((item) => item.id === variantId && item.status === 'published') : null;
+      if (variantId && !variant) throw new HttpError(404, 'VARIANT_NOT_FOUND');
       const seed = Math.floor(Math.random() * 1_000_000_000);
       const match = {
         id: newId('match'),
         gameId,
+        variantId: variant?.id ?? null,
+        variantConfig: variant
+          ? {
+              boardSize: variant.boardSize,
+              winCondition: variant.winCondition,
+              scoringMultipliers: variant.scoringMultipliers,
+              turnTimer: variant.turnTimer ?? null
+            }
+          : null,
         players,
         currentPlayer: players[0],
         moveNumber: 0,
-        maxMoves: gameId === 'tile_placement_demo' ? 16 : 25,
+        maxMoves: variant?.boardSize ? variant.boardSize * variant.boardSize : gameId === 'tile_placement_demo' ? 16 : 25,
         scores: Object.fromEntries(players.map((p) => [p, 0])),
         log: [],
         status: 'active',
         winner: null,
         snapshots: [],
         acceptedMoveIds: new Set(),
-        gameState: createInitialGameState(gameId, players, seed),
+        gameState: applyVariantToInitialState({ gameId, players, seed, variant }),
         bot: botLevel ? { enabled: true, playerId: players[1], level: botLevel } : { enabled: false }
       };
       state.matches.push(match);
@@ -326,6 +378,90 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     }
   };
 
+  const variants = {
+    listByGame: ({ gameId, userId }) => {
+      assertString(gameId, 'gameId');
+      return state.gameVariants.filter(
+        (item) => item.gameId === gameId && (item.status === 'published' || (userId && item.authorUserId === userId))
+      );
+    },
+    listMine: ({ userId }) => {
+      assertString(userId, 'userId');
+      return state.gameVariants.filter((item) => item.authorUserId === userId);
+    },
+    createDraft: ({ userId, gameId, boardSize, winCondition, scoringMultipliers, turnTimer = null }) => {
+      assertString(userId, 'userId');
+      validateVariantPayload({ gameId, boardSize, winCondition, scoringMultipliers, turnTimer });
+      const variant = {
+        id: newId('variant'),
+        authorUserId: userId,
+        gameId,
+        boardSize,
+        winCondition,
+        scoringMultipliers,
+        turnTimer,
+        status: 'draft',
+        validationErrors: [],
+        privateLinkToken: null,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+        publishedAt: null
+      };
+      state.gameVariants.push(variant);
+      return variant;
+    },
+    update: ({ variantId, userId, patch }) => {
+      assertString(variantId, 'variantId');
+      assertString(userId, 'userId');
+      const variant = state.gameVariants.find((item) => item.id === variantId);
+      if (!variant) throw new HttpError(404, 'VARIANT_NOT_FOUND');
+      if (variant.authorUserId !== userId) throw new HttpError(403, 'FORBIDDEN');
+      if (variant.status === 'published') throw new HttpError(409, 'VARIANT_ALREADY_PUBLISHED');
+      const merged = {
+        ...variant,
+        ...patch
+      };
+      validateVariantPayload({
+        gameId: merged.gameId,
+        boardSize: merged.boardSize,
+        winCondition: merged.winCondition,
+        scoringMultipliers: merged.scoringMultipliers,
+        turnTimer: merged.turnTimer
+      });
+      Object.assign(variant, merged, { updatedAt: nowIso() });
+      return variant;
+    },
+    validate: ({ variantId, userId }) => {
+      assertString(variantId, 'variantId');
+      assertString(userId, 'userId');
+      const variant = state.gameVariants.find((item) => item.id === variantId);
+      if (!variant) throw new HttpError(404, 'VARIANT_NOT_FOUND');
+      if (variant.authorUserId !== userId) throw new HttpError(403, 'FORBIDDEN');
+      const errors = [];
+      if (variant.winCondition.toLowerCase().includes('invalid')) errors.push('WIN_CONDITION_UNSUPPORTED');
+      if (variant.boardSize < 3 || variant.boardSize > 8) errors.push('BOARD_SIZE_OUT_OF_RANGE');
+      if (!Object.keys(variant.scoringMultipliers).length) errors.push('SCORING_MULTIPLIERS_EMPTY');
+      variant.validationErrors = errors;
+      variant.updatedAt = nowIso();
+      return { ok: errors.length === 0, errors };
+    },
+    publish: ({ variantId, userId }) => {
+      const variant = variants.update({ variantId, userId, patch: {} });
+      const validation = variants.validate({ variantId, userId });
+      if (!validation.ok) throw new HttpError(409, 'VARIANT_VALIDATION_FAILED', { errors: validation.errors });
+      variant.status = 'published';
+      variant.publishedAt = nowIso();
+      variant.privateLinkToken = `variant-${variant.id}-${Math.random().toString(36).slice(2, 8)}`;
+      return { ok: true, privateLink: `/join-variant/${variant.privateLinkToken}`, variant };
+    },
+    resolvePrivateLink: ({ token }) => {
+      assertString(token, 'token');
+      const variant = state.gameVariants.find((item) => item.privateLinkToken === token && item.status === 'published');
+      if (!variant) throw new HttpError(404, 'VARIANT_LINK_NOT_FOUND');
+      return variant;
+    }
+  };
+
   const moderation = {
     report: ({ reporterUserId, targetType, targetId, reason }) => {
       assertString(reporterUserId, 'reporterUserId');
@@ -358,5 +494,5 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     }
   };
 
-  return { state, auth, users, catalog, matches, store, moderation, analytics, securityConfig, HttpError };
+  return { state, auth, users, catalog, matches, store, variants, moderation, analytics, securityConfig, HttpError };
 };

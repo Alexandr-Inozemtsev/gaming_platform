@@ -1,8 +1,8 @@
 // Назначение файла: реализовать минимальный HTTP-клиент для интеграции Flutter MVP с backend API.
 // Роль в проекте: изолировать сетевые вызовы от UI, чтобы экраны работали через единый слой данных.
-// Основные функции: auth, games, создание матча, store skus/purchase/apply-skin, inventory.
+// Основные функции: auth, games, создание матча, store, inventory и редактор вариантов правил (create/validate/publish).
 // Связи с другими файлами: используется в main.dart через AppState; базовый URL приходит из константы API_BASE_URL.
-// Важно при изменении: сохранять fallback для MVP-оффлайна и не дублировать бизнес-правила store в клиенте.
+// Важно при изменении: сохранять fallback для MVP-оффлайна и не дублировать бизнес-правила в клиенте.
 
 import 'dart:convert';
 import 'dart:io';
@@ -50,7 +50,44 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> createMatch(String gameId, List<String> players) async => _post('/matches', {'gameId': gameId, 'players': players});
+  Future<List<dynamic>> myVariants(String userId) async {
+    try {
+      final body = await _get('/variants?userId=$userId');
+      return body as List<dynamic>;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<Map<String, dynamic>> variantByPrivateLink(String token) async => (await _get('/join-variant/$token')) as Map<String, dynamic>;
+
+  Future<Map<String, dynamic>> createVariantDraft({
+    required String userId,
+    required String gameId,
+    required int boardSize,
+    required String winCondition,
+    required Map<String, dynamic> scoringMultipliers,
+    int? turnTimer
+  }) async => _post('/variants', {
+    'userId': userId,
+    'gameId': gameId,
+    'boardSize': boardSize,
+    'winCondition': winCondition,
+    'scoringMultipliers': scoringMultipliers,
+    'turnTimer': turnTimer
+  });
+
+  Future<Map<String, dynamic>> updateVariant({required String variantId, required String userId, required Map<String, dynamic> patch}) async =>
+      _put('/variants/$variantId', {'userId': userId, 'patch': patch});
+
+  Future<Map<String, dynamic>> validateVariant({required String variantId, required String userId}) async =>
+      _post('/variants/$variantId/validate', {'userId': userId});
+
+  Future<Map<String, dynamic>> publishVariant({required String variantId, required String userId}) async =>
+      _post('/variants/$variantId/publish', {'userId': userId});
+
+  Future<Map<String, dynamic>> createMatch(String gameId, List<String> players, {String? variantId}) async =>
+      _post('/matches', {'gameId': gameId, 'players': players, 'variantId': variantId});
   Future<Map<String, dynamic>> purchaseSandbox(String userId, String sku) async => _post('/store/purchase-sandbox', {'userId': userId, 'sku': sku});
   Future<Map<String, dynamic>> applySkin(String userId, String sku) async => _post('/store/apply-skin', {'userId': userId, 'sku': sku});
 
@@ -68,6 +105,18 @@ class ApiClient {
     final uri = Uri.parse('$baseUrl$path');
     final client = HttpClient();
     final req = await client.postUrl(uri);
+    req.headers.set('content-type', 'application/json');
+    req.write(jsonEncode(payload));
+    final res = await req.close();
+    final body = await utf8.decodeStream(res);
+    if (res.statusCode >= 200 && res.statusCode < 300) return (body.isEmpty ? {} : jsonDecode(body)) as Map<String, dynamic>;
+    throw Exception('HTTP ${res.statusCode}: $body');
+  }
+
+  Future<Map<String, dynamic>> _put(String path, Map<String, dynamic> payload) async {
+    final uri = Uri.parse('$baseUrl$path');
+    final client = HttpClient();
+    final req = await client.putUrl(uri);
     req.headers.set('content-type', 'application/json');
     req.write(jsonEncode(payload));
     final res = await req.close();

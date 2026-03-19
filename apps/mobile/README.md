@@ -80,3 +80,9 @@ Dice: [3][2]  Sheet: tap to mark
 
 - `store.priceTag = #FFD166`
 - `store.badgeNew = #6EE7FF`
+
+## Prompt H
+`Editor: [Board Size] [Scoring] [Validate] [Test] [Publish]`
+
+- `editor.warning = #FFB020`
+- `editor.sectionTitle = 18`
