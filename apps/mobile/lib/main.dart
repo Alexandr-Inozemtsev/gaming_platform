@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import 'i18n/strings.dart';
 import 'services/api_client.dart';
+import 'services/analytics_client.dart';
 import 'services/ws_client.dart';
 import 'theme/tokens.dart';
 
@@ -26,10 +27,13 @@ void main() => runApp(const TabletopApp());
 class AppState extends ChangeNotifier {
   AppState()
       : api = ApiClient(apiBaseUrl),
-        ws = WsClient(wsUrl);
+        ws = WsClient(wsUrl) {
+    analytics = AnalyticsClient(api);
+  }
 
   final ApiClient api;
   final WsClient ws;
+  late final AnalyticsClient analytics;
 
   String lang = 'ru';
   int tab = 0;
@@ -47,6 +51,8 @@ class AppState extends ChangeNotifier {
   bool mediaPermissionGranted = false;
   String videoStatus = 'idle';
   final List<String> videoParticipants = [];
+  Map<String, dynamic> analyticsDashboardData = const {};
+  List<dynamic> analyticsEventsTable = const [];
 
   String? roomId;
   String currentGameId = 'tile_placement_demo';
@@ -72,18 +78,25 @@ class AppState extends ChangeNotifier {
   String t(String key) => AppStrings.t(lang, key);
 
   Future<void> init() async {
+    analytics.start();
     await ws.connect();
     _wsSub = ws.events.listen((event) {
       roomLog.add('WS: ${event['type'] ?? 'event'}');
       final eventType = event['type']?.toString() ?? '';
       if (eventType.startsWith('video.')) {
         videoStatus = 'signaling:${eventType.split('.').last}';
+        analytics.enqueue(eventName: 'reconnect_count', userId: userId, payload: {'videoEvent': eventType});
+      }
+      if (eventType == 'offline') {
+        analytics.incrementMetric('wsDisconnects');
+        analytics.enqueue(eventName: 'ws_disconnects', userId: userId, payload: {'payload': event['payload']});
       }
       notifyListeners();
     });
     games = await api.games();
     final skuResponse = await api.storeSkus();
     skus = skuResponse['items'] as List<dynamic>? ?? const [];
+    analytics.enqueue(eventName: 'store_view', payload: {'phase': 'init'});
     notifyListeners();
   }
 
@@ -114,6 +127,8 @@ class AppState extends ChangeNotifier {
     authorized = true;
     inventoryItems = await api.inventory(userId!);
     myVariants = await api.myVariants(userId!);
+    analytics.enqueue(eventName: 'login_success', userId: userId, payload: {'register': register});
+    await loadAdminAnalytics();
     notifyListeners();
   }
 
@@ -132,7 +147,19 @@ class AppState extends ChangeNotifier {
     micEnabled = false;
     mediaPermissionGranted = false;
     videoStatus = 'ready';
+    analytics.enqueue(eventName: 'match_create', userId: userId, payload: {'gameId': gameId, 'roomId': roomId});
     tab = 3;
+    notifyListeners();
+  }
+
+  Future<void> loadAdminAnalytics() async {
+    try {
+      analyticsEventsTable = await api.analyticsEvents(limit: 100);
+      analyticsDashboardData = await api.analyticsDashboard();
+    } catch (_) {
+      analyticsEventsTable = const [];
+      analyticsDashboardData = const {};
+    }
     notifyListeners();
   }
 
@@ -210,6 +237,7 @@ class AppState extends ChangeNotifier {
     if (tileGrid[row][col] != null) return;
     tileGrid[row][col] = selectedTile;
     roomLog.add('Tile placed: [$row,$col] = $selectedTile');
+    analytics.enqueue(eventName: 'match_move', userId: userId, payload: {'gameId': currentGameId, 'row': row, 'col': col});
     yourTurn = false;
     _botTurn();
     notifyListeners();
@@ -231,6 +259,7 @@ class AppState extends ChangeNotifier {
     }
     rollSheet[row][col] = 1;
     roomLog.add('Sheet marked: [$row,$col], dice=$expected');
+    analytics.enqueue(eventName: 'match_move', userId: userId, payload: {'gameId': currentGameId, 'row': row, 'col': col});
     yourTurn = false;
     _botTurn();
     notifyListeners();
@@ -373,6 +402,10 @@ class AppState extends ChangeNotifier {
       );
     }
     videoStatus = cameraEnabled ? 'camera_on' : 'camera_off';
+    if (!isRtcConfigured) {
+      analytics.incrementMetric('videoConnectFailures');
+      analytics.enqueue(eventName: 'video_connect_failures', userId: userId, payload: {'reason': 'rtc_not_configured'});
+    }
     notifyListeners();
   }
 
@@ -431,6 +464,8 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
+    analytics.stop();
+    unawaited(analytics.flush());
     _wsSub?.cancel();
     ws.disconnect();
     super.dispose();
@@ -1064,7 +1099,35 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.state});
   final AppState state;
   @override
-  Widget build(BuildContext context) => Center(child: Text('${state.t('profile.title')}: ${state.userId ?? 'guest'}'));
+  Widget build(BuildContext context) {
+    final dashboard = state.analyticsDashboardData;
+    final dau = (dashboard['dauProxy'] as List?) ?? const [];
+    return ListView(
+      padding: const EdgeInsets.all(AppTokens.s16),
+      children: [
+        Text('${state.t('profile.title')}: ${state.userId ?? 'guest'}'),
+        const SizedBox(height: 8),
+        const Text('Admin -> Analytics -> [Events table]'),
+        Row(children: [
+          Container(width: 24, height: 2, color: AppTokens.analyticsChartLine),
+          const SizedBox(width: 8),
+          Container(width: 24, height: 2, color: AppTokens.analyticsAxis)
+        ]),
+        Text('7-day matches: ${dashboard['matches7d'] ?? 0}'),
+        ...dau.map((row) => Text('DAU ${row['day']}: ${row['uniqueUsers']}')),
+        const SizedBox(height: 8),
+        OutlinedButton(onPressed: state.loadAdminAnalytics, child: const Text('Обновить Analytics')),
+        ...state.analyticsEventsTable.take(20).map((e) {
+          final item = e as Map<String, dynamic>;
+          return ListTile(
+            dense: true,
+            title: Text(item['eventName']?.toString() ?? 'event'),
+            subtitle: Text(item['ts']?.toString() ?? '')
+          );
+        })
+      ]
+    );
+  }
 }
 
 class SettingsScreen extends StatelessWidget {
