@@ -85,6 +85,26 @@ class ApiClient {
 
   Future<Map<String, dynamic>> publishVariant({required String variantId, required String userId}) async =>
       _post('/variants/$variantId/publish', {'userId': userId});
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
+  Future<Map<String, dynamic>> trackAnalyticsEvent({
+    required String eventName,
+    String? userId,
+    String? sessionId,
+    Map<String, dynamic> payload = const {},
+    String source = 'client'
+  }) async =>
+      _post('/analytics/events', {
+        'eventName': eventName,
+        'userId': userId,
+        'sessionId': sessionId,
+        'payload': payload,
+        'source': source
+      });
+  Future<Map<String, dynamic>> incrementTechnicalMetric(String name) async => _post('/analytics/metrics', {'name': name});
+  Future<List<dynamic>> analyticsEvents({int limit = 200}) async => (await _get('/analytics/events?limit=$limit')) as List<dynamic>;
+  Future<Map<String, dynamic>> analyticsDashboard() async => (await _get('/admin/analytics/dashboard')) as Map<String, dynamic>;
+=======
+>>>>>>> main
 
   Future<Map<String, dynamic>> createMatch(String gameId, List<String> players, {String? variantId}) async =>
       _post('/matches', {'gameId': gameId, 'players': players, 'variantId': variantId});

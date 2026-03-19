@@ -23,8 +23,10 @@ const send = (res, status, data) => {
 
 export const createHttpHandler = (deps = {}) => {
   const app = createApiApp(deps);
+  const logLevel = process.env.LOG_LEVEL ?? 'info';
 
   return async (req, res) => {
+    const startedAt = Date.now();
     try {
       const url = new URL(req.url, 'http://localhost');
       const method = req.method;
@@ -88,6 +90,16 @@ export const createHttpHandler = (deps = {}) => {
       if (method === 'POST' && url.pathname === '/reports') return send(res, 201, app.moderation.report(await parseBody(req)));
       if (method === 'POST' && url.pathname === '/admin/ban') return send(res, 200, app.moderation.ban(await parseBody(req)));
       if (method === 'POST' && url.pathname === '/admin/mute') return send(res, 200, app.moderation.mute(await parseBody(req)));
+      if (method === 'POST' && url.pathname === '/analytics/events') return send(res, 201, app.analytics.track(await parseBody(req)));
+      if (method === 'GET' && url.pathname === '/analytics/events') {
+        return send(
+          res,
+          200,
+          app.analytics.list({ limit: Number(url.searchParams.get('limit') ?? 200), eventName: url.searchParams.get('eventName') })
+        );
+      }
+      if (method === 'GET' && url.pathname === '/admin/analytics/dashboard') return send(res, 200, app.analytics.dashboard());
+      if (method === 'POST' && url.pathname === '/analytics/metrics') return send(res, 200, app.analytics.incMetric((await parseBody(req)).name));
 
       return send(res, 404, { error: 'NOT_FOUND' });
     } catch (error) {
@@ -95,6 +107,19 @@ export const createHttpHandler = (deps = {}) => {
         return send(res, error.status, { error: error.code ?? 'HTTP_ERROR', details: error.details ?? null });
       }
       return send(res, 400, { error: error.message ?? 'BAD_REQUEST' });
+    } finally {
+      const durationMs = Date.now() - startedAt;
+      app.state.requestLogs.push({
+        id: `req_${Date.now()}`,
+        method: req.method,
+        path: req.url,
+        durationMs,
+        ts: new Date().toISOString()
+      });
+      if (logLevel === 'debug') {
+        // eslint-disable-next-line no-console
+        console.debug(`[api] ${req.method} ${req.url} ${durationMs}ms`);
+      }
     }
   };
 };

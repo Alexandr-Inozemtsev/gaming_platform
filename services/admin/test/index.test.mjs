@@ -26,8 +26,14 @@ test('admin видит репорты и применяет ban/mute', () => {
     ban: ({ userId }) => ({ action: 'ban', userId }),
     mute: ({ userId }) => ({ action: 'mute', userId })
   };
-  const admin = createAdminPanel({ moderationApi });
+  const analyticsApi = {
+    list: () => [{ id: 'e1', eventName: 'login_success' }],
+    dashboard: () => ({ matches7d: 3, dauProxy: [{ day: '2026-03-19', uniqueUsers: 2 }] })
+  };
+  const admin = createAdminPanel({ moderationApi, analyticsApi });
   assert.equal(admin.reportsTable().length, 1);
+  assert.equal(admin.analyticsEventsTable().length, 1);
+  assert.equal(admin.analyticsDashboard().matches7d, 3);
   assert.equal(admin.ban({ userId: 'u1', reason: 'tox' }).action, 'ban');
   assert.equal(admin.mute({ userId: 'u1', reason: 'spam' }).action, 'mute');
 });
