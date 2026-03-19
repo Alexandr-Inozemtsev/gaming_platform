@@ -16,6 +16,8 @@ class AppTokens {
   static const Color ok = Color(0xFF4EE59A);
   static const Color boardGridLine = Color(0xFF22304D);
   static const Color boardHighlight = Color(0xFF6EE7FF);
+  static const Color priceTag = Color(0xFFFFD166);
+  static const Color storeBadgeNew = Color(0xFF6EE7FF);
 
   static const String fontFamily = 'Inter';
 

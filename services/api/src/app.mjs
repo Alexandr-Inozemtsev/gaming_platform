@@ -97,7 +97,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     DEFAULT_LANG: config.DEFAULT_LANG ?? 'ru',
     MATCH_STATE_SNAPSHOT_EVERY_N_MOVES: Number(config.MATCH_STATE_SNAPSHOT_EVERY_N_MOVES ?? 1),
     REQUIRE_TLS_IN_PROD: String(config.REQUIRE_TLS_IN_PROD ?? 'true') === 'true',
-    MATCH_STORE_FILE: config.MATCH_STORE_FILE ?? path.join(process.cwd(), '.data', 'matches.json')
+    MATCH_STORE_FILE: config.MATCH_STORE_FILE ?? path.join(process.cwd(), '.data', 'matches.json'),
+    REGION_MODE: config.REGION_MODE ?? 'global'
   };
 
   const state = {
@@ -105,6 +106,13 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     sessions: new Map(),
     matches: [],
     inventory: new Map(),
+    purchases: [],
+    skuCatalog: [
+      { sku: 'game.tile_pack', title: 'Tile Placement License', type: 'GAME_LICENSE', priceSandbox: 4.99, isNew: true },
+      { sku: 'game.roll_pack', title: 'Roll&Write License', type: 'GAME_LICENSE', priceSandbox: 4.99, isNew: false },
+      { sku: 'skin.dice.neon', title: 'Dice Neon Skin', type: 'COSMETIC', priceSandbox: 1.49, isNew: true },
+      { sku: 'skin.board.forest', title: 'Board Forest Skin', type: 'COSMETIC', priceSandbox: 1.99, isNew: false }
+    ],
     reports: [],
     sanctions: { bans: new Set(), mutes: new Set() },
     analytics: [],
@@ -180,7 +188,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   const users = {
     inventory: ({ userId }) => {
       assertString(userId, 'userId');
-      return state.inventory.get(userId) ?? [];
+      return [...(state.inventory.get(userId) ?? [])];
     }
   };
 
@@ -281,13 +289,40 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   };
 
   const store = {
+    skus: () => ({
+      regionMode: securityConfig.REGION_MODE,
+      warning: securityConfig.REGION_MODE === 'ru_by' ? 'Платежный канал зависит от дистрибуции' : null,
+      items: state.skuCatalog
+    }),
     purchaseSandbox: ({ userId, sku }) => {
       assertString(userId, 'userId');
       assertString(sku, 'sku');
+      const skuItem = state.skuCatalog.find((i) => i.sku === sku);
+      if (!skuItem) throw new HttpError(404, 'SKU_NOT_FOUND');
       const inventory = state.inventory.get(userId) ?? [];
-      inventory.push({ sku, purchasedAt: nowIso(), mode: 'sandbox' });
+      const record = {
+        id: newId('purchase'),
+        userId,
+        sku,
+        type: skuItem.type,
+        purchasedAt: nowIso(),
+        mode: 'sandbox',
+        applied: false
+      };
+      state.purchases.push(record);
+      inventory.push(record);
       state.inventory.set(userId, inventory);
-      return { ok: true, item: inventory[inventory.length - 1] };
+      return { ok: true, item: record };
+    },
+    applySkin: ({ userId, sku }) => {
+      assertString(userId, 'userId');
+      assertString(sku, 'sku');
+      const inventory = state.inventory.get(userId) ?? [];
+      const item = inventory.find((i) => i.sku === sku && i.type === 'COSMETIC');
+      if (!item) throw new HttpError(404, 'SKIN_NOT_OWNED');
+      for (const i of inventory) if (i.type === 'COSMETIC') i.applied = false;
+      item.applied = true;
+      return { ok: true, appliedSku: sku };
     }
   };
 

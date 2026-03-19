@@ -73,3 +73,10 @@ Dice: [3][2]  Sheet: tap to mark
 ## Prompt F токены
 - `board.gridLine = #22304D`
 - `board.highlight = #6EE7FF`
+
+
+## Prompt G
+`Store -> Skins -> [Try] [Buy] [Apply]`
+
+- `store.priceTag = #FFD166`
+- `store.badgeNew = #6EE7FF`
