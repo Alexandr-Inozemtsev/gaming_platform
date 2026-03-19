@@ -85,6 +85,9 @@ flutter run
 
 ## Video P1 (Prompt I)
 Документация по WebRTC signaling и TURN/STUN: `docs/video.md`.
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
 
 ## Analytics MVP (Prompt J)
 Документация по событиям, логам и метрикам: `docs/analytics.md`.
+=======
+>>>>>>> main
