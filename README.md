@@ -76,3 +76,6 @@ flutter run
 
 ## MVP Games
 Описание правил и ботов: `docs/games.md`.
+
+## Store MVP
+Документация магазина и инвентаря: `docs/store.md`.

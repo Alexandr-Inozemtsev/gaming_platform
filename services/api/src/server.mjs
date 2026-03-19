@@ -57,7 +57,9 @@ export const createHttpHandler = (deps = {}) => {
         );
       }
 
+      if (method === 'GET' && url.pathname === '/store/skus') return send(res, 200, app.store.skus());
       if (method === 'POST' && url.pathname === '/store/purchase-sandbox') return send(res, 200, app.store.purchaseSandbox(await parseBody(req)));
+      if (method === 'POST' && url.pathname === '/store/apply-skin') return send(res, 200, app.store.applySkin(await parseBody(req)));
       if (method === 'GET' && url.pathname === '/inventory') return send(res, 200, app.users.inventory({ userId: url.searchParams.get('userId') }));
 
       if (method === 'POST' && url.pathname === '/reports') return send(res, 201, app.moderation.report(await parseBody(req)));

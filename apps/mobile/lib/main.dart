@@ -32,6 +32,9 @@ class AppState extends ChangeNotifier {
   bool authorized = false;
   String? userId;
   List<dynamic> games = const [];
+  List<dynamic> skus = const [];
+  List<dynamic> inventoryItems = const [];
+  String? appliedSkinSku;
 
   String? roomId;
   String currentGameId = 'tile_placement_demo';
@@ -49,6 +52,8 @@ class AppState extends ChangeNotifier {
   final List<String> chat = [];
   bool yourTurn = true;
 
+  Color get activeBoardHighlight => appliedSkinSku == 'skin.dice.neon' ? AppTokens.ok : AppTokens.boardHighlight;
+
   StreamSubscription<Map<String, dynamic>>? _wsSub;
   final Random _random = Random(7);
 
@@ -61,6 +66,8 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     });
     games = await api.games();
+    final skuResponse = await api.storeSkus();
+    skus = skuResponse['items'] as List<dynamic>? ?? const [];
     notifyListeners();
   }
 
@@ -89,6 +96,7 @@ class AppState extends ChangeNotifier {
     final result = register ? await api.register(email, password) : await api.login(email, password);
     userId = (result['user']?['id'] ?? result['id'])?.toString();
     authorized = true;
+    inventoryItems = await api.inventory(userId!);
     notifyListeners();
   }
 
@@ -250,8 +258,30 @@ class AppState extends ChangeNotifier {
 
   Future<void> sandboxPurchase() async {
     if (userId == null) return;
-    await api.purchaseSandbox(userId!, 'dice_skin_001');
+    final first = skus.isNotEmpty ? (skus.first as Map<String, dynamic>)['sku']?.toString() : 'skin.dice.neon';
+    await api.purchaseSandbox(userId!, first ?? 'skin.dice.neon');
+    inventoryItems = await api.inventory(userId!);
     roomLog.add('Sandbox purchase completed');
+    notifyListeners();
+  }
+
+  Future<void> buySku(String sku) async {
+    if (userId == null) return;
+    await api.purchaseSandbox(userId!, sku);
+    inventoryItems = await api.inventory(userId!);
+    notifyListeners();
+  }
+
+  void trySkin(String sku) {
+    appliedSkinSku = sku;
+    notifyListeners();
+  }
+
+  Future<void> applySkin(String sku) async {
+    if (userId == null) return;
+    await api.applySkin(userId!, sku);
+    appliedSkinSku = sku;
+    inventoryItems = await api.inventory(userId!);
     notifyListeners();
   }
 
@@ -489,7 +519,7 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
           builder: (_, __) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTokens.boardHighlight.withOpacity(s.yourTurn ? 0.4 + pulse.value * 0.4 : 0.2),
+              color: s.activeBoardHighlight.withOpacity(s.yourTurn ? 0.4 + pulse.value * 0.4 : 0.2),
               borderRadius: BorderRadius.circular(AppTokens.radiusButton)
             ),
             child: Text(s.t('room.yourTurn'))
@@ -550,7 +580,7 @@ class TileBoardWidget extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: highlight ? AppTokens.boardHighlight.withOpacity(0.25) : AppTokens.card,
+        color: highlight ? state.activeBoardHighlight.withOpacity(0.25) : AppTokens.card,
         border: Border.all(color: AppTokens.boardGridLine),
         borderRadius: BorderRadius.circular(8)
       ),
@@ -581,7 +611,7 @@ class RollWriteBoardWidget extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: canMark ? AppTokens.boardHighlight.withOpacity(0.25) : AppTokens.card,
+                  color: canMark ? state.activeBoardHighlight.withOpacity(0.25) : AppTokens.card,
                   border: Border.all(color: AppTokens.boardGridLine),
                   borderRadius: BorderRadius.circular(6)
                 ),
@@ -602,16 +632,91 @@ class StoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Column(children: [
-        const TabBar(tabs: [Tab(text: 'Games'), Tab(text: 'Skins')]),
+        const TabBar(tabs: [Tab(text: 'Games'), Tab(text: 'Skins'), Tab(text: 'Inventory')]),
         Expanded(
           child: TabBarView(children: [
-            ListTile(title: const Text('Game Pack'), trailing: FilledButton(onPressed: state.sandboxPurchase, child: Text(state.t('store.buy')))),
-            ListTile(title: const Text('Dice Skin'), trailing: FilledButton(onPressed: state.sandboxPurchase, child: Text(state.t('store.buy'))))
+            ListView(
+              children: state.skus
+                  .where((e) => (e as Map<String, dynamic>)['type'] == 'GAME_LICENSE')
+                  .map((e) => _StoreSkuTile(state: state, sku: e as Map<String, dynamic>))
+                  .toList()
+            ),
+            ListView(
+              children: state.skus
+                  .where((e) => (e as Map<String, dynamic>)['type'] == 'COSMETIC')
+                  .map((e) => _StoreSkinTile(state: state, sku: e as Map<String, dynamic>))
+                  .toList()
+            ),
+            ListView(
+              children: state.inventoryItems
+                  .map((e) => _InventoryTile(state: state, item: e as Map<String, dynamic>))
+                  .toList()
+            )
           ])
         )
       ])
+    );
+  }
+}
+
+class _StoreSkuTile extends StatelessWidget {
+  const _StoreSkuTile({required this.state, required this.sku});
+  final AppState state;
+  final Map<String, dynamic> sku;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(sku['title'].toString()),
+      subtitle: Text(sku['sku'].toString()),
+      trailing: FilledButton(onPressed: () => state.buySku(sku['sku'].toString()), child: Text(state.t('store.buy')))
+    );
+  }
+}
+
+class _StoreSkinTile extends StatelessWidget {
+  const _StoreSkinTile({required this.state, required this.sku});
+  final AppState state;
+  final Map<String, dynamic> sku;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppTokens.priceTag;
+    return Card(
+      child: ListTile(
+        title: Text(sku['title'].toString()),
+        subtitle: Row(children: [
+          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), color: color, child: Text('\$${sku['priceSandbox']}')),
+          const SizedBox(width: 8),
+          if (sku['isNew'] == true) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), color: AppTokens.storeBadgeNew, child: const Text('NEW'))
+        ]),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          OutlinedButton(onPressed: () => state.trySkin(sku['sku'].toString()), child: const Text('Try')),
+          const SizedBox(width: 8),
+          FilledButton(onPressed: () => state.buySku(sku['sku'].toString()), child: Text(state.t('store.buy'))),
+          const SizedBox(width: 8),
+          TextButton(onPressed: () => state.applySkin(sku['sku'].toString()), child: const Text('Apply'))
+        ])
+      )
+    );
+  }
+}
+
+class _InventoryTile extends StatelessWidget {
+  const _InventoryTile({required this.state, required this.item});
+  final AppState state;
+  final Map<String, dynamic> item;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(item['sku'].toString()),
+      subtitle: Text(item['type'].toString()),
+      trailing: item['type'] == 'COSMETIC'
+          ? FilledButton(onPressed: () => state.applySkin(item['sku'].toString()), child: const Text('Apply'))
+          : const SizedBox.shrink()
     );
   }
 }
