@@ -124,6 +124,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     reports: [],
     sanctions: { bans: new Set(), mutes: new Set() },
     analytics: [],
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
     securityLogs: [],
     requestLogs: [],
     technicalMetrics: {
@@ -131,6 +132,9 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       wsDisconnects: 0,
       videoConnectFailures: 0
     }
+=======
+    securityLogs: []
+>>>>>>> main
   };
 
   const persistMatches = () => {
@@ -200,6 +204,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       const user = { id: newId('user'), email, passwordHash: hashPassword(password), lang, createdAt: nowIso() };
       state.users.push(user);
       state.inventory.set(user.id, []);
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       state.analytics.push({
         id: newId('event'),
         eventName: 'onboarding_complete',
@@ -209,6 +214,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
+=======
+>>>>>>> main
       return { id: user.id, email: user.email, lang: user.lang };
     },
     login: ({ email, password, ip = 'local' }) => {
@@ -223,6 +230,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       if (state.sanctions.bans.has(user.id)) throw new HttpError(403, 'USER_BANNED');
       const tokens = createTokens(user.id);
       state.sessions.set(tokens.refreshToken, { userId: user.id, expiresAt: Date.now() + securityConfig.REFRESH_TTL_DAYS * 86400000 });
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       state.analytics.push({
         id: newId('event'),
         eventName: 'login_success',
@@ -232,6 +240,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
+=======
+>>>>>>> main
       return { user: { id: user.id, email: user.email }, ...tokens };
     },
     refresh: ({ refreshToken }) => {
@@ -298,6 +308,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       };
       state.matches.push(match);
       gateway?.configurePrivateRoom?.(match.id, players);
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       state.analytics.push({
         id: newId('event'),
         eventName: 'match_create',
@@ -307,6 +318,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
+=======
+>>>>>>> main
       persistMatches();
       gateway?.emitMatchState(match.id, toSerializableMatch(match));
       return toSerializableMatch(match);
@@ -330,7 +343,10 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         throw new HttpError(403, 'NOT_YOUR_TURN');
       }
 
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       const startedAt = Date.now();
+=======
+>>>>>>> main
       const result = applyMove(match, { playerId, action, moveId, payload, ts: nowIso() });
       if (!result.accepted) {
         if (result.reason === 'NOT_YOUR_TURN') throw new HttpError(403, 'NOT_YOUR_TURN');
@@ -361,6 +377,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       }
 
       persistMatches();
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       state.analytics.push({
         id: newId('event'),
         eventName: 'match_move',
@@ -390,6 +407,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
           ts: nowIso()
         });
       }
+=======
+>>>>>>> main
       gateway?.emitMatchState(match.id, toSerializableMatch(match));
       gateway?.emitRoomEvent(match.id, 'match.move.applied', { matchId, moveNumber: match.moveNumber });
       return toSerializableMatch(match);
@@ -407,6 +426,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
 
   const store = {
     skus: () => ({
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       ...(() => {
         state.analytics.push({
           id: newId('event'),
@@ -419,6 +439,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         });
         return {};
       })(),
+=======
+>>>>>>> main
       regionMode: securityConfig.REGION_MODE,
       warning: securityConfig.REGION_MODE === 'ru_by' ? 'Платежный канал зависит от дистрибуции' : null,
       items: state.skuCatalog
@@ -426,6 +448,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     purchaseSandbox: ({ userId, sku }) => {
       assertString(userId, 'userId');
       assertString(sku, 'sku');
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       state.analytics.push({
         id: newId('event'),
         eventName: 'purchase_attempt',
@@ -435,6 +458,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
+=======
+>>>>>>> main
       const skuItem = state.skuCatalog.find((i) => i.sku === sku);
       if (!skuItem) throw new HttpError(404, 'SKU_NOT_FOUND');
       const inventory = state.inventory.get(userId) ?? [];
@@ -450,6 +475,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       state.purchases.push(record);
       inventory.push(record);
       state.inventory.set(userId, inventory);
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       state.analytics.push({
         id: newId('event'),
         eventName: 'purchase_success',
@@ -459,6 +485,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
+=======
+>>>>>>> main
       return { ok: true, item: record };
     },
     applySkin: ({ userId, sku }) => {
@@ -547,6 +575,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       variant.status = 'published';
       variant.publishedAt = nowIso();
       variant.privateLinkToken = `variant-${variant.id}-${Math.random().toString(36).slice(2, 8)}`;
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       state.analytics.push({
         id: newId('event'),
         eventName: 'variant_publish',
@@ -556,6 +585,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
+=======
+>>>>>>> main
       return { ok: true, privateLink: `/join-variant/${variant.privateLinkToken}`, variant };
     },
     resolvePrivateLink: ({ token }) => {
@@ -574,6 +605,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       assertString(reason, 'reason', { min: 3 });
       const report = { id: newId('report'), reporterUserId, targetType, targetId, reason, createdAt: nowIso() };
       state.reports.push(report);
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
       state.analytics.push({
         id: newId('event'),
         eventName: 'report_sent',
@@ -583,6 +615,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
+=======
+>>>>>>> main
       return report;
     },
     listReports: () => state.reports,
@@ -601,6 +635,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   };
 
   const analytics = {
+<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
     track: ({ eventName, userId = null, sessionId = null, payload = {}, source = 'backend' }) => {
       assertString(eventName, 'eventName');
       const allowed = new Set([
@@ -655,6 +690,11 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       if (!(name in state.technicalMetrics)) throw new HttpError(400, 'UNKNOWN_TECHNICAL_METRIC', { name });
       state.technicalMetrics[name] += Number(value) || 0;
       return { ok: true, value: state.technicalMetrics[name] };
+=======
+    track: (event) => {
+      state.analytics.push({ id: newId('event'), ...event, ts: nowIso() });
+      return { ok: true };
+>>>>>>> main
     }
   };
 
