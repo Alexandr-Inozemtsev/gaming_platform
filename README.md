@@ -82,3 +82,6 @@ flutter run
 
 ## Variant Builder v0 (Prompt H)
 Документация редактора вариантов правил: `docs/variants.md`.
+
+## Video P1 (Prompt I)
+Документация по WebRTC signaling и TURN/STUN: `docs/video.md`.
