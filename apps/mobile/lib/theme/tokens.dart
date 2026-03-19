@@ -18,11 +18,13 @@ class AppTokens {
   static const Color boardHighlight = Color(0xFF6EE7FF);
   static const Color priceTag = Color(0xFFFFD166);
   static const Color storeBadgeNew = Color(0xFF6EE7FF);
+  static const Color editorWarning = Color(0xFFFFB020);
 
   static const String fontFamily = 'Inter';
 
   static const double h1 = 22;
   static const double h2 = 18;
+  static const double editorSectionTitle = 18;
   static const double body = 14;
   static const double caption = 12;
 

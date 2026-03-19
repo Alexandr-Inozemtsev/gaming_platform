@@ -44,6 +44,10 @@ export const createHttpHandler = (deps = {}) => {
 
       if (method === 'GET' && url.pathname === '/games') return send(res, 200, app.catalog.listGames());
       if (method === 'GET' && url.pathname.startsWith('/games/')) return send(res, 200, app.catalog.getGame(url.pathname.split('/')[2]));
+      if (method === 'GET' && /^\/games\/[^/]+\/variants$/.test(url.pathname)) {
+        const gameId = url.pathname.split('/')[2];
+        return send(res, 200, app.variants.listByGame({ gameId, userId: url.searchParams.get('userId') }));
+      }
 
       if (method === 'POST' && url.pathname === '/matches') return send(res, 201, app.matches.create(await parseBody(req)));
       if (method === 'GET' && url.pathname === '/matches') return send(res, 200, app.matches.list());
@@ -61,6 +65,25 @@ export const createHttpHandler = (deps = {}) => {
       if (method === 'POST' && url.pathname === '/store/purchase-sandbox') return send(res, 200, app.store.purchaseSandbox(await parseBody(req)));
       if (method === 'POST' && url.pathname === '/store/apply-skin') return send(res, 200, app.store.applySkin(await parseBody(req)));
       if (method === 'GET' && url.pathname === '/inventory') return send(res, 200, app.users.inventory({ userId: url.searchParams.get('userId') }));
+      if (method === 'GET' && url.pathname === '/variants') return send(res, 200, app.variants.listMine({ userId: url.searchParams.get('userId') }));
+      if (method === 'POST' && url.pathname === '/variants') return send(res, 201, app.variants.createDraft(await parseBody(req)));
+      if (method === 'PUT' && /^\/variants\/[^/]+$/.test(url.pathname)) {
+        const variantId = url.pathname.split('/')[2];
+        const body = await parseBody(req);
+        return send(res, 200, app.variants.update({ variantId, userId: body.userId, patch: body.patch ?? {} }));
+      }
+      if (method === 'POST' && /^\/variants\/[^/]+\/validate$/.test(url.pathname)) {
+        const variantId = url.pathname.split('/')[2];
+        return send(res, 200, app.variants.validate({ variantId, ...(await parseBody(req)) }));
+      }
+      if (method === 'POST' && /^\/variants\/[^/]+\/publish$/.test(url.pathname)) {
+        const variantId = url.pathname.split('/')[2];
+        return send(res, 200, app.variants.publish({ variantId, ...(await parseBody(req)) }));
+      }
+      if (method === 'GET' && /^\/join-variant\/[^/]+$/.test(url.pathname)) {
+        const token = url.pathname.split('/')[2];
+        return send(res, 200, app.variants.resolvePrivateLink({ token }));
+      }
 
       if (method === 'POST' && url.pathname === '/reports') return send(res, 201, app.moderation.report(await parseBody(req)));
       if (method === 'POST' && url.pathname === '/admin/ban') return send(res, 200, app.moderation.ban(await parseBody(req)));

@@ -34,7 +34,9 @@ class AppState extends ChangeNotifier {
   List<dynamic> games = const [];
   List<dynamic> skus = const [];
   List<dynamic> inventoryItems = const [];
+  List<dynamic> myVariants = const [];
   String? appliedSkinSku;
+  String? lastVariantLink;
 
   String? roomId;
   String currentGameId = 'tile_placement_demo';
@@ -97,6 +99,7 @@ class AppState extends ChangeNotifier {
     userId = (result['user']?['id'] ?? result['id'])?.toString();
     authorized = true;
     inventoryItems = await api.inventory(userId!);
+    myVariants = await api.myVariants(userId!);
     notifyListeners();
   }
 
@@ -107,7 +110,70 @@ class AppState extends ChangeNotifier {
     final result = await api.createMatch(gameId, [userId!, '${userId!}_bot']);
     roomId = result['id']?.toString();
     roomLog.add('Room created: $roomId, game: $gameId');
-    tab = 2;
+    tab = 3;
+    notifyListeners();
+  }
+
+  Future<void> refreshMyVariants() async {
+    if (userId == null) return;
+    myVariants = await api.myVariants(userId!);
+    notifyListeners();
+  }
+
+  Future<Map<String, dynamic>> createVariantDraft({
+    required String gameId,
+    required int boardSize,
+    required String winCondition,
+    required double scoringMultiplier,
+    int? turnTimer
+  }) async {
+    if (userId == null) return {};
+    final draft = await api.createVariantDraft(
+      userId: userId!,
+      gameId: gameId,
+      boardSize: boardSize,
+      winCondition: winCondition,
+      scoringMultipliers: {'base': scoringMultiplier},
+      turnTimer: turnTimer
+    );
+    await refreshMyVariants();
+    return draft;
+  }
+
+  Future<Map<String, dynamic>> validateVariant(String variantId) async {
+    if (userId == null) return {'ok': false, 'errors': ['NOT_AUTHORIZED']};
+    return api.validateVariant(variantId: variantId, userId: userId!);
+  }
+
+  Future<Map<String, dynamic>> publishVariant(String variantId) async {
+    if (userId == null) return {'ok': false};
+    final result = await api.publishVariant(variantId: variantId, userId: userId!);
+    lastVariantLink = result['privateLink']?.toString();
+    await refreshMyVariants();
+    return result;
+  }
+
+  Future<void> startTestPlay(String variantId, String gameId) async {
+    if (userId == null) return;
+    final result = await api.createMatch(gameId, [userId!, '${userId!}_bot'], variantId: variantId);
+    roomId = result['id']?.toString();
+    currentGameId = gameId;
+    tab = 3;
+    notifyListeners();
+  }
+
+  Future<void> joinVariantByToken(String token) async {
+    if (userId == null) return;
+    final variant = await api.variantByPrivateLink(token);
+    await createPrivateRoom(variant['gameId'].toString());
+    final result = await api.createMatch(
+      variant['gameId'].toString(),
+      [userId!, '${userId!}_bot'],
+      variantId: variant['id'].toString()
+    );
+    roomId = result['id']?.toString();
+    currentGameId = variant['gameId'].toString();
+    tab = 3;
     notifyListeners();
   }
 
@@ -377,7 +443,15 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [HomeScreen(state: state), CatalogScreen(state: state), RoomScreen(state: state), StoreScreen(state: state), ProfileScreen(state: state), SettingsScreen(state: state)];
+    final pages = [
+      HomeScreen(state: state),
+      CatalogScreen(state: state),
+      CreateScreen(state: state),
+      RoomScreen(state: state),
+      StoreScreen(state: state),
+      ProfileScreen(state: state),
+      SettingsScreen(state: state)
+    ];
     return Scaffold(
       appBar: AppBar(title: const Text('TabletopPlatform')),
       body: AnimatedSwitcher(
@@ -391,6 +465,7 @@ class MainShell extends StatelessWidget {
         destinations: [
           NavigationDestination(icon: const Icon(Icons.home), label: state.t('tab.home')),
           NavigationDestination(icon: const Icon(Icons.grid_view), label: state.t('tab.catalog')),
+          NavigationDestination(icon: const Icon(Icons.edit_note), label: state.t('tab.create')),
           NavigationDestination(icon: const Icon(Icons.meeting_room), label: state.t('tab.room')),
           NavigationDestination(icon: const Icon(Icons.store), label: state.t('tab.store')),
           NavigationDestination(icon: const Icon(Icons.person), label: state.t('tab.profile')),
@@ -415,7 +490,7 @@ class HomeScreen extends StatelessWidget {
             Text(state.t('home.continue')),
             const SizedBox(height: AppTokens.s12),
             Row(children: [
-              FilledButton(onPressed: () => state.setTab(2), child: Text(state.t('home.play'))),
+              FilledButton(onPressed: () => state.setTab(3), child: Text(state.t('home.play'))),
               const SizedBox(width: AppTokens.s12),
               OutlinedButton(onPressed: () => state.createPrivateRoom(state.currentGameId), child: Text(state.t('home.createRoom')))
             ]),
@@ -457,6 +532,112 @@ class CatalogScreen extends StatelessWidget {
             )
           );
         })
+      ]
+    );
+  }
+}
+
+class CreateScreen extends StatefulWidget {
+  const CreateScreen({super.key, required this.state});
+  final AppState state;
+  @override
+  State<CreateScreen> createState() => _CreateScreenState();
+}
+
+class _CreateScreenState extends State<CreateScreen> {
+  final boardSize = TextEditingController(text: '4');
+  final winCondition = TextEditingController(text: 'highest_score');
+  final scoring = TextEditingController(text: '1.0');
+  final turnTimer = TextEditingController(text: '30');
+  final joinToken = TextEditingController();
+  String selectedGameId = 'tile_placement_demo';
+  String message = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.state;
+    return ListView(
+      padding: const EdgeInsets.all(AppTokens.s16),
+      children: [
+        Text(s.t('editor.title'), style: const TextStyle(fontSize: AppTokens.editorSectionTitle, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        Text(s.t('editor.myVariants')),
+        ...s.myVariants.map((raw) {
+          final v = raw as Map<String, dynamic>;
+          final hasErrors = (v['validationErrors'] as List<dynamic>? ?? const []).isNotEmpty;
+          return Card(
+            child: ListTile(
+              title: Text('${v['gameId']} • ${v['status']}'),
+              subtitle: Text('board=${v['boardSize']}, win=${v['winCondition']}'),
+              trailing: Wrap(spacing: 8, children: [
+                OutlinedButton(
+                  onPressed: () async {
+                    final result = await s.validateVariant(v['id'].toString());
+                    setState(() => message = 'validate: ${result['ok']} / ${result['errors'] ?? const []}');
+                  },
+                  child: Text(s.t('editor.validate'))
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    await s.startTestPlay(v['id'].toString(), v['gameId'].toString());
+                  },
+                  child: Text(s.t('editor.test'))
+                ),
+                TextButton(
+                  onPressed: hasErrors
+                      ? null
+                      : () async {
+                          final result = await s.publishVariant(v['id'].toString());
+                          setState(() => message = '${s.t('editor.linkReady')}: ${result['privateLink'] ?? '-'}');
+                        },
+                  child: Text(s.t('editor.publish'))
+                )
+              ])
+            )
+          );
+        }),
+        const SizedBox(height: 8),
+        TextField(controller: boardSize, decoration: InputDecoration(labelText: s.t('editor.boardSize'))),
+        TextField(controller: winCondition, decoration: InputDecoration(labelText: s.t('editor.winCondition'))),
+        TextField(controller: scoring, decoration: InputDecoration(labelText: s.t('editor.scoring'))),
+        TextField(controller: turnTimer, decoration: InputDecoration(labelText: s.t('editor.turnTimer'))),
+        DropdownButtonFormField<String>(
+          value: selectedGameId,
+          items: const [
+            DropdownMenuItem(value: 'tile_placement_demo', child: Text('tile_placement_demo')),
+            DropdownMenuItem(value: 'roll_and_write_demo', child: Text('roll_and_write_demo'))
+          ],
+          onChanged: (value) => setState(() => selectedGameId = value ?? 'tile_placement_demo')
+        ),
+        const SizedBox(height: 8),
+        Row(children: [
+          FilledButton(
+            onPressed: () async {
+              final created = await s.createVariantDraft(
+                gameId: selectedGameId,
+                boardSize: int.tryParse(boardSize.text) ?? 4,
+                winCondition: winCondition.text.trim(),
+                scoringMultiplier: double.tryParse(scoring.text) ?? 1,
+                turnTimer: int.tryParse(turnTimer.text)
+              );
+              setState(() => message = 'draft: ${created['id'] ?? '-'}');
+            },
+            child: Text(s.t('editor.createDraft'))
+          )
+        ]),
+        const SizedBox(height: 8),
+        TextField(controller: joinToken, decoration: InputDecoration(labelText: s.t('editor.joinVariant'))),
+        OutlinedButton(
+          onPressed: () async {
+            await s.joinVariantByToken(joinToken.text.trim());
+          },
+          child: Text(s.t('editor.joinVariant'))
+        ),
+        if (message.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(message, style: const TextStyle(color: AppTokens.editorWarning))
+          )
       ]
     );
   }

@@ -79,3 +79,6 @@ flutter run
 
 ## Store MVP
 Документация магазина и инвентаря: `docs/store.md`.
+
+## Variant Builder v0 (Prompt H)
+Документация редактора вариантов правил: `docs/variants.md`.
