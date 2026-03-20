@@ -16,16 +16,25 @@
 1. Включена строгая ориентация только в landscape (`left`/`right`) на уровне `main()`.
 2. Переработан `MainShell`:
    - в режиме room убираются глобальные `AppBar` и нижняя навигация для увеличения игровой области.
+   - добавлен `ReconnectBanner` в верхней части shell для offline/reconnect состояния.
 3. Переработан `RoomScreen`:
    - добавлен адаптивный режим `compact` по высоте;
    - в compact скрывается вторичный блок chat/log и приоритет отдаётся игровому полю;
    - добавлена явная кнопка возврата в Home прямо в комнате.
 4. Переработан `TileBoardWidget`:
    - добавлена адаптация для очень маленькой высоты (скрытие верхней панели drag/switch), чтобы избежать overflow и сохранить играбельность.
+5. Начата декомпозиция монолита:
+   - room/gameplay вынесены в отдельный feature part-файл.
+6. Добавлены reusable state-компоненты:
+   - `LoadingState`, `ErrorState`, `EmptyState`, `ReconnectBanner`.
+7. Добавлены golden-тесты под viewport 932x430 и 960x540 (подготовлены и помечены для запуска в UI-пайплайне).
 
 ## Где лежат ключевые части
 - Токены: `apps/mobile/lib/theme/tokens.dart`
 - Основной shell + экраны: `apps/mobile/lib/main.dart`
+- Feature room/gameplay: `apps/mobile/lib/features/gameplay/room_screen_part.dart`
+- Reusable системные состояния: `apps/mobile/lib/shared/ui/system_states.dart`
+- Golden-тесты: `apps/mobile/test/golden/system_states_golden_test.dart`
 
 ## Как подключать реальные данные
 - `AppState` уже использует `ApiClient`/`WsClient`.
