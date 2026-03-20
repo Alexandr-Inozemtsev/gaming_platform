@@ -47,6 +47,43 @@ docker compose logs -f
 ## Deploy (staging/prod templates)
 См. `docs/deploy.md` для Dockerfile сервисов, `docker-compose.prod.yml` и env-шаблонов для staging/prod.
 
+## Release checklist и one-button запуск (Prompt P)
+Быстрый запуск локального контура:
+
+```bash
+npm install
+scripts/dev-up.sh
+```
+
+Ручные команды (эквивалент):
+
+```bash
+# infra
+cd infra && docker compose -f docker-compose.yml up -d
+
+# backend runtime из корня репозитория
+REGION_MODE=global API_PORT=3000 node services/api/src/runtime.mjs
+REGION_MODE=global REALTIME_PORT=3001 node services/realtime/src/runtime.mjs
+REGION_MODE=global ADMIN_PORT=3002 node services/admin/src/runtime.mjs
+REGION_MODE=global RULES_ENGINE_PORT=3003 node services/rules-engine/src/runtime.mjs
+
+# mobile
+cd apps/mobile && flutter run -d emulator-5554
+cd apps/mobile && flutter run -d "iPhone 15"
+```
+
+Smoke-проверка сценария:
+
+```bash
+scripts/smoke.sh
+```
+
+Остановка контура:
+
+```bash
+scripts/dev-down.sh
+```
+
 ## Flutter (локально)
 ```bash
 cd apps/mobile
