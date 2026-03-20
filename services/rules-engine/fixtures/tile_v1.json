@@ -1,0 +1,12 @@
+{
+  "id": "tile_v1",
+  "template": "tile",
+  "engineGameId": "tile_placement_demo",
+  "boardSize": 4,
+  "maxMoves": 16,
+  "winCondition": "highest_score",
+  "internal": {
+    "note": "not user-facing",
+    "generatedAt": "2026-03-20T00:00:00.000Z"
+  }
+}
