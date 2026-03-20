@@ -6,6 +6,10 @@
 - Шаблоны окружения: `infra/.env.staging.example`, `infra/.env.prod.example`.
 - Placeholder ingress/CDN-конфиг: `infra/cdn/nginx.cdn.conf`.
 
+## Важное исправление контейнера API
+- В `services/api/Dockerfile` дополнительно копируется `services/rules-engine`, потому что API импортирует rules-engine как локальный модуль (`../../rules-engine/src/index.mjs`).
+- Без этого контейнер API падает с `ERR_MODULE_NOT_FOUND` при старте.
+
 ## Быстрый запуск staging-подобного окружения
 ```bash
 cp infra/.env.staging.example .env
