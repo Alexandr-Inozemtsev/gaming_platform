@@ -15,9 +15,14 @@ import 'i18n/strings.dart';
 import 'services/api_client.dart';
 import 'services/analytics_client.dart';
 import 'services/ws_client.dart';
+import 'shared/ui/controls.dart';
 import 'shared/ui/system_states.dart';
 import 'theme/tokens.dart';
+part 'features/catalog/catalog_container_part.dart';
 part 'features/gameplay/room_screen_part.dart';
+part 'features/home/home_container_part.dart';
+part 'features/profile/profile_container_part.dart';
+part 'features/settings/settings_container_part.dart';
 
 const String _apiBaseUrlFromEnv = String.fromEnvironment('API_BASE_URL', defaultValue: '');
 const String _wsUrlFromEnv = String.fromEnvironment('WS_URL', defaultValue: '');
@@ -621,23 +626,21 @@ class _AuthScreenState extends State<AuthScreen> {
                   padding: const EdgeInsets.all(AppTokens.s16),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Text(register ? widget.state.t('auth.register') : widget.state.t('auth.login')),
-                    TextField(controller: email, decoration: InputDecoration(labelText: widget.state.t('auth.email'))),
-                    TextField(controller: password, decoration: InputDecoration(labelText: widget.state.t('auth.password'))),
+                    AppTextInput(controller: email, label: widget.state.t('auth.email')),
+                    AppTextInput(controller: password, label: widget.state.t('auth.password')),
                     const SizedBox(height: AppTokens.s12),
-                    FilledButton(
+                    AppPrimaryButton(
                       onPressed: widget.state.authBusy
                           ? null
                           : () => widget.state.loginOrRegister(email.text.trim(), password.text.trim(), register: register),
-                      child: Text(
-                        widget.state.authBusy ? '...' : (register ? widget.state.t('auth.register') : widget.state.t('auth.login'))
-                      )
+                      label: widget.state.authBusy ? '...' : (register ? widget.state.t('auth.register') : widget.state.t('auth.login'))
                     ),
                     if (widget.state.authError != null)
                       Padding(
                         padding: const EdgeInsets.only(top: AppTokens.s8),
                         child: Text(widget.state.authError!, style: const TextStyle(color: AppTokens.editorWarning))
                       ),
-                    TextButton(onPressed: () => setState(() => register = !register), child: Text(register ? 'Login' : 'Register'))
+                    AppGhostButton(onPressed: () => setState(() => register = !register), label: register ? 'Login' : 'Register')
                   ])
                 )
               )
@@ -698,74 +701,6 @@ class MainShell extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.state});
-  final AppState state;
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppTokens.s16),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(AppTokens.s16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(state.t('home.continue')),
-            const SizedBox(height: AppTokens.s12),
-            Row(children: [
-              FilledButton(onPressed: () => state.setTab(3), child: Text(state.t('home.play'))),
-              const SizedBox(width: AppTokens.s12),
-              OutlinedButton(onPressed: () => state.createPrivateRoom(state.currentGameId), child: Text(state.t('home.createRoom')))
-            ]),
-            const SizedBox(height: AppTokens.s12),
-            Text(state.t('home.teaser'))
-          ])
-        )
-      )
-    );
-  }
-}
-
-class CatalogScreen extends StatelessWidget {
-  const CatalogScreen({super.key, required this.state});
-  final AppState state;
-  @override
-  Widget build(BuildContext context) {
-    if (state.games.isEmpty) {
-      return EmptyState(
-        title: 'Каталог пуст',
-        subtitle: 'Игры пока недоступны. Попробуйте перезапустить backend.',
-        actionLabel: 'На главную',
-        onAction: () => state.setTab(0)
-      );
-    }
-    return ListView(
-      padding: const EdgeInsets.all(AppTokens.s16),
-      children: [
-        Wrap(spacing: 8, children: [
-          ChoiceChip(label: Text(state.t('home.botEasy')), selected: state.botLevel == 'easy', onSelected: (_) => state.setBotLevel('easy')),
-          ChoiceChip(label: Text(state.t('home.botNormal')), selected: state.botLevel == 'normal', onSelected: (_) => state.setBotLevel('normal'))
-        ]),
-        const SizedBox(height: 8),
-        ...state.games.map((raw) {
-          final game = raw as Map<String, dynamic>;
-          return Card(
-            child: ListTile(
-              title: Text(game['title']?.toString() ?? game['id'].toString()),
-              subtitle: Text(game['id'].toString()),
-              trailing: FilledButton(
-                onPressed: () {
-                  state.setCurrentGame(game['id'].toString());
-                  state.createPrivateRoom(game['id'].toString());
-                },
-                child: Text(state.t('home.join'))
-              )
-            )
-          );
-        })
-      ]
-    );
-  }
-}
 
 class CreateScreen extends StatefulWidget {
   const CreateScreen({super.key, required this.state});
@@ -973,89 +908,6 @@ class _InventoryTile extends StatelessWidget {
       trailing: item['type'] == 'COSMETIC'
           ? FilledButton(onPressed: () => state.applySkin(item['sku'].toString()), child: Text(state.t('store.apply')))
           : const SizedBox.shrink()
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key, required this.state});
-  final AppState state;
-  @override
-  Widget build(BuildContext context) {
-    final dashboard = state.analyticsDashboardData;
-    final dau = (dashboard['dauProxy'] as List?) ?? const [];
-    return ListView(
-      padding: const EdgeInsets.all(AppTokens.s16),
-      children: [
-        Text('${state.t('profile.title')}: ${state.userId ?? state.t('profile.guest')}'),
-        const SizedBox(height: 8),
-        Text(state.t('profile.adminAnalytics')),
-        Row(children: [
-          Container(width: 24, height: 2, color: AppTokens.analyticsChartLine),
-          const SizedBox(width: 8),
-          Container(width: 24, height: 2, color: AppTokens.analyticsAxis)
-        ]),
-        Text('${state.t('profile.matches7d')}: ${state.formatNumber((dashboard['matches7d'] as num?) ?? 0)}'),
-        ...dau.map(
-          (row) => Text('${state.t('profile.dauPrefix')} ${row['day']}: ${state.formatNumber((row['uniqueUsers'] as num?) ?? 0)}')
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton(onPressed: state.loadAdminAnalytics, child: Text(state.t('profile.refreshAnalytics'))),
-        const SizedBox(height: 8),
-        Text(state.t('profile.moderationFlow')),
-        const SizedBox(height: 8),
-        ...state.moderationQueue.take(10).map((entry) {
-          final item = entry as Map<String, dynamic>;
-          final isOpen = (item['status']?.toString() ?? '') == 'open';
-          return Card(
-            child: ListTile(
-              title: Text('${state.t('profile.casePrefix')} ${item['id']} • ${item['targetType']}'),
-              subtitle: Text('${state.t('profile.caseStatus')}=${item['status']} • ${state.t('profile.caseReason')}=${item['reason']}'),
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isOpen ? AppTokens.modCaseOpen : AppTokens.modCaseClosed,
-                  borderRadius: BorderRadius.circular(8)
-                ),
-                child: Text(item['status']?.toString() ?? '-')
-              )
-            )
-          );
-        }),
-        const SizedBox(height: 8),
-        Text(state.tp('profile.auditEntries', state.moderationAuditLog.length)),
-        ...state.analyticsEventsTable.take(20).map((e) {
-          final item = e as Map<String, dynamic>;
-          return ListTile(
-            dense: true,
-            title: Text(item['eventName']?.toString() ?? 'event'),
-            subtitle: Text(item['ts']?.toString() ?? '')
-          );
-        })
-      ]
-    );
-  }
-}
-
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key, required this.state});
-  final AppState state;
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(AppTokens.s16),
-      children: [
-        Text(state.t('settings.title')),
-        Text('${state.t('settings.lang')}: ${state.lang.toUpperCase()}'),
-        Wrap(
-          spacing: AppTokens.s8,
-          children: AppStrings.supported
-              .map((l) => ChoiceChip(label: Text(l.toUpperCase()), selected: state.lang == l, onSelected: (_) => state.setLang(l)))
-              .toList()
-        ),
-        const SizedBox(height: 12),
-        Text(state.t('settings.summary'))
-      ]
     );
   }
 }
