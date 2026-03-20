@@ -1,6 +1,6 @@
 # Этот workflow задаёт базовый CI для MVP-монорепозитория.
 # Роль файла: автоматизировать контроль качества backend и мобильного клиента в pull request/push.
-# Основные функции: запуск lint и unit-тестов для сервисов, а также flutter analyze для mobile-приложения.
+# Основные функции: запуск lint, unit/integration/load-тестов для сервисов, а также flutter test/analyze для mobile-приложения.
 # Связи: использует npm-скрипты из package.json и структуру apps/mobile, services/*.
 # Важно при изменении: сохранять быстрый фидбек и падение пайплайна при ошибках качества.
 name: CI
@@ -34,6 +34,13 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Load test (synthetic WS)
+        env:
+          TARGET_WS_CONN: 200
+          TARGET_MOVE_RPS: 20
+          LOAD_TEST_DURATION_SEC: 3
+        run: npm run test:load:ws
+
   mobile:
     name: Flutter analyze
     runs-on: ubuntu-latest
@@ -56,3 +63,7 @@ jobs:
       - name: Flutter analyze
         working-directory: apps/mobile
         run: flutter analyze
+
+      - name: Flutter e2e smoke (widget)
+        working-directory: apps/mobile
+        run: flutter test test/smoke_test.dart

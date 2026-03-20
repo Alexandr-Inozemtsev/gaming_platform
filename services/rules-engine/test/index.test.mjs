@@ -124,3 +124,50 @@ test('rng с одинаковым seed детерминирован', () => {
   assert.equal(a(), b());
   assert.equal(a(), b());
 });
+
+test('property: tile инвариант — число занятых клеток растёт не более чем на 1 за ход', () => {
+  for (let seed = 1; seed <= 25; seed += 1) {
+    let state = baseMatch('tile_placement_demo');
+    state.gameState = createInitialGameState('tile_placement_demo', ['u1', 'u2'], seed);
+    let previousFilled = 0;
+    for (let turn = 0; turn < 8; turn += 1) {
+      const playerId = state.currentPlayer;
+      const moves = legalMoves(state, playerId);
+      if (moves.length === 0) break;
+      const nextMove = moves[Math.floor((seed + turn) % moves.length)];
+      const result = applyMove(state, { playerId, ...nextMove, moveId: `prop-tile-${seed}-${turn}` });
+      assert.equal(result.accepted, true);
+      const filled = result.state.gameState.grid.flat().filter((x) => x !== null).length;
+      assert.equal(filled >= previousFilled, true);
+      assert.equal(filled - previousFilled <= 1, true);
+      previousFilled = filled;
+      state = result.state;
+      if (state.status === 'finished') break;
+    }
+  }
+});
+
+test('property: roll-write инвариант — заполненных клеток у игрока не становится меньше', () => {
+  for (let seed = 3; seed <= 20; seed += 1) {
+    let state = baseMatch('roll_and_write_demo');
+    state.gameState = createInitialGameState('roll_and_write_demo', ['u1', 'u2'], seed);
+    let prevU1 = 0;
+    let prevU2 = 0;
+    for (let turn = 0; turn < 12; turn += 1) {
+      const playerId = state.currentPlayer;
+      const moves = legalMoves(state, playerId);
+      if (moves.length === 0) break;
+      const move = moves[Math.floor((seed * 7 + turn) % moves.length)];
+      const result = applyMove(state, { playerId, ...move, moveId: `prop-roll-${seed}-${turn}` });
+      assert.equal(result.accepted, true);
+      const currU1 = result.state.gameState.sheet.u1.flat().reduce((a, b) => a + b, 0);
+      const currU2 = result.state.gameState.sheet.u2.flat().reduce((a, b) => a + b, 0);
+      assert.equal(currU1 >= prevU1, true);
+      assert.equal(currU2 >= prevU2, true);
+      prevU1 = currU1;
+      prevU2 = currU2;
+      state = result.state;
+      if (state.status === 'finished') break;
+    }
+  }
+});

@@ -20,11 +20,13 @@ class AppTokens {
   static const Color storeBadgeNew = Color(0xFF6EE7FF);
   static const Color editorWarning = Color(0xFFFFB020);
   static const Color videoOverlayBg = Color(0x59000000);
-<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
   static const Color analyticsChartLine = Color(0xFF6EE7FF);
   static const Color analyticsAxis = Color(0xFF9AA4B2);
-=======
->>>>>>> main
+  static const Color qaPass = Color(0xFF4EE59A);
+  static const Color qaFail = Color(0xFFFF5C7A);
+  static const Color analyticsChartLine = Color(0xFF6EE7FF);
+  static const Color analyticsAxis = Color(0xFF9AA4B2);
+
 
   static const String fontFamily = 'Inter';
 

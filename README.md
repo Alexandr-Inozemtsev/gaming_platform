@@ -85,9 +85,16 @@ flutter run
 
 ## Video P1 (Prompt I)
 Документация по WebRTC signaling и TURN/STUN: `docs/video.md`.
-<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
 
 ## Analytics MVP (Prompt J)
 Документация по событиям, логам и метрикам: `docs/analytics.md`.
-=======
->>>>>>> main
+
+## Testing contour (Prompt K)
+Документация по unit/integration/e2e/load: `docs/testing.md`.
+
+## Internal Game Generator (Prompt L)
+Документация внутреннего генератора definitions/fixtures: `docs/game-generator.md`.
+
+## Analytics MVP (Prompt J)
+Документация по событиям, логам и метрикам: `docs/analytics.md`.
+
