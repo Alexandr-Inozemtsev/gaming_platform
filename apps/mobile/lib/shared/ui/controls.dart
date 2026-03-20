@@ -1,6 +1,8 @@
+// Назначение файла: совместимость старых вызовов controls с новым UI Kit.
+
 import 'package:flutter/material.dart';
 
-import '../../theme/tokens.dart';
+import 'ui_kit.dart';
 
 class AppPrimaryButton extends StatelessWidget {
   const AppPrimaryButton({super.key, required this.onPressed, required this.label});
@@ -9,9 +11,7 @@ class AppPrimaryButton extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) {
-    return FilledButton(onPressed: onPressed, child: Text(label));
-  }
+  Widget build(BuildContext context) => AppButton(label: label, onPressed: onPressed, variant: AppButtonVariant.primary);
 }
 
 class AppSecondaryButton extends StatelessWidget {
@@ -21,9 +21,7 @@ class AppSecondaryButton extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(onPressed: onPressed, child: Text(label));
-  }
+  Widget build(BuildContext context) => AppButton(label: label, onPressed: onPressed, variant: AppButtonVariant.secondary);
 }
 
 class AppGhostButton extends StatelessWidget {
@@ -33,9 +31,7 @@ class AppGhostButton extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) {
-    return TextButton(onPressed: onPressed, child: Text(label));
-  }
+  Widget build(BuildContext context) => AppButton(label: label, onPressed: onPressed, variant: AppButtonVariant.ghost);
 }
 
 class AppTextInput extends StatelessWidget {
@@ -46,7 +42,13 @@ class AppTextInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(controller: controller, decoration: InputDecoration(labelText: label));
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 }
 
@@ -56,14 +58,7 @@ class AppPanelCard extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTokens.s16),
-        child: child,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppPanel(child: child);
 }
 
 class AppChoiceTab extends StatelessWidget {
@@ -79,7 +74,5 @@ class AppChoiceTab extends StatelessWidget {
   final VoidCallback onSelected;
 
   @override
-  Widget build(BuildContext context) {
-    return ChoiceChip(label: Text(label), selected: selected, onSelected: (_) => onSelected());
-  }
+  Widget build(BuildContext context) => AppChip(label: label, selected: selected, onTap: onSelected);
 }

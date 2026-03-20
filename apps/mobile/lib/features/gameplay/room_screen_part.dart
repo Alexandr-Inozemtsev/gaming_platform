@@ -75,16 +75,20 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
                     ),
                   ],
                   const SizedBox(height: 8),
-                  AnimatedBuilder(
-                    animation: pulse,
-                    builder: (_, __) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: s.activeBoardHighlight.withOpacity(s.yourTurn ? 0.4 + pulse.value * 0.4 : 0.2),
-                        borderRadius: BorderRadius.circular(AppTokens.radiusButton)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AnimatedBuilder(
+                          animation: pulse,
+                          builder: (_, __) => Opacity(
+                            opacity: s.yourTurn ? 0.75 + pulse.value * 0.25 : 1,
+                            child: TurnIndicator(myTurn: s.yourTurn),
+                          ),
+                        ),
                       ),
-                      child: Text(s.t('room.yourTurn'))
-                    )
+                      const SizedBox(width: AppSpacing.xs),
+                      const TimerIndicator(seconds: 24),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Align(
