@@ -32,7 +32,7 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
           builder: (context, constraints) {
             final compact = constraints.maxHeight < 700;
             return Padding(
-              padding: const EdgeInsets.all(AppTokens.s16),
+              padding: const EdgeInsets.all(AppSpacing.xs),
               child: Column(
                 children: [
                   Align(
@@ -44,11 +44,19 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
                     )
                   ),
                   const SizedBox(height: 8),
+<<<<<<< codex/develop-production-ready-design-system-xadjfm
+                  Row(
+                    children: const [
+                      Expanded(child: SizedBox(height: 44, child: PlayerSlot(name: 'You', ready: true, host: true))),
+                      SizedBox(width: AppSpacing.xs),
+                      Expanded(child: SizedBox(height: 44, child: PlayerSlot(name: 'Bot', ready: true))),
+=======
                   const Row(
                     children: [
                       Expanded(child: PlayerSlot(name: 'You', ready: true, host: true)),
                       SizedBox(width: AppSpacing.xs),
                       Expanded(child: PlayerSlot(name: 'Bot', ready: true)),
+>>>>>>> main
                       SizedBox(width: AppSpacing.xs),
                       InviteCodeBadge(code: 'ROOM-42'),
                     ],
@@ -107,12 +115,20 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
                         onPressed: s.toggleVideoOverlay,
                         icon: Icons.videocam_rounded,
                         label: s.t('video.openOverlay'),
+<<<<<<< codex/develop-production-ready-design-system-xadjfm
+                        size: AppButtonSize.sm,
+=======
+>>>>>>> main
                       ),
                       AppButton(
                         onPressed: () => s.sendRoomReport(reason: 'Токсичное сообщение в игровом чате'),
                         icon: Icons.report_rounded,
                         label: s.t('room.report'),
                         variant: AppButtonVariant.secondary,
+<<<<<<< codex/develop-production-ready-design-system-xadjfm
+                        size: AppButtonSize.sm,
+=======
+>>>>>>> main
                       ),
                     ],
                   ),
