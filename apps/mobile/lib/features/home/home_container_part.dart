@@ -19,65 +19,101 @@ class HomeScreen extends StatelessWidget {
 
     return Padding(
       padding: AppLayout.safeAwarePadding(context, horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF364A5C), Color(0xFF1B2431), Color(0xFF0F1115)],
-              ),
-            ),
-          ),
-          Positioned(
-            left: 16,
-            bottom: 16,
-            child: AppButton(
-              label: state.t('home.play'),
-              onPressed: () => state.createPrivateRoom(state.currentGameId),
-              size: AppButtonSize.lg,
-            ),
-          ),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 360),
-              child: AppPanel(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Выбранная настольная игра', style: AppTypography.caption),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(title, style: AppTypography.h2),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text('ID: ${selectedGame['id'] ?? state.currentGameId}', style: AppTypography.bodySm),
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppButton(
-                            label: state.t('home.play'),
-                            icon: Icons.play_arrow_rounded,
-                            onPressed: () => state.setTab(3),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        AppButton(
-                          label: state.t('tab.catalog'),
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => state.setTab(1),
-                        ),
-                      ],
-                    ),
-                  ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF1A2632), Color(0xFF111823), Color(0xFF0B0F15)],
                 ),
               ),
             ),
-          ),
-        ],
+            // Темный vignette-слой в стиле lobby-сцены.
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0, -0.15),
+                    radius: 0.9,
+                    colors: [
+                      AppColors.accentPrimary.withOpacity(0.09),
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.6),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Центральный персонажный силуэт placeholder.
+            Align(
+              alignment: const Alignment(0, -0.08),
+              child: Opacity(
+                opacity: 0.3,
+                child: Container(
+                  width: 280,
+                  height: 360,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF7F8CA0), Color(0xFF3D4A5C), Color(0x00111823)],
+                    ),
+                    borderRadius: BorderRadius.circular(140),
+                    boxShadow: AppElevation.level2,
+                  ),
+                  child: const Icon(Icons.shield_moon_rounded, size: 120, color: Colors.white54),
+                ),
+              ),
+            ),
+            // Минимальный верхний статус-блок без шумных боковых панелей.
+            Positioned(
+              right: 16,
+              top: 14,
+              child: AppBadge(label: 'Lobby', color: AppColors.info),
+            ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: AppPanel(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Выбранная настольная игра', style: AppTypography.caption),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(title, style: AppTypography.h2),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text('ID: ${selectedGame['id'] ?? state.currentGameId}', style: AppTypography.bodySm),
+                      const SizedBox(height: AppSpacing.sm),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppButton(
+                              label: state.t('home.play'),
+                              icon: Icons.play_arrow_rounded,
+                              onPressed: () => state.setTab(3),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          AppButton(
+                            label: state.t('tab.catalog'),
+                            variant: AppButtonVariant.secondary,
+                            onPressed: () => state.setTab(1),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
