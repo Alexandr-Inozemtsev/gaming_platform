@@ -51,6 +51,8 @@ class AppState extends ChangeNotifier {
   String lang = 'ru';
   int tab = 0;
   bool authorized = false;
+  bool authBusy = false;
+  String? authError;
   String? userId;
   List<dynamic> games = const [];
   List<dynamic> skus = const [];
@@ -141,14 +143,30 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> loginOrRegister(String email, String password, {required bool register}) async {
-    final result = register ? await api.register(email, password) : await api.login(email, password);
-    userId = (result['user']?['id'] ?? result['id'])?.toString();
-    authorized = true;
-    inventoryItems = await api.inventory(userId!);
-    myVariants = await api.myVariants(userId!);
-    analytics.enqueue(eventName: 'login_success', userId: userId, payload: {'register': register});
-    await loadAdminAnalytics();
+    authBusy = true;
+    authError = null;
     notifyListeners();
+    try {
+      final result = register ? await api.register(email, password) : await api.login(email, password);
+      userId = (result['user']?['id'] ?? result['id'])?.toString();
+      authorized = true;
+      inventoryItems = await api.inventory(userId!);
+      myVariants = await api.myVariants(userId!);
+      analytics.enqueue(eventName: 'login_success', userId: userId, payload: {'register': register});
+      await loadAdminAnalytics();
+    } catch (error) {
+      final message = error.toString();
+      if (!register && message.contains('INVALID_CREDENTIALS')) {
+        authError = 'Неверный логин/пароль. Если это первый вход, переключитесь на Register.';
+      } else if (register && message.contains('EMAIL_TAKEN')) {
+        authError = 'Email уже занят. Переключитесь на Login.';
+      } else {
+        authError = message;
+      }
+    } finally {
+      authBusy = false;
+      notifyListeners();
+    }
   }
 
   Future<void> createPrivateRoom(String gameId) async {
@@ -566,9 +584,18 @@ class _AuthScreenState extends State<AuthScreen> {
                 TextField(controller: password, decoration: InputDecoration(labelText: widget.state.t('auth.password'))),
                 const SizedBox(height: AppTokens.s12),
                 FilledButton(
-                  onPressed: () => widget.state.loginOrRegister(email.text.trim(), password.text.trim(), register: register),
-                  child: Text(register ? widget.state.t('auth.register') : widget.state.t('auth.login'))
+                  onPressed: widget.state.authBusy
+                      ? null
+                      : () => widget.state.loginOrRegister(email.text.trim(), password.text.trim(), register: register),
+                  child: Text(
+                    widget.state.authBusy ? '...' : (register ? widget.state.t('auth.register') : widget.state.t('auth.login'))
+                  )
                 ),
+                if (widget.state.authError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppTokens.s8),
+                    child: Text(widget.state.authError!, style: const TextStyle(color: AppTokens.editorWarning))
+                  ),
                 TextButton(onPressed: () => setState(() => register = !register), child: Text(register ? 'Login' : 'Register'))
               ])
             )
