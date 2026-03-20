@@ -16,9 +16,15 @@
 ## Gameplay domain
 - FeaturedGameBanner.
 - GameCard.
+- PlayerAvatar.
+- PlayerSlot.
+- InviteCodeBadge.
+- ScorePanel.
+- ActionBar.
+- HandTray / CardTray foundation.
 - TurnIndicator.
 - TimerIndicator.
-- Базовые блоки для HUD/ActionBar/ScorePanel под расширение.
+- SettingsRow (для settings/account/destructive actions).
 
 ## Production rules
 - Touch target: минимум 44dp.

@@ -44,6 +44,16 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
                     )
                   ),
                   const SizedBox(height: 8),
+                  const Row(
+                    children: [
+                      Expanded(child: PlayerSlot(name: 'You', ready: true, host: true)),
+                      SizedBox(width: AppSpacing.xs),
+                      Expanded(child: PlayerSlot(name: 'Bot', ready: true)),
+                      SizedBox(width: AppSpacing.xs),
+                      InviteCodeBadge(code: 'ROOM-42'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Expanded(
                     flex: compact ? 4 : 2,
                     child: Card(
@@ -91,24 +101,26 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.icon(
-                          onPressed: s.toggleVideoOverlay,
-                          icon: const Icon(Icons.videocam),
-                          label: Text(s.t('video.openOverlay'))
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () => s.sendRoomReport(reason: 'Токсичное сообщение в игровом чате'),
-                          icon: const Icon(Icons.report),
-                          label: Text(s.t('room.report'))
-                        )
-                      ]
-                    )
+                  ActionBar(
+                    actions: [
+                      AppButton(
+                        onPressed: s.toggleVideoOverlay,
+                        icon: Icons.videocam_rounded,
+                        label: s.t('video.openOverlay'),
+                      ),
+                      AppButton(
+                        onPressed: () => s.sendRoomReport(reason: 'Токсичное сообщение в игровом чате'),
+                        icon: Icons.report_rounded,
+                        label: s.t('room.report'),
+                        variant: AppButtonVariant.secondary,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  HandTray(
+                    items: const ['A', 'B', 'C', 'D', 'E'],
+                    selectedIndex: 0,
+                    onSelect: (_) {},
                   )
                 ]
               )
