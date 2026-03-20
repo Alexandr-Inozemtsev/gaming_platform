@@ -1,0 +1,65 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    image: tabletop/api:local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      JWT_SECRET: ${JWT_SECRET}
+      REQUIRE_TLS_IN_PROD: ${REQUIRE_TLS_IN_PROD:-true}
+    expose:
+      - '3000'
+
+  realtime:
+    build:
+      context: .
+      dockerfile: services/realtime/Dockerfile
+    image: tabletop/realtime:local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      REALTIME_PORT: 3001
+    expose:
+      - '3001'
+
+  admin:
+    build:
+      context: .
+      dockerfile: services/admin/Dockerfile
+    image: tabletop/admin:local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      ADMIN_PORT: 3002
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    expose:
+      - '3002'
+
+  rules-engine:
+    build:
+      context: .
+      dockerfile: services/rules-engine/Dockerfile
+    image: tabletop/rules-engine:local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      RULES_ENGINE_PORT: 3003
+    expose:
+      - '3003'
+
+  cdn:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - realtime
+      - admin
+      - rules-engine
+    ports:
+      - '${CDN_HTTP_PORT:-8080}:80'
+    volumes:
+      - ./infra/cdn/nginx.cdn.conf:/etc/nginx/conf.d/default.conf:ro
