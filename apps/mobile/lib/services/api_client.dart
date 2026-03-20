@@ -12,8 +12,23 @@ class ApiClient {
 
   final String baseUrl;
 
-  Future<Map<String, dynamic>> login(String email, String password) async => _post('/auth/login', {'email': email, 'password': password});
-  Future<Map<String, dynamic>> register(String email, String password) async => _post('/auth/register', {'email': email, 'password': password});
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    try {
+      return await _post('/auth/login', {'email': email, 'password': password});
+    } catch (error) {
+      if (_isNetworkError(error)) return _offlineAuthUser(email);
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> register(String email, String password) async {
+    try {
+      return await _post('/auth/register', {'email': email, 'password': password});
+    } catch (error) {
+      if (_isNetworkError(error)) return _offlineAuthUser(email);
+      rethrow;
+    }
+  }
 
   Future<List<dynamic>> games() async {
     try {
@@ -161,5 +176,16 @@ class ApiClient {
     final body = await utf8.decodeStream(res);
     if (res.statusCode >= 200 && res.statusCode < 300) return (body.isEmpty ? {} : jsonDecode(body)) as Map<String, dynamic>;
     throw Exception('HTTP ${res.statusCode}: $body');
+  }
+
+  bool _isNetworkError(Object error) => error.toString().contains('SocketException');
+
+  Map<String, dynamic> _offlineAuthUser(String email) {
+    final id = 'offline_${email.hashCode.abs()}';
+    return {
+      'id': id,
+      'user': {'id': id, 'email': email},
+      'offline': true
+    };
   }
 }
