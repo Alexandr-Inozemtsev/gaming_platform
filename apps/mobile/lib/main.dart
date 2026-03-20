@@ -53,6 +53,8 @@ class AppState extends ChangeNotifier {
   final List<String> videoParticipants = [];
   Map<String, dynamic> analyticsDashboardData = const {};
   List<dynamic> analyticsEventsTable = const [];
+  List<dynamic> moderationQueue = const [];
+  List<dynamic> moderationAuditLog = const [];
 
   String? roomId;
   String currentGameId = 'tile_placement_demo';
@@ -156,10 +158,29 @@ class AppState extends ChangeNotifier {
     try {
       analyticsEventsTable = await api.analyticsEvents(limit: 100);
       analyticsDashboardData = await api.analyticsDashboard();
+      moderationQueue = await api.moderationCases();
+      moderationAuditLog = await api.moderationAudit();
     } catch (_) {
       analyticsEventsTable = const [];
       analyticsDashboardData = const {};
+      moderationQueue = const [];
+      moderationAuditLog = const [];
     }
+    notifyListeners();
+  }
+
+  Future<void> sendRoomReport({required String reason}) async {
+    if (userId == null) return;
+    // В MVP репорт отправляется из экрана комнаты в едином формате game_room.
+    final response = await api.reportFromGameRoom(
+      reporterUserId: userId!,
+      targetType: 'chat',
+      targetId: '${roomId ?? 'room_unknown'}:latest',
+      reason: reason,
+      policyType: 'no negotiation'
+    );
+    roomLog.add('Report sent: case=${response['case']?['id'] ?? '-'}');
+    await loadAdminAnalytics();
     notifyListeners();
   }
 
@@ -814,10 +835,21 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
-            child: FilledButton.icon(
-              onPressed: s.toggleVideoOverlay,
-              icon: const Icon(Icons.videocam),
-              label: Text(s.t('video.openOverlay'))
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: s.toggleVideoOverlay,
+                  icon: const Icon(Icons.videocam),
+                  label: Text(s.t('video.openOverlay'))
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => s.sendRoomReport(reason: 'Токсичное сообщение в игровом чате'),
+                  icon: const Icon(Icons.report),
+                  label: Text(s.t('room.report'))
+                )
+              ]
             )
           )
         ])
@@ -1117,6 +1149,29 @@ class ProfileScreen extends StatelessWidget {
         ...dau.map((row) => Text('DAU ${row['day']}: ${row['uniqueUsers']}')),
         const SizedBox(height: 8),
         OutlinedButton(onPressed: state.loadAdminAnalytics, child: const Text('Обновить Analytics')),
+        const SizedBox(height: 8),
+        const Text('Admin: [Reports] -> [Case] -> [Mute/Ban]'),
+        const SizedBox(height: 8),
+        ...state.moderationQueue.take(10).map((entry) {
+          final item = entry as Map<String, dynamic>;
+          final isOpen = (item['status']?.toString() ?? '') == 'open';
+          return Card(
+            child: ListTile(
+              title: Text('Case ${item['id']} • ${item['targetType']}'),
+              subtitle: Text('status=${item['status']} • reason=${item['reason']}'),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isOpen ? AppTokens.modCaseOpen : AppTokens.modCaseClosed,
+                  borderRadius: BorderRadius.circular(8)
+                ),
+                child: Text(item['status']?.toString() ?? '-')
+              )
+            )
+          );
+        }),
+        const SizedBox(height: 8),
+        Text('Audit entries: ${state.moderationAuditLog.length}'),
         ...state.analyticsEventsTable.take(20).map((e) {
           final item = e as Map<String, dynamic>;
           return ListTile(

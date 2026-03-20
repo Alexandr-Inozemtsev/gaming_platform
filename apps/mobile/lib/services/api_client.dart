@@ -102,6 +102,27 @@ class ApiClient {
   Future<Map<String, dynamic>> incrementTechnicalMetric(String name) async => _post('/analytics/metrics', {'name': name});
   Future<List<dynamic>> analyticsEvents({int limit = 200}) async => (await _get('/analytics/events?limit=$limit')) as List<dynamic>;
   Future<Map<String, dynamic>> analyticsDashboard() async => (await _get('/admin/analytics/dashboard')) as Map<String, dynamic>;
+  Future<List<dynamic>> moderationReports() async => (await _get('/admin/reports')) as List<dynamic>;
+  Future<List<dynamic>> moderationCases({String? status}) async =>
+      (await _get('/admin/cases${status == null ? '' : '?status=$status'}')) as List<dynamic>;
+  Future<List<dynamic>> moderationAudit() async => (await _get('/admin/moderation/audit')) as List<dynamic>;
+  Future<Map<String, dynamic>> moderationCaseStatus({required String caseId, required String status}) async =>
+      _post('/admin/cases/$caseId/status', {'status': status, 'moderatorUserId': 'admin_mobile'});
+  Future<Map<String, dynamic>> reportFromGameRoom({
+    required String reporterUserId,
+    required String targetType,
+    required String targetId,
+    required String reason,
+    String policyType = 'no negotiation'
+  }) async =>
+      _post('/reports', {
+        'reporterUserId': reporterUserId,
+        'targetType': targetType,
+        'targetId': targetId,
+        'reason': reason,
+        'source': 'game_room',
+        'policyType': policyType
+      });
 
   Future<Map<String, dynamic>> createMatch(String gameId, List<String> players, {String? variantId}) async =>
       _post('/matches', {'gameId': gameId, 'players': players, 'variantId': variantId});

@@ -29,6 +29,8 @@ class HttpError extends Error {
 
 const nowIso = () => new Date().toISOString();
 const newId = (prefix) => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+const BAN_DURATIONS = ['1h', '24h', '7d', 'permanent'];
+const DEFAULT_POLICY = ['no negotiation', 'bluff', 'party', 'physical'];
 
 const hashPassword = (password) => {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -108,6 +110,9 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     VIDEO_POLICY: config.VIDEO_POLICY ?? 'invite_only'
   };
 
+  // Выделяем флаг редактора в конфиг, чтобы корректно принимать/блокировать репорты на варианты правил.
+  const editorEnabled = String(config.EDITOR_ENABLED ?? 'true') === 'true';
+
   const state = {
     users: [],
     sessions: new Map(),
@@ -122,7 +127,9 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       { sku: 'skin.board.forest', title: 'Board Forest Skin', type: 'COSMETIC', priceSandbox: 1.99, isNew: false }
     ],
     reports: [],
-    sanctions: { bans: new Set(), mutes: new Set() },
+    moderationCases: [],
+    moderationAuditLogs: [],
+    sanctions: [],
     analytics: [],
     securityLogs: [],
     requestLogs: [],
@@ -192,6 +199,33 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
 
   const addSecurityLog = (kind, payload) => state.securityLogs.push({ id: newId('seclog'), kind, payload, ts: nowIso() });
 
+  const parseDurationToExpiresAt = (duration) => {
+    if (duration === 'permanent') return null;
+    const map = { '1h': 3_600_000, '24h': 86_400_000, '7d': 604_800_000 };
+    const ms = map[duration];
+    if (!ms) throw new HttpError(400, 'MODERATION_DURATION_UNSUPPORTED', { duration, allowed: BAN_DURATIONS });
+    return new Date(Date.now() + ms).toISOString();
+  };
+
+  const findActiveSanction = ({ userId, type, nowTs = Date.now() }) =>
+    state.sanctions.find((item) => item.userId === userId && item.type === type && item.active && (!item.expiresAt || Date.parse(item.expiresAt) > nowTs));
+
+  const assertUserIsNotBanned = (userId) => {
+    if (findActiveSanction({ userId, type: 'ban' })) throw new HttpError(403, 'USER_BANNED');
+  };
+
+  const addModerationAudit = ({ moderatorUserId, action, caseId = null, userId = null, payload = {} }) => {
+    state.moderationAuditLogs.push({
+      id: newId('modaudit'),
+      moderatorUserId,
+      action,
+      caseId,
+      userId,
+      payload,
+      ts: nowIso()
+    });
+  };
+
   const auth = {
     register: ({ email, password, lang = securityConfig.DEFAULT_LANG }) => {
       assertString(email, 'email', { min: 5 });
@@ -220,7 +254,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         addSecurityLog('SUSPICIOUS_LOGIN', { email, ip });
         throw new HttpError(401, 'INVALID_CREDENTIALS');
       }
-      if (state.sanctions.bans.has(user.id)) throw new HttpError(403, 'USER_BANNED');
+      assertUserIsNotBanned(user.id);
       const tokens = createTokens(user.id);
       state.sessions.set(tokens.refreshToken, { userId: user.id, expiresAt: Date.now() + securityConfig.REFRESH_TTL_DAYS * 86400000 });
       state.analytics.push({
@@ -268,6 +302,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       assertString(gameId, 'gameId');
       assertArray(players, 'players', { min: 2 });
       if (!SUPPORTED_GAMES.includes(gameId)) throw new HttpError(400, 'UNSUPPORTED_GAME');
+      for (const userId of players) assertUserIsNotBanned(userId);
       const variant = variantId ? state.gameVariants.find((item) => item.id === variantId && item.status === 'published') : null;
       if (variantId && !variant) throw new HttpError(404, 'VARIANT_NOT_FOUND');
       const seed = Math.floor(Math.random() * 1_000_000_000);
@@ -321,6 +356,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       assertString(playerId, 'playerId');
       assertString(action, 'action');
       assertString(moveId, 'moveId');
+      assertUserIsNotBanned(playerId);
       moveLimiter.hit(`move:${playerId}`);
       const match = state.matches.find((m) => m.id === matchId);
       if (!match) throw new HttpError(404, 'MATCH_NOT_FOUND');
@@ -567,13 +603,31 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   };
 
   const moderation = {
-    report: ({ reporterUserId, targetType, targetId, reason }) => {
+    report: ({ reporterUserId, targetType, targetId, reason, source = 'game_room', policyType = DEFAULT_POLICY[0] }) => {
       assertString(reporterUserId, 'reporterUserId');
       assertString(targetType, 'targetType');
       assertString(targetId, 'targetId');
       assertString(reason, 'reason', { min: 3 });
-      const report = { id: newId('report'), reporterUserId, targetType, targetId, reason, createdAt: nowIso() };
+      if (!['chat', 'profile', 'variant'].includes(targetType)) throw new HttpError(400, 'REPORT_TARGET_UNSUPPORTED', { targetType });
+      if (targetType === 'variant' && !editorEnabled) throw new HttpError(409, 'VARIANT_REPORTS_DISABLED');
+      if (!DEFAULT_POLICY.includes(policyType)) throw new HttpError(400, 'REPORT_POLICY_UNSUPPORTED', { policyType, allowed: DEFAULT_POLICY });
+      const report = { id: newId('report'), reporterUserId, targetType, targetId, reason, source, policyType, createdAt: nowIso() };
       state.reports.push(report);
+      const modCase = {
+        id: newId('case'),
+        status: 'open',
+        reportId: report.id,
+        reporterUserId,
+        targetType,
+        targetId,
+        reason,
+        policyType,
+        source,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+        resolution: null
+      };
+      state.moderationCases.push(modCase);
       state.analytics.push({
         id: newId('event'),
         eventName: 'report_sent',
@@ -583,21 +637,98 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
-      return report;
+      return { report, case: modCase };
     },
     listReports: () => state.reports,
-    ban: ({ userId, reason }) => {
-      assertString(userId, 'userId');
-      assertString(reason, 'reason');
-      state.sanctions.bans.add(userId);
-      return { userId, reason, action: 'ban', createdAt: nowIso() };
+    listCases: ({ status = null } = {}) => {
+      if (!status) return state.moderationCases;
+      return state.moderationCases.filter((item) => item.status === status);
     },
-    mute: ({ userId, reason }) => {
+    getCaseById: ({ caseId }) => {
+      assertString(caseId, 'caseId');
+      const item = state.moderationCases.find((c) => c.id === caseId);
+      if (!item) throw new HttpError(404, 'MODERATION_CASE_NOT_FOUND');
+      return item;
+    },
+    updateCaseStatus: ({ caseId, status, moderatorUserId = 'admin' }) => {
+      assertString(caseId, 'caseId');
+      assertString(status, 'status');
+      if (!['open', 'in_review', 'closed'].includes(status)) throw new HttpError(400, 'MODERATION_STATUS_UNSUPPORTED', { status });
+      const item = moderation.getCaseById({ caseId });
+      item.status = status;
+      item.updatedAt = nowIso();
+      addModerationAudit({ moderatorUserId, action: 'case_status_update', caseId, payload: { status } });
+      return item;
+    },
+    ban: ({ userId, reason, duration = '24h', moderatorUserId = 'admin', caseId = null }) => {
       assertString(userId, 'userId');
       assertString(reason, 'reason');
-      state.sanctions.mutes.add(userId);
-      return { userId, reason, action: 'mute', createdAt: nowIso() };
-    }
+      assertString(duration, 'duration');
+      const sanction = {
+        id: newId('sanction'),
+        type: 'ban',
+        userId,
+        reason,
+        duration,
+        expiresAt: parseDurationToExpiresAt(duration),
+        active: true,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+        moderatorUserId
+      };
+      state.sanctions.push(sanction);
+      addModerationAudit({ moderatorUserId, action: 'ban', caseId, userId, payload: { reason, duration, sanctionId: sanction.id } });
+      if (caseId) {
+        const item = moderation.getCaseById({ caseId });
+        item.status = 'closed';
+        item.updatedAt = nowIso();
+        item.resolution = { action: 'ban', sanctionId: sanction.id, moderatorUserId, reason, duration, at: nowIso() };
+      }
+      return { ...sanction, action: 'ban' };
+    },
+    mute: ({ userId, reason, duration = '1h', moderatorUserId = 'admin', caseId = null }) => {
+      assertString(userId, 'userId');
+      assertString(reason, 'reason');
+      assertString(duration, 'duration');
+      const sanction = {
+        id: newId('sanction'),
+        type: 'mute',
+        userId,
+        reason,
+        duration,
+        expiresAt: parseDurationToExpiresAt(duration),
+        active: true,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+        moderatorUserId
+      };
+      state.sanctions.push(sanction);
+      addModerationAudit({ moderatorUserId, action: 'mute', caseId, userId, payload: { reason, duration, sanctionId: sanction.id } });
+      if (caseId) {
+        const item = moderation.getCaseById({ caseId });
+        item.status = 'closed';
+        item.updatedAt = nowIso();
+        item.resolution = { action: 'mute', sanctionId: sanction.id, moderatorUserId, reason, duration, at: nowIso() };
+      }
+      return { ...sanction, action: 'mute' };
+    },
+    unban: ({ userId, reason = 'manual_review', moderatorUserId = 'admin', caseId = null }) => {
+      assertString(userId, 'userId');
+      const activeBan = findActiveSanction({ userId, type: 'ban' });
+      if (!activeBan) throw new HttpError(404, 'ACTIVE_BAN_NOT_FOUND', { userId });
+      activeBan.active = false;
+      activeBan.updatedAt = nowIso();
+      addModerationAudit({ moderatorUserId, action: 'unban', caseId, userId, payload: { reason, sanctionId: activeBan.id } });
+      if (caseId) {
+        const item = moderation.getCaseById({ caseId });
+        item.status = 'closed';
+        item.updatedAt = nowIso();
+        item.resolution = { action: 'unban', sanctionId: activeBan.id, moderatorUserId, reason, at: nowIso() };
+      }
+      return { ok: true, userId, action: 'unban', reason };
+    },
+    auditLog: () => state.moderationAuditLogs,
+    policies: () => ({ durations: BAN_DURATIONS, policyTypes: DEFAULT_POLICY })
   };
 
   const analytics = {

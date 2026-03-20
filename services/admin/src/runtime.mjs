@@ -5,16 +5,29 @@ const port = Number(process.env.ADMIN_PORT ?? process.env.PORT ?? 3002);
 const host = process.env.HOST ?? '0.0.0.0';
 
 const reports = [];
+const cases = [];
 const bans = [];
 const mutes = [];
+const audit = [];
 const events = [];
 
 const panel = createAdminPanel({
   adminPassword: process.env.ADMIN_PASSWORD ?? 'local_admin_password',
   moderationApi: {
     listReports: () => reports,
-    ban: ({ userId, reason }) => bans.push({ userId, reason, ts: new Date().toISOString() }),
-    mute: ({ userId, reason }) => mutes.push({ userId, reason, ts: new Date().toISOString() })
+    listCases: () => cases,
+    getCaseById: ({ caseId }) => cases.find((item) => item.id === caseId) ?? null,
+    updateCaseStatus: ({ caseId, status }) => {
+      const item = cases.find((entry) => entry.id === caseId);
+      if (!item) return null;
+      item.status = status;
+      item.updatedAt = new Date().toISOString();
+      return item;
+    },
+    ban: ({ userId, reason, duration = '24h' }) => bans.push({ userId, reason, duration, ts: new Date().toISOString() }),
+    mute: ({ userId, reason, duration = '1h' }) => mutes.push({ userId, reason, duration, ts: new Date().toISOString() }),
+    unban: ({ userId, reason = 'manual_review' }) => ({ ok: true, userId, reason }),
+    auditLog: () => audit
   },
   analyticsApi: {
     list: ({ limit = 100 } = {}) => events.slice(-limit),
@@ -39,6 +52,8 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && url.pathname === '/health') return send(res, 200, { ok: true, service: 'admin' });
   if (req.method === 'GET' && url.pathname === '/reports') return send(res, 200, panel.reportsTable());
+  if (req.method === 'GET' && url.pathname === '/cases') return send(res, 200, panel.moderationQueue());
+  if (req.method === 'GET' && url.pathname === '/audit') return send(res, 200, panel.auditLog());
   if (req.method === 'POST' && url.pathname === '/login') {
     try {
       return send(res, 200, panel.login(await parseBody(req)));

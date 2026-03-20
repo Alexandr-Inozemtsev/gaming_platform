@@ -61,3 +61,10 @@
 - Добавлен rate-limit для login и move.
 - Включён server-authoritative RNG (клиентские очки игнорируются).
 - Ведутся security-логи подозрительных действий.
+
+
+## Moderation tools (Prompt N)
+- Репорт из Game Room создаёт `report` и `case` со статусом `open`.
+- Админка получает очередь кейсов и может менять статусы `open/in_review/closed`.
+- Поддержаны `mute`, `ban`, `unban` и аудит действий модератора.
+- Активный ban блокирует login и действия в матчах.
