@@ -20,6 +20,25 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
+          FutureBuilder<String?>(
+            future: RuntimeAssetPack.instance.firstInCategory('ambient_backgrounds'),
+            builder: (context, snapshot) => AppPanel(
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: AppColors.rewardGlow),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      "Asset pack: ${snapshot.data ?? 'loading...'}",
+                      style: AppTypography.bodySm,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
           AppPanel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

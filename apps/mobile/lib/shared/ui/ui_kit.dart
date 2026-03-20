@@ -250,3 +250,168 @@ class OfflineBanner extends StatelessWidget {
     );
   }
 }
+
+class PlayerAvatar extends StatelessWidget {
+  const PlayerAvatar({super.key, required this.name, this.online = true});
+  final String name;
+  final bool online;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        CircleAvatar(radius: 20, backgroundColor: AppColors.bgElevated2, child: Text(name.isEmpty ? '?' : name[0].toUpperCase())),
+        Positioned(
+          right: -1,
+          bottom: -1,
+          child: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: online ? AppColors.success : AppColors.textMuted,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.bgBase),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class PlayerSlot extends StatelessWidget {
+  const PlayerSlot({super.key, required this.name, required this.ready, this.host = false});
+  final String name;
+  final bool ready;
+  final bool host;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPanel(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+      child: Row(
+        children: [
+          PlayerAvatar(name: name, online: true),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(child: Text(name, style: AppTypography.bodyMd, overflow: TextOverflow.ellipsis)),
+          if (host) const AppBadge(label: 'HOST', color: AppColors.info),
+          const SizedBox(width: AppSpacing.xs),
+          AppBadge(label: ready ? 'Ready' : 'Waiting', color: ready ? AppColors.success : AppColors.warning),
+        ],
+      ),
+    );
+  }
+}
+
+class InviteCodeBadge extends StatelessWidget {
+  const InviteCodeBadge({super.key, required this.code});
+  final String code;
+
+  @override
+  Widget build(BuildContext context) => AppBadge(label: 'INVITE: $code', color: AppColors.accentSecondary);
+}
+
+class ScorePanel extends StatelessWidget {
+  const ScorePanel({super.key, required this.items});
+  final Map<String, int> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPanel(
+      child: Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: items.entries
+            .map((entry) => Column(mainAxisSize: MainAxisSize.min, children: [Text(entry.key, style: AppTypography.caption), Text('${entry.value}', style: AppTypography.h3)]))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class ActionBar extends StatelessWidget {
+  const ActionBar({super.key, required this.actions});
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPanel(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [for (final action in actions) ...[action, const SizedBox(width: AppSpacing.xs)]]),
+      ),
+    );
+  }
+}
+
+class HandTray extends StatelessWidget {
+  const HandTray({super.key, required this.items, required this.selectedIndex, required this.onSelect});
+  final List<String> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 92,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xs),
+        itemBuilder: (context, index) {
+          final selected = selectedIndex == index;
+          return GestureDetector(
+            onTap: () => onSelect(index),
+            child: AnimatedContainer(
+              duration: AppMotion.base,
+              width: 70,
+              decoration: BoxDecoration(
+                color: selected ? AppColors.accentPrimarySoft : AppColors.bgElevated2,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: selected ? AppColors.accentPrimary : AppColors.strokeSoft),
+              ),
+              alignment: Alignment.center,
+              child: Text(items[index], style: AppTypography.label),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class SettingsRow extends StatelessWidget {
+  const SettingsRow({super.key, required this.title, this.subtitle, this.trailing, this.onTap, this.destructive = false});
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTypography.bodyMd.copyWith(color: destructive ? AppColors.error : AppColors.textPrimary)),
+                  if (subtitle != null) Text(subtitle!, style: AppTypography.bodySm, maxLines: 2, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            trailing ?? const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
