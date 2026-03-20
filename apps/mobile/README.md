@@ -104,3 +104,20 @@ Dice: [3][2]  Sheet: tap to mark
 
 - `qa.pass = #4EE59A`
 - `qa.fail = #FF5C7A`
+
+
+## Troubleshooting (Windows / Git Bash)
+- Если вы уже находитесь в `.../gaming_platform/apps/mobile`, **не выполняйте повторно** `cd apps/mobile`.
+- Корректная последовательность запуска из корня репозитория:
+```bash
+cd apps/mobile
+flutter clean
+flutter pub get
+flutter run -d emulator-5554
+```
+- Если компилятор показывает `<<<<<<<`, `=======`, `>>>>>>>`, значит в файлах остались merge conflict markers.
+  Проверка из корня репозитория:
+```bash
+rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
+```
+  После исправления выполните повторно `flutter clean && flutter pub get && flutter run`.
