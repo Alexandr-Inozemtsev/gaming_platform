@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "lint": "node --test test/*.test.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "gen:game": "node tools/generator/cli.mjs"
   }
 }

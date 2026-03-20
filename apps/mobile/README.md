@@ -92,12 +92,15 @@ Dice: [3][2]  Sheet: tap to mark
 
 - `video.overlayBg = rgba(0,0,0,0.35)`
 - `video.tileRadius = 12`
-<<<<<<< codex/create-monorepo-for-tabletopplatform-sv1z0u
 
 ## Prompt J
 `Admin -> Analytics -> [Events table]`
 
 - `analytics.chartLine = #6EE7FF`
 - `analytics.axis = #9AA4B2`
-=======
->>>>>>> main
+
+## Prompt K
+`CI pipeline: lint -> unit -> integration -> e2e`
+
+- `qa.pass = #4EE59A`
+- `qa.fail = #FF5C7A`

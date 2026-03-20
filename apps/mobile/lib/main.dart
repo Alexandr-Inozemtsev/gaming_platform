@@ -25,10 +25,10 @@ const String turnCredential = String.fromEnvironment('TURN_CREDENTIAL', defaultV
 void main() => runApp(const TabletopApp());
 
 class AppState extends ChangeNotifier {
-  AppState()
-      : api = ApiClient(apiBaseUrl),
-        ws = WsClient(wsUrl) {
-    analytics = AnalyticsClient(api);
+  AppState({ApiClient? apiClient, WsClient? wsClient, AnalyticsClient? analyticsClient})
+      : api = apiClient ?? ApiClient(apiBaseUrl),
+        ws = wsClient ?? WsClient(wsUrl) {
+    analytics = analyticsClient ?? AnalyticsClient(api);
   }
 
   final ApiClient api;
