@@ -16,33 +16,31 @@ class CatalogScreen extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(AppTokens.s16),
+      padding: AppLayout.safeAwarePadding(context),
       children: [
-        Wrap(
-          spacing: 8,
-          children: [
-            AppChoiceTab(label: state.t('home.botEasy'), selected: state.botLevel == 'easy', onSelected: () => state.setBotLevel('easy')),
-            AppChoiceTab(
-              label: state.t('home.botNormal'),
-              selected: state.botLevel == 'normal',
-              onSelected: () => state.setBotLevel('normal'),
-            ),
-          ],
+        TopBar(
+          title: 'Каталог игр',
+          trailing: Wrap(
+            spacing: AppSpacing.xs,
+            children: [
+              AppChoiceTab(label: state.t('home.botEasy'), selected: state.botLevel == 'easy', onSelected: () => state.setBotLevel('easy')),
+              AppChoiceTab(label: state.t('home.botNormal'), selected: state.botLevel == 'normal', onSelected: () => state.setBotLevel('normal')),
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.md),
         ...state.games.map((raw) {
           final game = raw as Map<String, dynamic>;
-          return Card(
-            child: ListTile(
-              title: Text(game['title']?.toString() ?? game['id'].toString()),
-              subtitle: Text(game['id'].toString()),
-              trailing: AppPrimaryButton(
-                onPressed: () {
-                  state.setCurrentGame(game['id'].toString());
-                  state.createPrivateRoom(game['id'].toString());
-                },
-                label: state.t('home.join'),
-              ),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: GameCard(
+              title: game['title']?.toString() ?? game['id'].toString(),
+              description: 'ID: ${game['id']}',
+              badge: 'online',
+              onPlay: () {
+                state.setCurrentGame(game['id'].toString());
+                state.createPrivateRoom(game['id'].toString());
+              },
             ),
           );
         }),
