@@ -1,0 +1,202 @@
+{
+  "fixtureVersion": 1,
+  "definition": {
+    "id": "tile_v1",
+    "template": "tile",
+    "engineGameId": "tile_placement_demo",
+    "boardSize": 4,
+    "maxMoves": 16,
+    "winCondition": "highest_score",
+    "internal": {
+      "note": "not user-facing",
+      "generatedAt": "2026-03-20T00:00:00.000Z"
+    }
+  },
+  "simulations": [
+    {
+      "game": 0,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 1,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 2,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 3,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 4,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 5,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 6,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 7,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 8,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 9,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 10,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 11,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 12,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 13,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 14,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 15,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 16,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 17,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 18,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 19,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 20,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 21,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 22,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 23,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 24,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 25,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 26,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 27,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 28,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 29,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    }
+  ],
+  "stats": {
+    "total": 30,
+    "finished": 30,
+    "avgMoves": 16
+  }
+}
