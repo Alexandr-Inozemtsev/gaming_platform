@@ -131,7 +131,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       wsDisconnects: 0,
       videoConnectFailures: 0
     }
-
   };
 
   const persistMatches = () => {
@@ -210,7 +209,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
-
       return { id: user.id, email: user.email, lang: user.lang };
     },
     login: ({ email, password, ip = 'local' }) => {
@@ -234,7 +232,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
-
       return { user: { id: user.id, email: user.email }, ...tokens };
     },
     refresh: ({ refreshToken }) => {
@@ -310,7 +307,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
-
       persistMatches();
       gateway?.emitMatchState(match.id, toSerializableMatch(match));
       return toSerializableMatch(match);
@@ -335,8 +331,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       }
 
       const startedAt = Date.now();
-      const startedAt = Date.now();
-
       const result = applyMove(match, { playerId, action, moveId, payload, ts: nowIso() });
       if (!result.accepted) {
         if (result.reason === 'NOT_YOUR_TURN') throw new HttpError(403, 'NOT_YOUR_TURN');
@@ -396,7 +390,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
           ts: nowIso()
         });
       }
-
       gateway?.emitMatchState(match.id, toSerializableMatch(match));
       gateway?.emitRoomEvent(match.id, 'match.move.applied', { matchId, moveNumber: match.moveNumber });
       return toSerializableMatch(match);
@@ -426,7 +419,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         });
         return {};
       })(),
-
       regionMode: securityConfig.REGION_MODE,
       warning: securityConfig.REGION_MODE === 'ru_by' ? 'Платежный канал зависит от дистрибуции' : null,
       items: state.skuCatalog
@@ -443,7 +435,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
-
       const skuItem = state.skuCatalog.find((i) => i.sku === sku);
       if (!skuItem) throw new HttpError(404, 'SKU_NOT_FOUND');
       const inventory = state.inventory.get(userId) ?? [];
@@ -468,7 +459,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
-
       return { ok: true, item: record };
     },
     applySkin: ({ userId, sku }) => {
@@ -566,7 +556,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
-
       return { ok: true, privateLink: `/join-variant/${variant.privateLinkToken}`, variant };
     },
     resolvePrivateLink: ({ token }) => {
@@ -594,7 +583,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         source: 'backend',
         ts: nowIso()
       });
-
       return report;
     },
     listReports: () => state.reports,
@@ -667,7 +655,6 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       if (!(name in state.technicalMetrics)) throw new HttpError(400, 'UNKNOWN_TECHNICAL_METRIC', { name });
       state.technicalMetrics[name] += Number(value) || 0;
       return { ok: true, value: state.technicalMetrics[name] };
-
     }
   };
 

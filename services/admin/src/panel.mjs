@@ -7,8 +7,6 @@
  */
 
 export const createAdminPanel = ({ moderationApi, analyticsApi, adminPassword = 'local_admin_password' }) => ({
-export const createAdminPanel = ({ moderationApi, analyticsApi, adminPassword = 'local_admin_password' }) => ({
-
   login: ({ username, password }) => {
     if (username !== 'admin' || password !== adminPassword) throw new Error('INVALID_ADMIN_CREDENTIALS');
     return { ok: true, role: 'admin' };
@@ -16,9 +14,6 @@ export const createAdminPanel = ({ moderationApi, analyticsApi, adminPassword = 
   reportsTable: () => moderationApi.listReports(),
   analyticsEventsTable: ({ limit = 100 } = {}) => analyticsApi?.list?.({ limit }) ?? [],
   analyticsDashboard: () => analyticsApi?.dashboard?.() ?? { matches7d: 0, dauProxy: [] },
-  analyticsEventsTable: ({ limit = 100 } = {}) => analyticsApi?.list?.({ limit }) ?? [],
-  analyticsDashboard: () => analyticsApi?.dashboard?.() ?? { matches7d: 0, dauProxy: [] },
-
   ban: ({ userId, reason }) => moderationApi.ban({ userId, reason }),
   mute: ({ userId, reason }) => moderationApi.mute({ userId, reason })
 });

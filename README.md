@@ -44,6 +44,9 @@ docker compose logs -f
 
 Подробности: `docs/infra.md`.
 
+## Deploy (staging/prod templates)
+См. `docs/deploy.md` для Dockerfile сервисов, `docker-compose.prod.yml` и env-шаблонов для staging/prod.
+
 ## Flutter (локально)
 ```bash
 cd apps/mobile
@@ -94,7 +97,3 @@ flutter run
 
 ## Internal Game Generator (Prompt L)
 Документация внутреннего генератора definitions/fixtures: `docs/game-generator.md`.
-
-## Analytics MVP (Prompt J)
-Документация по событиям, логам и метрикам: `docs/analytics.md`.
-
