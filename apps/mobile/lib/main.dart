@@ -669,36 +669,32 @@ class MainShell extends StatelessWidget {
       ProfileScreen(state: state),
       SettingsScreen(state: state)
     ];
-    final inRoom = state.tab == 3;
+    final breadcrumbItems = [
+      state.t('tab.home'),
+      state.t('tab.catalog'),
+      state.t('tab.create'),
+      state.t('tab.room'),
+      state.t('tab.store'),
+      state.t('tab.profile'),
+      state.t('tab.settings')
+    ];
     return Scaffold(
-      appBar: inRoom ? null : AppBar(title: Text(state.t('app.title'))),
       body: Column(
         children: [
           ReconnectBanner(visible: state.wsOffline, text: 'Проблемы с соединением. Пытаемся переподключиться...'),
+          Padding(
+            padding: AppLayout.safeAwarePadding(context, horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+            child: BreadcrumbNav(items: breadcrumbItems, currentIndex: state.tab, onTap: state.setTab),
+          ),
           Expanded(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 280),
+              duration: const Duration(milliseconds: 220),
               transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
               child: KeyedSubtree(key: ValueKey(state.tab), child: pages[state.tab])
             )
           )
         ]
       ),
-      bottomNavigationBar: inRoom
-          ? null
-          : NavigationBar(
-              selectedIndex: state.tab,
-              onDestinationSelected: state.setTab,
-              destinations: [
-                NavigationDestination(icon: const Icon(Icons.home), label: state.t('tab.home')),
-                NavigationDestination(icon: const Icon(Icons.grid_view), label: state.t('tab.catalog')),
-                NavigationDestination(icon: const Icon(Icons.edit_note), label: state.t('tab.create')),
-                NavigationDestination(icon: const Icon(Icons.meeting_room), label: state.t('tab.room')),
-                NavigationDestination(icon: const Icon(Icons.store), label: state.t('tab.store')),
-                NavigationDestination(icon: const Icon(Icons.person), label: state.t('tab.profile')),
-                NavigationDestination(icon: const Icon(Icons.settings), label: state.t('tab.settings'))
-              ]
-            )
     );
   }
 }

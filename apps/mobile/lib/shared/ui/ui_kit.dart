@@ -415,3 +415,41 @@ class SettingsRow extends StatelessWidget {
     );
   }
 }
+
+
+class BreadcrumbNav extends StatelessWidget {
+  const BreadcrumbNav({super.key, required this.items, required this.currentIndex, required this.onTap});
+  final List<String> items;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            GestureDetector(
+              onTap: () => onTap(i),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: i == currentIndex ? AppColors.accentPrimarySoft : AppColors.bgElevated1,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: i == currentIndex ? AppColors.accentPrimary : AppColors.strokeSoft),
+                ),
+                child: Text(items[i], style: AppTypography.caption.copyWith(color: i == currentIndex ? AppColors.accentPrimary : AppColors.textSecondary)),
+              ),
+            ),
+            if (i != items.length - 1)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                child: Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textMuted),
+              ),
+          ]
+        ],
+      ),
+    );
+  }
+}
