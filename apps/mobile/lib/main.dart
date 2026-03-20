@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'i18n/strings.dart';
 import 'services/api_client.dart';
@@ -15,12 +16,24 @@ import 'services/analytics_client.dart';
 import 'services/ws_client.dart';
 import 'theme/tokens.dart';
 
-const String apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
-const String wsUrl = String.fromEnvironment('WS_URL', defaultValue: 'ws://localhost:3001');
+const String _apiBaseUrlFromEnv = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+const String _wsUrlFromEnv = String.fromEnvironment('WS_URL', defaultValue: '');
 const String stunUrlsRaw = String.fromEnvironment('STUN_URLS', defaultValue: '');
 const String turnUrlsRaw = String.fromEnvironment('TURN_URLS', defaultValue: '');
 const String turnUsername = String.fromEnvironment('TURN_USERNAME', defaultValue: '');
 const String turnCredential = String.fromEnvironment('TURN_CREDENTIAL', defaultValue: '');
+
+String get apiBaseUrl {
+  if (_apiBaseUrlFromEnv.isNotEmpty) return _apiBaseUrlFromEnv;
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:3000';
+  return 'http://localhost:3000';
+}
+
+String get wsUrl {
+  if (_wsUrlFromEnv.isNotEmpty) return _wsUrlFromEnv;
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) return 'ws://10.0.2.2:3001';
+  return 'ws://localhost:3001';
+}
 
 void main() => runApp(const TabletopApp());
 
