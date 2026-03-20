@@ -7,18 +7,28 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(AppTokens.s16),
+      padding: AppLayout.safeAwarePadding(context),
       children: [
-        Text(state.t('settings.title')),
-        Text('${state.t('settings.lang')}: ${state.lang.toUpperCase()}'),
-        Wrap(
-          spacing: AppTokens.s8,
-          children: AppStrings.supported
-              .map((l) => AppChoiceTab(label: l.toUpperCase(), selected: state.lang == l, onSelected: () => state.setLang(l)))
-              .toList(),
+        TopBar(title: state.t('settings.title')),
+        const SizedBox(height: AppSpacing.sm),
+        AppPanel(
+          child: Column(
+            children: [
+              SettingsRow(title: state.t('settings.lang'), subtitle: state.lang.toUpperCase(), trailing: const Icon(Icons.language_rounded)),
+              const Divider(color: AppColors.strokeSoft),
+              Wrap(
+                spacing: AppSpacing.xs,
+                children: AppStrings.supported
+                    .map((l) => AppChoiceTab(label: l.toUpperCase(), selected: state.lang == l, onSelected: () => state.setLang(l)))
+                    .toList(),
+              ),
+              const Divider(color: AppColors.strokeSoft),
+              SettingsRow(title: state.t('settings.summary'), subtitle: 'Audio, accessibility, gameplay preferences'),
+              const Divider(color: AppColors.strokeSoft),
+              const SettingsRow(title: 'Выйти', destructive: true, trailing: Icon(Icons.logout_rounded, color: AppColors.error)),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        Text(state.t('settings.summary')),
       ],
     );
   }
