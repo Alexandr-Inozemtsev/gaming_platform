@@ -49,7 +49,6 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
                       Expanded(child: SizedBox(height: 44, child: PlayerSlot(name: 'You', ready: true, host: true))),
                       SizedBox(width: AppSpacing.xs),
                       Expanded(child: SizedBox(height: 44, child: PlayerSlot(name: 'Bot', ready: true))),
-
                       SizedBox(width: AppSpacing.xs),
                       InviteCodeBadge(code: 'ROOM-42'),
                     ],
@@ -108,18 +107,12 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
                         onPressed: s.toggleVideoOverlay,
                         icon: Icons.videocam_rounded,
                         label: s.t('video.openOverlay'),
-                        size: AppButtonSize.sm,
-                        size: AppButtonSize.sm,
-
                       ),
                       AppButton(
                         onPressed: () => s.sendRoomReport(reason: 'Токсичное сообщение в игровом чате'),
                         icon: Icons.report_rounded,
                         label: s.t('room.report'),
                         variant: AppButtonVariant.secondary,
-                        size: AppButtonSize.sm,
-                        size: AppButtonSize.sm,
-
                       ),
                     ],
                   ),
