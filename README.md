@@ -94,3 +94,7 @@ flutter run
 
 ## Internal Game Generator (Prompt L)
 Документация внутреннего генератора definitions/fixtures: `docs/game-generator.md`.
+
+## Analytics MVP (Prompt J)
+Документация по событиям, логам и метрикам: `docs/analytics.md`.
+

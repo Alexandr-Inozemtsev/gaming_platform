@@ -103,6 +103,7 @@ class ApiClient {
   Future<List<dynamic>> analyticsEvents({int limit = 200}) async => (await _get('/analytics/events?limit=$limit')) as List<dynamic>;
   Future<Map<String, dynamic>> analyticsDashboard() async => (await _get('/admin/analytics/dashboard')) as Map<String, dynamic>;
 
+
   Future<Map<String, dynamic>> createMatch(String gameId, List<String> players, {String? variantId}) async =>
       _post('/matches', {'gameId': gameId, 'players': players, 'variantId': variantId});
   Future<Map<String, dynamic>> purchaseSandbox(String userId, String sku) async => _post('/store/purchase-sandbox', {'userId': userId, 'sku': sku});
