@@ -91,3 +91,6 @@ flutter run
 
 ## Testing contour (Prompt K)
 Документация по unit/integration/e2e/load: `docs/testing.md`.
+
+## Internal Game Generator (Prompt L)
+Документация внутреннего генератора definitions/fixtures: `docs/game-generator.md`.

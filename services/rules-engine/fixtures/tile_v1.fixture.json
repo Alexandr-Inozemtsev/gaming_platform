@@ -1,0 +1,922 @@
+{
+  "fixtureVersion": 1,
+  "definition": {
+    "id": "tile_v1",
+    "template": "tile",
+    "engineGameId": "tile_placement_demo",
+    "boardSize": 4,
+    "maxMoves": 16,
+    "winCondition": "highest_score",
+    "internal": {
+      "note": "not user-facing",
+      "generatedAt": "2026-03-20T08:23:30.804Z"
+    }
+  },
+  "simulations": [
+    {
+      "game": 0,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 1,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 2,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 3,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 4,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 5,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 6,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 7,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 8,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 9,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 10,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 11,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 12,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 13,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 14,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 15,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 16,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 17,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 18,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 19,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 20,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 21,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 22,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 23,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 24,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 25,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 26,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 27,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 28,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 29,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 30,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 31,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 32,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 33,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 34,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 35,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 36,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 37,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 38,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 39,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 40,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 41,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 42,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 43,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 44,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 45,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 46,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 47,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 48,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 49,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 50,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 51,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 52,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 53,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 54,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 55,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 56,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 57,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 58,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 59,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 60,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 61,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 62,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 63,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 64,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 65,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 66,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 67,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 68,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 69,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 70,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 71,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 72,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 73,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 74,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 75,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 76,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 77,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 78,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 79,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 80,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 81,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 82,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 83,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 84,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 85,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 86,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 87,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 88,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 89,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 90,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 91,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 92,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 93,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 94,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 95,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 96,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 97,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 98,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 99,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 100,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 101,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 102,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 103,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 104,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 105,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 106,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 107,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 108,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 109,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 110,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 111,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 112,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 113,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 114,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 115,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 116,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 117,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 118,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 119,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 120,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 121,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 122,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 123,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 124,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 125,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 126,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 127,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 128,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 129,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 130,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 131,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 132,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 133,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 134,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 135,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 136,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 137,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 138,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 139,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 140,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 141,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 142,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 143,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 144,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 145,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 146,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 147,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 148,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    },
+    {
+      "game": 149,
+      "finished": true,
+      "moves": 16,
+      "winner": "bot_a"
+    }
+  ],
+  "stats": {
+    "total": 150,
+    "finished": 150,
+    "avgMoves": 16
+  }
+}
