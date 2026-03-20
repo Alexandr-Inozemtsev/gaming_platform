@@ -78,6 +78,10 @@ class AppState extends ChangeNotifier {
   final Random _random = Random(7);
 
   String t(String key) => AppStrings.t(lang, key);
+  String tr(String key, Map<String, String> values) => AppStrings.tr(lang, key, values);
+  String tp(String key, int count) => AppStrings.tp(lang, key, count);
+  String formatNumber(num value) => AppStrings.formatNumber(lang, value);
+  String formatCurrency(num value) => AppStrings.formatCurrency(lang, value);
 
   Future<void> init() async {
     analytics.start();
@@ -578,7 +582,7 @@ class MainShell extends StatelessWidget {
       SettingsScreen(state: state)
     ];
     return Scaffold(
-      appBar: AppBar(title: const Text('TabletopPlatform')),
+      appBar: AppBar(title: Text(state.t('app.title'))),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 280),
         transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
@@ -637,8 +641,8 @@ class CatalogScreen extends StatelessWidget {
       padding: const EdgeInsets.all(AppTokens.s16),
       children: [
         Wrap(spacing: 8, children: [
-          ChoiceChip(label: const Text('easy'), selected: state.botLevel == 'easy', onSelected: (_) => state.setBotLevel('easy')),
-          ChoiceChip(label: const Text('normal'), selected: state.botLevel == 'normal', onSelected: (_) => state.setBotLevel('normal'))
+          ChoiceChip(label: Text(state.t('home.botEasy')), selected: state.botLevel == 'easy', onSelected: (_) => state.setBotLevel('easy')),
+          ChoiceChip(label: Text(state.t('home.botNormal')), selected: state.botLevel == 'normal', onSelected: (_) => state.setBotLevel('normal'))
         ]),
         const SizedBox(height: 8),
         ...state.games.map((raw) {
@@ -652,7 +656,7 @@ class CatalogScreen extends StatelessWidget {
                   state.setCurrentGame(game['id'].toString());
                   state.createPrivateRoom(game['id'].toString());
                 },
-                child: const Text('Join')
+                child: Text(state.t('home.join'))
               )
             )
           );
@@ -693,7 +697,12 @@ class _CreateScreenState extends State<CreateScreen> {
           return Card(
             child: ListTile(
               title: Text('${v['gameId']} • ${v['status']}'),
-              subtitle: Text('board=${v['boardSize']}, win=${v['winCondition']}'),
+              subtitle: Text(
+                s.tr('editor.variantMeta', {
+                  'board': '${v['boardSize']}',
+                  'win': '${v['winCondition']}'
+                })
+              ),
               trailing: Wrap(spacing: 8, children: [
                 OutlinedButton(
                   onPressed: () async {
@@ -926,7 +935,7 @@ class VideoOverlayWidget extends StatelessWidget {
                   const SizedBox(width: 8),
                   FilledButton(onPressed: state.hangupVideo, child: Text(state.t('video.hangup')))
                 ]),
-                Text('status: ${state.videoStatus}')
+                Text('${state.t('room.videoStatus')}: ${state.videoStatus}')
               ])
             )
           )
@@ -950,7 +959,7 @@ class TileBoardWidget extends StatelessWidget {
           child: _tileCell(state.selectedTile, highlight: true)
         ),
         const SizedBox(width: 8),
-        OutlinedButton(onPressed: state.toggleTileSymbol, child: const Text('Switch'))
+        OutlinedButton(onPressed: state.toggleTileSymbol, child: Text(state.t('room.switch')))
       ]),
       Expanded(
         child: GridView.builder(
@@ -1003,7 +1012,7 @@ class RollWriteBoardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      Text('Dice: [${state.dice[0]}][${state.dice[1]}]'),
+      Text('${state.t('room.dice')}: [${state.dice[0]}][${state.dice[1]}]'),
       Expanded(
         child: GridView.builder(
           itemCount: 25,
@@ -1094,16 +1103,20 @@ class _StoreSkinTile extends StatelessWidget {
       child: ListTile(
         title: Text(sku['title'].toString()),
         subtitle: Row(children: [
-          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), color: color, child: Text('\$${sku['priceSandbox']}')),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            color: color,
+            child: Text(state.formatCurrency((sku['priceSandbox'] as num?) ?? 0))
+          ),
           const SizedBox(width: 8),
-          if (sku['isNew'] == true) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), color: AppTokens.storeBadgeNew, child: const Text('NEW'))
+          if (sku['isNew'] == true) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), color: AppTokens.storeBadgeNew, child: Text(state.t('store.new')))
         ]),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          OutlinedButton(onPressed: () => state.trySkin(sku['sku'].toString()), child: const Text('Try')),
+          OutlinedButton(onPressed: () => state.trySkin(sku['sku'].toString()), child: Text(state.t('store.try'))),
           const SizedBox(width: 8),
           FilledButton(onPressed: () => state.buySku(sku['sku'].toString()), child: Text(state.t('store.buy'))),
           const SizedBox(width: 8),
-          TextButton(onPressed: () => state.applySkin(sku['sku'].toString()), child: const Text('Apply'))
+          TextButton(onPressed: () => state.applySkin(sku['sku'].toString()), child: Text(state.t('store.apply')))
         ])
       )
     );
@@ -1121,7 +1134,7 @@ class _InventoryTile extends StatelessWidget {
       title: Text(item['sku'].toString()),
       subtitle: Text(item['type'].toString()),
       trailing: item['type'] == 'COSMETIC'
-          ? FilledButton(onPressed: () => state.applySkin(item['sku'].toString()), child: const Text('Apply'))
+          ? FilledButton(onPressed: () => state.applySkin(item['sku'].toString()), child: Text(state.t('store.apply')))
           : const SizedBox.shrink()
     );
   }
@@ -1137,28 +1150,30 @@ class ProfileScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppTokens.s16),
       children: [
-        Text('${state.t('profile.title')}: ${state.userId ?? 'guest'}'),
+        Text('${state.t('profile.title')}: ${state.userId ?? state.t('profile.guest')}'),
         const SizedBox(height: 8),
-        const Text('Admin -> Analytics -> [Events table]'),
+        Text(state.t('profile.adminAnalytics')),
         Row(children: [
           Container(width: 24, height: 2, color: AppTokens.analyticsChartLine),
           const SizedBox(width: 8),
           Container(width: 24, height: 2, color: AppTokens.analyticsAxis)
         ]),
-        Text('7-day matches: ${dashboard['matches7d'] ?? 0}'),
-        ...dau.map((row) => Text('DAU ${row['day']}: ${row['uniqueUsers']}')),
+        Text('${state.t('profile.matches7d')}: ${state.formatNumber((dashboard['matches7d'] as num?) ?? 0)}'),
+        ...dau.map(
+          (row) => Text('${state.t('profile.dauPrefix')} ${row['day']}: ${state.formatNumber((row['uniqueUsers'] as num?) ?? 0)}')
+        ),
         const SizedBox(height: 8),
-        OutlinedButton(onPressed: state.loadAdminAnalytics, child: const Text('Обновить Analytics')),
+        OutlinedButton(onPressed: state.loadAdminAnalytics, child: Text(state.t('profile.refreshAnalytics'))),
         const SizedBox(height: 8),
-        const Text('Admin: [Reports] -> [Case] -> [Mute/Ban]'),
+        Text(state.t('profile.moderationFlow')),
         const SizedBox(height: 8),
         ...state.moderationQueue.take(10).map((entry) {
           final item = entry as Map<String, dynamic>;
           final isOpen = (item['status']?.toString() ?? '') == 'open';
           return Card(
             child: ListTile(
-              title: Text('Case ${item['id']} • ${item['targetType']}'),
-              subtitle: Text('status=${item['status']} • reason=${item['reason']}'),
+              title: Text('${state.t('profile.casePrefix')} ${item['id']} • ${item['targetType']}'),
+              subtitle: Text('${state.t('profile.caseStatus')}=${item['status']} • ${state.t('profile.caseReason')}=${item['reason']}'),
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -1171,7 +1186,7 @@ class ProfileScreen extends StatelessWidget {
           );
         }),
         const SizedBox(height: 8),
-        Text('Audit entries: ${state.moderationAuditLog.length}'),
+        Text(state.tp('profile.auditEntries', state.moderationAuditLog.length)),
         ...state.analyticsEventsTable.take(20).map((e) {
           final item = e as Map<String, dynamic>;
           return ListTile(
@@ -1202,7 +1217,7 @@ class SettingsScreen extends StatelessWidget {
               .toList()
         ),
         const SizedBox(height: 12),
-        const Text('[SETTINGS] Privacy • Block list • Report')
+        Text(state.t('settings.summary'))
       ]
     );
   }

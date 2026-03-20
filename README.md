@@ -80,6 +80,9 @@ flutter run
 ## Mobile MVP
 Подробности мобильного клиента: `docs/mobile.md`.
 
+## Localization (Prompt O)
+Подробности i18n RU/EN: `docs/i18n.md`.
+
 ## MVP Games
 Описание правил и ботов: `docs/games.md`.
 
