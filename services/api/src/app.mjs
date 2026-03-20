@@ -226,6 +226,14 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     });
   };
 
+  // Проверяем существование пользователя, чтобы бизнес-операции не выполнялись для несуществующих id.
+  const assertKnownUser = (userId, field = 'userId') => {
+    if (!state.users.some((user) => user.id === userId)) throw new HttpError(404, 'USER_NOT_FOUND', { field, userId });
+  };
+
+  // Служебный bot-id в MVP генерируется как "<userId>_bot", поэтому исключаем его из проверки зарегистрированных пользователей.
+  const isBotUserId = (userId) => typeof userId === 'string' && userId.endsWith('_bot');
+
   const auth = {
     register: ({ email, password, lang = securityConfig.DEFAULT_LANG }) => {
       assertString(email, 'email', { min: 5 });
@@ -302,7 +310,10 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       assertString(gameId, 'gameId');
       assertArray(players, 'players', { min: 2 });
       if (!SUPPORTED_GAMES.includes(gameId)) throw new HttpError(400, 'UNSUPPORTED_GAME');
-      for (const userId of players) assertUserIsNotBanned(userId);
+      for (const userId of players) {
+        if (!isBotUserId(userId)) assertKnownUser(userId, 'players');
+        if (!isBotUserId(userId)) assertUserIsNotBanned(userId);
+      }
       const variant = variantId ? state.gameVariants.find((item) => item.id === variantId && item.status === 'published') : null;
       if (variantId && !variant) throw new HttpError(404, 'VARIANT_NOT_FOUND');
       const seed = Math.floor(Math.random() * 1_000_000_000);
@@ -356,10 +367,12 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       assertString(playerId, 'playerId');
       assertString(action, 'action');
       assertString(moveId, 'moveId');
+      if (!isBotUserId(playerId)) assertKnownUser(playerId, 'playerId');
       assertUserIsNotBanned(playerId);
       moveLimiter.hit(`move:${playerId}`);
       const match = state.matches.find((m) => m.id === matchId);
       if (!match) throw new HttpError(404, 'MATCH_NOT_FOUND');
+      if (!match.players.includes(playerId)) throw new HttpError(403, 'PLAYER_NOT_IN_MATCH');
       if (match.acceptedMoveIds.has(moveId)) throw new HttpError(409, 'MOVE_ID_ALREADY_PROCESSED');
       if (match.currentPlayer !== playerId) {
         addSecurityLog('MOVE_NOT_YOUR_TURN', { matchId, playerId, ip });
@@ -462,6 +475,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     purchaseSandbox: ({ userId, sku }) => {
       assertString(userId, 'userId');
       assertString(sku, 'sku');
+      assertKnownUser(userId);
+      assertUserIsNotBanned(userId);
       state.analytics.push({
         id: newId('event'),
         eventName: 'purchase_attempt',
@@ -500,6 +515,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     applySkin: ({ userId, sku }) => {
       assertString(userId, 'userId');
       assertString(sku, 'sku');
+      assertKnownUser(userId);
+      assertUserIsNotBanned(userId);
       const inventory = state.inventory.get(userId) ?? [];
       const item = inventory.find((i) => i.sku === sku && i.type === 'COSMETIC');
       if (!item) throw new HttpError(404, 'SKIN_NOT_OWNED');
@@ -664,6 +681,13 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       assertString(userId, 'userId');
       assertString(reason, 'reason');
       assertString(duration, 'duration');
+      assertKnownUser(userId);
+      for (const row of state.sanctions) {
+        if (row.userId === userId && row.type === 'ban' && row.active) {
+          row.active = false;
+          row.updatedAt = nowIso();
+        }
+      }
       const sanction = {
         id: newId('sanction'),
         type: 'ban',
@@ -690,6 +714,13 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       assertString(userId, 'userId');
       assertString(reason, 'reason');
       assertString(duration, 'duration');
+      assertKnownUser(userId);
+      for (const row of state.sanctions) {
+        if (row.userId === userId && row.type === 'mute' && row.active) {
+          row.active = false;
+          row.updatedAt = nowIso();
+        }
+      }
       const sanction = {
         id: newId('sanction'),
         type: 'mute',
@@ -714,16 +745,27 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     },
     unban: ({ userId, reason = 'manual_review', moderatorUserId = 'admin', caseId = null }) => {
       assertString(userId, 'userId');
-      const activeBan = findActiveSanction({ userId, type: 'ban' });
-      if (!activeBan) throw new HttpError(404, 'ACTIVE_BAN_NOT_FOUND', { userId });
-      activeBan.active = false;
-      activeBan.updatedAt = nowIso();
-      addModerationAudit({ moderatorUserId, action: 'unban', caseId, userId, payload: { reason, sanctionId: activeBan.id } });
+      assertKnownUser(userId);
+      const activeBans = state.sanctions.filter(
+        (row) => row.userId === userId && row.type === 'ban' && row.active && (!row.expiresAt || Date.parse(row.expiresAt) > Date.now())
+      );
+      if (!activeBans.length) throw new HttpError(404, 'ACTIVE_BAN_NOT_FOUND', { userId });
+      for (const activeBan of activeBans) {
+        activeBan.active = false;
+        activeBan.updatedAt = nowIso();
+      }
+      addModerationAudit({
+        moderatorUserId,
+        action: 'unban',
+        caseId,
+        userId,
+        payload: { reason, sanctionIds: activeBans.map((item) => item.id) }
+      });
       if (caseId) {
         const item = moderation.getCaseById({ caseId });
         item.status = 'closed';
         item.updatedAt = nowIso();
-        item.resolution = { action: 'unban', sanctionId: activeBan.id, moderatorUserId, reason, at: nowIso() };
+        item.resolution = { action: 'unban', sanctionIds: activeBans.map((entry) => entry.id), moderatorUserId, reason, at: nowIso() };
       }
       return { ok: true, userId, action: 'unban', reason };
     },
