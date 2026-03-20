@@ -75,7 +75,6 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
             ),
           ),
         ],
