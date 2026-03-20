@@ -147,12 +147,38 @@ class AppState extends ChangeNotifier {
     authError = null;
     notifyListeners();
     try {
-      final result = register ? await api.register(email, password) : await api.login(email, password);
+      Map<String, dynamic> result;
+      var flow = register ? 'register' : 'login';
+      if (register) {
+        try {
+          result = await api.register(email, password);
+        } catch (error) {
+          final message = error.toString();
+          if (message.contains('EMAIL_TAKEN')) {
+            result = await api.login(email, password);
+            flow = 'login_fallback_after_email_taken';
+          } else {
+            rethrow;
+          }
+        }
+      } else {
+        try {
+          result = await api.login(email, password);
+        } catch (error) {
+          final message = error.toString();
+          if (message.contains('INVALID_CREDENTIALS')) {
+            result = await api.register(email, password);
+            flow = 'register_fallback_after_invalid_credentials';
+          } else {
+            rethrow;
+          }
+        }
+      }
       userId = (result['user']?['id'] ?? result['id'])?.toString();
       authorized = true;
       inventoryItems = await api.inventory(userId!);
       myVariants = await api.myVariants(userId!);
-      analytics.enqueue(eventName: 'login_success', userId: userId, payload: {'register': register});
+      analytics.enqueue(eventName: 'login_success', userId: userId, payload: {'register': register, 'flow': flow});
       await loadAdminAnalytics();
     } catch (error) {
       final message = error.toString();
