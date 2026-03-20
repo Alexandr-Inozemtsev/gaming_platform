@@ -7,24 +7,43 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppTokens.s16),
-      child: AppPanelCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(state.t('home.continue')),
-            const SizedBox(height: AppTokens.s12),
-            Row(
+      padding: AppLayout.safeAwarePadding(context),
+      child: ListView(
+        children: [
+          FeaturedGameBanner(
+            title: 'Tactical Tabletop Lounge',
+            subtitle: 'Лобби, партии и друзья в едином landscape-first потоке.',
+            cta: AppButton(
+              label: state.t('home.play'),
+              icon: Icons.play_arrow_rounded,
+              onPressed: () => state.setTab(3),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppPrimaryButton(onPressed: () => state.setTab(3), label: state.t('home.play')),
-                const SizedBox(width: AppTokens.s12),
-                AppSecondaryButton(onPressed: () => state.createPrivateRoom(state.currentGameId), label: state.t('home.createRoom')),
+                Text(state.t('home.continue'), style: AppTypography.h3),
+                const SizedBox(height: AppSpacing.sm),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    AppButton(onPressed: () => state.setTab(3), label: state.t('home.play')),
+                    AppButton(
+                      onPressed: () => state.createPrivateRoom(state.currentGameId),
+                      label: state.t('home.createRoom'),
+                      variant: AppButtonVariant.secondary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(state.t('home.teaser'), style: AppTypography.bodySm),
               ],
             ),
-            const SizedBox(height: AppTokens.s12),
-            Text(state.t('home.teaser')),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
