@@ -1,0 +1,162 @@
+[
+  {
+    "id": "match_v44h6eym",
+    "gameId": "tile_placement_demo",
+    "variantId": null,
+    "variantConfig": null,
+    "players": [
+      "user_001nm9js",
+      "user_001nm9js_bot"
+    ],
+    "currentPlayer": "user_001nm9js_bot",
+    "moveNumber": 1,
+    "maxMoves": 16,
+    "scores": {
+      "user_001nm9js": 0,
+      "user_001nm9js_bot": 0
+    },
+    "log": [
+      {
+        "playerId": "user_001nm9js",
+        "action": "place",
+        "moveId": "smoke_m1",
+        "payload": {
+          "row": 0,
+          "col": 0
+        },
+        "ts": "2026-03-20T15:11:27.363Z",
+        "moveNumber": 1
+      }
+    ],
+    "status": "active",
+    "winner": null,
+    "snapshots": [
+      {
+        "moveNumber": 1,
+        "state": {
+          "id": "match_v44h6eym",
+          "gameId": "tile_placement_demo",
+          "variantId": null,
+          "variantConfig": null,
+          "players": [
+            "user_001nm9js",
+            "user_001nm9js_bot"
+          ],
+          "currentPlayer": "user_001nm9js_bot",
+          "moveNumber": 1,
+          "maxMoves": 16,
+          "scores": {
+            "user_001nm9js": 0,
+            "user_001nm9js_bot": 0
+          },
+          "log": [
+            {
+              "playerId": "user_001nm9js",
+              "action": "place",
+              "moveId": "smoke_m1",
+              "payload": {
+                "row": 0,
+                "col": 0
+              },
+              "ts": "2026-03-20T15:11:27.363Z",
+              "moveNumber": 1
+            }
+          ],
+          "status": "active",
+          "winner": null,
+          "snapshots": [],
+          "acceptedMoveIds": [
+            "smoke_m1"
+          ],
+          "gameState": {
+            "gameId": "tile_placement_demo",
+            "size": 4,
+            "grid": [
+              [
+                {
+                  "owner": "user_001nm9js",
+                  "symbol": "A"
+                },
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null
+              ]
+            ],
+            "hands": {
+              "user_001nm9js": "A",
+              "user_001nm9js_bot": "B"
+            },
+            "seed": 463322099,
+            "turn": 1
+          },
+          "bot": {
+            "enabled": false
+          }
+        }
+      }
+    ],
+    "acceptedMoveIds": [
+      "smoke_m1"
+    ],
+    "gameState": {
+      "gameId": "tile_placement_demo",
+      "size": 4,
+      "grid": [
+        [
+          {
+            "owner": "user_001nm9js",
+            "symbol": "A"
+          },
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "hands": {
+        "user_001nm9js": "A",
+        "user_001nm9js_bot": "B"
+      },
+      "seed": 463322099,
+      "turn": 1
+    },
+    "bot": {
+      "enabled": false
+    }
+  }
+]
