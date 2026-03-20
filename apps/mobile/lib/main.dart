@@ -652,26 +652,29 @@ class MainShell extends StatelessWidget {
       ProfileScreen(state: state),
       SettingsScreen(state: state)
     ];
+    final inRoom = state.tab == 3;
     return Scaffold(
-      appBar: AppBar(title: Text(state.t('app.title'))),
+      appBar: inRoom ? null : AppBar(title: Text(state.t('app.title'))),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 280),
         transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
         child: KeyedSubtree(key: ValueKey(state.tab), child: pages[state.tab])
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: state.tab,
-        onDestinationSelected: state.setTab,
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.home), label: state.t('tab.home')),
-          NavigationDestination(icon: const Icon(Icons.grid_view), label: state.t('tab.catalog')),
-          NavigationDestination(icon: const Icon(Icons.edit_note), label: state.t('tab.create')),
-          NavigationDestination(icon: const Icon(Icons.meeting_room), label: state.t('tab.room')),
-          NavigationDestination(icon: const Icon(Icons.store), label: state.t('tab.store')),
-          NavigationDestination(icon: const Icon(Icons.person), label: state.t('tab.profile')),
-          NavigationDestination(icon: const Icon(Icons.settings), label: state.t('tab.settings'))
-        ]
-      )
+      bottomNavigationBar: inRoom
+          ? null
+          : NavigationBar(
+              selectedIndex: state.tab,
+              onDestinationSelected: state.setTab,
+              destinations: [
+                NavigationDestination(icon: const Icon(Icons.home), label: state.t('tab.home')),
+                NavigationDestination(icon: const Icon(Icons.grid_view), label: state.t('tab.catalog')),
+                NavigationDestination(icon: const Icon(Icons.edit_note), label: state.t('tab.create')),
+                NavigationDestination(icon: const Icon(Icons.meeting_room), label: state.t('tab.room')),
+                NavigationDestination(icon: const Icon(Icons.store), label: state.t('tab.store')),
+                NavigationDestination(icon: const Icon(Icons.person), label: state.t('tab.profile')),
+                NavigationDestination(icon: const Icon(Icons.settings), label: state.t('tab.settings'))
+              ]
+            )
     );
   }
 }
@@ -868,74 +871,94 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final s = widget.state;
-    return Stack(children: [
-      Padding(
-        padding: const EdgeInsets.all(AppTokens.s16),
-        child: Column(children: [
-          Expanded(
-            flex: 2,
-            child: Card(
-              child: Column(children: [
-                const SizedBox(height: 8),
-                Text(s.currentGameId),
-                Expanded(child: s.currentGameId == 'tile_placement_demo' ? TileBoardWidget(state: s) : RollWriteBoardWidget(state: s))
-              ])
-            )
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: Row(children: [
-              Expanded(child: Card(child: ListView(padding: const EdgeInsets.all(8), children: s.roomLog.map((e) => Text('• $e')).toList()))),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Card(
-                  child: Column(children: [
-                    Expanded(child: ListView(padding: const EdgeInsets.all(8), children: s.chat.map((e) => Text('💬 $e')).toList())),
-                    Row(children: [
-                      Expanded(child: TextField(controller: chat)),
-                      IconButton(onPressed: () { s.sendChat(chat.text); chat.clear(); }, icon: const Icon(Icons.send))
-                    ])
-                  ])
-                )
+    return Stack(
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 700;
+            return Padding(
+              padding: const EdgeInsets.all(AppTokens.s16),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () => s.setTab(0),
+                      icon: const Icon(Icons.arrow_back),
+                      label: Text(s.t('tab.home'))
+                    )
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    flex: compact ? 4 : 2,
+                    child: Card(
+                      child: Column(children: [
+                        const SizedBox(height: 8),
+                        Text(s.currentGameId),
+                        Expanded(child: s.currentGameId == 'tile_placement_demo' ? TileBoardWidget(state: s) : RollWriteBoardWidget(state: s))
+                      ])
+                    )
+                  ),
+                  if (!compact) ...[
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Row(children: [
+                        Expanded(child: Card(child: ListView(padding: const EdgeInsets.all(8), children: s.roomLog.map((e) => Text('• $e')).toList()))),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Card(
+                            child: Column(children: [
+                              Expanded(child: ListView(padding: const EdgeInsets.all(8), children: s.chat.map((e) => Text('💬 $e')).toList())),
+                              Row(children: [
+                                Expanded(child: TextField(controller: chat)),
+                                IconButton(onPressed: () { s.sendChat(chat.text); chat.clear(); }, icon: const Icon(Icons.send))
+                              ])
+                            ])
+                          )
+                        )
+                      ])
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  AnimatedBuilder(
+                    animation: pulse,
+                    builder: (_, __) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: s.activeBoardHighlight.withOpacity(s.yourTurn ? 0.4 + pulse.value * 0.4 : 0.2),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusButton)
+                      ),
+                      child: Text(s.t('room.yourTurn'))
+                    )
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: s.toggleVideoOverlay,
+                          icon: const Icon(Icons.videocam),
+                          label: Text(s.t('video.openOverlay'))
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => s.sendRoomReport(reason: 'Токсичное сообщение в игровом чате'),
+                          icon: const Icon(Icons.report),
+                          label: Text(s.t('room.report'))
+                        )
+                      ]
+                    )
+                  )
+                ]
               )
-            ])
-          ),
-          const SizedBox(height: 8),
-          AnimatedBuilder(
-            animation: pulse,
-            builder: (_, __) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: s.activeBoardHighlight.withOpacity(s.yourTurn ? 0.4 + pulse.value * 0.4 : 0.2),
-                borderRadius: BorderRadius.circular(AppTokens.radiusButton)
-              ),
-              child: Text(s.t('room.yourTurn'))
-            )
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  onPressed: s.toggleVideoOverlay,
-                  icon: const Icon(Icons.videocam),
-                  label: Text(s.t('video.openOverlay'))
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => s.sendRoomReport(reason: 'Токсичное сообщение в игровом чате'),
-                  icon: const Icon(Icons.report),
-                  label: Text(s.t('room.report'))
-                )
-              ]
-            )
-          )
-        ])
-      ),
-      if (s.videoOverlayVisible) VideoOverlayWidget(state: s)
-    ]);
+            );
+          }
+        ),
+        if (s.videoOverlayVisible) VideoOverlayWidget(state: s)
+      ]
+    );
   }
 }
 
@@ -1022,44 +1045,50 @@ class TileBoardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Draggable<String>(
-          data: state.selectedTile,
-          feedback: Material(color: Colors.transparent, child: _tileCell(state.selectedTile, highlight: true)),
-          child: _tileCell(state.selectedTile, highlight: true)
-        ),
-        const SizedBox(width: 8),
-        OutlinedButton(onPressed: state.toggleTileSymbol, child: Text(state.t('room.switch')))
-      ]),
-      Expanded(
-        child: GridView.builder(
-          shrinkWrap: true,
-          itemCount: 16,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4),
-          itemBuilder: (_, i) {
-            final r = i ~/ 4;
-            final c = i % 4;
-            final isPreview = state.previewRow == r && state.previewCol == c;
-            return DragTarget<String>(
-              onWillAcceptWithDetails: (_) {
-                state.updatePreview(r, c);
-                return true;
-              },
-              onLeave: (_) => state.updatePreview(null, null),
-              onAcceptWithDetails: (_) {
-                state.updatePreview(null, null);
-                state.confirmTilePlacement(r, c);
-              },
-              builder: (_, __, ___) => GestureDetector(
-                onTap: () => state.confirmTilePlacement(r, c),
-                child: _tileCell(state.tileGrid[r][c], highlight: isPreview)
-              )
-            );
-          }
-        )
-      )
-    ]);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight < 220;
+        return Column(children: [
+          if (!compact)
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Draggable<String>(
+                data: state.selectedTile,
+                feedback: Material(color: Colors.transparent, child: _tileCell(state.selectedTile, highlight: true)),
+                child: _tileCell(state.selectedTile, highlight: true)
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(onPressed: state.toggleTileSymbol, child: Text(state.t('room.switch')))
+            ]),
+          Expanded(
+            child: GridView.builder(
+              shrinkWrap: true,
+              itemCount: 16,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4),
+              itemBuilder: (_, i) {
+                final r = i ~/ 4;
+                final c = i % 4;
+                final isPreview = state.previewRow == r && state.previewCol == c;
+                return DragTarget<String>(
+                  onWillAcceptWithDetails: (_) {
+                    state.updatePreview(r, c);
+                    return true;
+                  },
+                  onLeave: (_) => state.updatePreview(null, null),
+                  onAcceptWithDetails: (_) {
+                    state.updatePreview(null, null);
+                    state.confirmTilePlacement(r, c);
+                  },
+                  builder: (_, __, ___) => GestureDetector(
+                    onTap: () => state.confirmTilePlacement(r, c),
+                    child: _tileCell(state.tileGrid[r][c], highlight: isPreview)
+                  )
+                );
+              }
+            )
+          )
+        ]);
+      }
+    );
   }
 
   Widget _tileCell(String? value, {required bool highlight}) {
