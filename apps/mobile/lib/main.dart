@@ -9,6 +9,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import 'i18n/strings.dart';
 import 'services/api_client.dart';
@@ -35,7 +36,12 @@ String get wsUrl {
   return 'ws://localhost:3001';
 }
 
-void main() => runApp(const TabletopApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Для MVP фиксируем только landscape-ориентации, как указано в UX-требованиях.
+  await SystemChrome.setPreferredOrientations(const [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
+  runApp(const TabletopApp());
+}
 
 class AppState extends ChangeNotifier {
   AppState({ApiClient? apiClient, WsClient? wsClient, AnalyticsClient? analyticsClient})
