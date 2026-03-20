@@ -572,32 +572,37 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppTokens.s16),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(register ? widget.state.t('auth.register') : widget.state.t('auth.login')),
-                TextField(controller: email, decoration: InputDecoration(labelText: widget.state.t('auth.email'))),
-                TextField(controller: password, decoration: InputDecoration(labelText: widget.state.t('auth.password'))),
-                const SizedBox(height: AppTokens.s12),
-                FilledButton(
-                  onPressed: widget.state.authBusy
-                      ? null
-                      : () => widget.state.loginOrRegister(email.text.trim(), password.text.trim(), register: register),
-                  child: Text(
-                    widget.state.authBusy ? '...' : (register ? widget.state.t('auth.register') : widget.state.t('auth.login'))
-                  )
-                ),
-                if (widget.state.authError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppTokens.s8),
-                    child: Text(widget.state.authError!, style: const TextStyle(color: AppTokens.editorWarning))
-                  ),
-                TextButton(onPressed: () => setState(() => register = !register), child: Text(register ? 'Login' : 'Register'))
-              ])
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(AppTokens.s16, AppTokens.s16, AppTokens.s16, MediaQuery.of(context).viewInsets.bottom + AppTokens.s16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTokens.s16),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(register ? widget.state.t('auth.register') : widget.state.t('auth.login')),
+                    TextField(controller: email, decoration: InputDecoration(labelText: widget.state.t('auth.email'))),
+                    TextField(controller: password, decoration: InputDecoration(labelText: widget.state.t('auth.password'))),
+                    const SizedBox(height: AppTokens.s12),
+                    FilledButton(
+                      onPressed: widget.state.authBusy
+                          ? null
+                          : () => widget.state.loginOrRegister(email.text.trim(), password.text.trim(), register: register),
+                      child: Text(
+                        widget.state.authBusy ? '...' : (register ? widget.state.t('auth.register') : widget.state.t('auth.login'))
+                      )
+                    ),
+                    if (widget.state.authError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppTokens.s8),
+                        child: Text(widget.state.authError!, style: const TextStyle(color: AppTokens.editorWarning))
+                      ),
+                    TextButton(onPressed: () => setState(() => register = !register), child: Text(register ? 'Login' : 'Register'))
+                  ])
+                )
+              )
             )
           )
         )
