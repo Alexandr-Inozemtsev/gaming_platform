@@ -88,8 +88,23 @@ export const createHttpHandler = (deps = {}) => {
       }
 
       if (method === 'POST' && url.pathname === '/reports') return send(res, 201, app.moderation.report(await parseBody(req)));
+      if (method === 'GET' && url.pathname === '/admin/reports') return send(res, 200, app.moderation.listReports());
+      if (method === 'GET' && url.pathname === '/admin/cases') {
+        return send(res, 200, app.moderation.listCases({ status: url.searchParams.get('status') }));
+      }
+      if (method === 'GET' && /^\/admin\/cases\/[^/]+$/.test(url.pathname)) {
+        const caseId = url.pathname.split('/')[3];
+        return send(res, 200, app.moderation.getCaseById({ caseId }));
+      }
+      if (method === 'POST' && /^\/admin\/cases\/[^/]+\/status$/.test(url.pathname)) {
+        const caseId = url.pathname.split('/')[3];
+        return send(res, 200, app.moderation.updateCaseStatus({ caseId, ...(await parseBody(req)) }));
+      }
       if (method === 'POST' && url.pathname === '/admin/ban') return send(res, 200, app.moderation.ban(await parseBody(req)));
       if (method === 'POST' && url.pathname === '/admin/mute') return send(res, 200, app.moderation.mute(await parseBody(req)));
+      if (method === 'POST' && url.pathname === '/admin/unban') return send(res, 200, app.moderation.unban(await parseBody(req)));
+      if (method === 'GET' && url.pathname === '/admin/moderation/audit') return send(res, 200, app.moderation.auditLog());
+      if (method === 'GET' && url.pathname === '/admin/moderation/policies') return send(res, 200, app.moderation.policies());
       if (method === 'POST' && url.pathname === '/analytics/events') return send(res, 201, app.analytics.track(await parseBody(req)));
       if (method === 'GET' && url.pathname === '/analytics/events') {
         return send(

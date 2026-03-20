@@ -24,6 +24,8 @@ class AppTokens {
   static const Color analyticsAxis = Color(0xFF9AA4B2);
   static const Color qaPass = Color(0xFF4EE59A);
   static const Color qaFail = Color(0xFFFF5C7A);
+  static const Color modCaseOpen = Color(0xFFFFD166);
+  static const Color modCaseClosed = Color(0xFF4EE59A);
 
   static const String fontFamily = 'Inter';
 

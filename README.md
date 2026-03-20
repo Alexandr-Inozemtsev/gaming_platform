@@ -74,6 +74,9 @@ flutter run
 ## Security (Prompt D)
 Подробности по безопасности MVP: `docs/security.md`.
 
+## Moderation tools (Prompt N)
+Подробности модерационного контура: `docs/moderation.md`.
+
 ## Mobile MVP
 Подробности мобильного клиента: `docs/mobile.md`.
 
