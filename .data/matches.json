@@ -158,5 +158,165 @@
     "bot": {
       "enabled": false
     }
+  },
+  {
+    "id": "match_rwvtupyo",
+    "gameId": "tile_placement_demo",
+    "variantId": null,
+    "variantConfig": null,
+    "players": [
+      "user_irbzsshp",
+      "user_irbzsshp_bot"
+    ],
+    "currentPlayer": "user_irbzsshp_bot",
+    "moveNumber": 1,
+    "maxMoves": 16,
+    "scores": {
+      "user_irbzsshp": 0,
+      "user_irbzsshp_bot": 0
+    },
+    "log": [
+      {
+        "playerId": "user_irbzsshp",
+        "action": "place",
+        "moveId": "smoke_m1",
+        "payload": {
+          "row": 0,
+          "col": 0
+        },
+        "ts": "2026-03-20T15:15:48.390Z",
+        "moveNumber": 1
+      }
+    ],
+    "status": "active",
+    "winner": null,
+    "snapshots": [
+      {
+        "moveNumber": 1,
+        "state": {
+          "id": "match_rwvtupyo",
+          "gameId": "tile_placement_demo",
+          "variantId": null,
+          "variantConfig": null,
+          "players": [
+            "user_irbzsshp",
+            "user_irbzsshp_bot"
+          ],
+          "currentPlayer": "user_irbzsshp_bot",
+          "moveNumber": 1,
+          "maxMoves": 16,
+          "scores": {
+            "user_irbzsshp": 0,
+            "user_irbzsshp_bot": 0
+          },
+          "log": [
+            {
+              "playerId": "user_irbzsshp",
+              "action": "place",
+              "moveId": "smoke_m1",
+              "payload": {
+                "row": 0,
+                "col": 0
+              },
+              "ts": "2026-03-20T15:15:48.390Z",
+              "moveNumber": 1
+            }
+          ],
+          "status": "active",
+          "winner": null,
+          "snapshots": [],
+          "acceptedMoveIds": [
+            "smoke_m1"
+          ],
+          "gameState": {
+            "gameId": "tile_placement_demo",
+            "size": 4,
+            "grid": [
+              [
+                {
+                  "owner": "user_irbzsshp",
+                  "symbol": "A"
+                },
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null
+              ]
+            ],
+            "hands": {
+              "user_irbzsshp": "A",
+              "user_irbzsshp_bot": "B"
+            },
+            "seed": 46777553,
+            "turn": 1
+          },
+          "bot": {
+            "enabled": false
+          }
+        }
+      }
+    ],
+    "acceptedMoveIds": [
+      "smoke_m1"
+    ],
+    "gameState": {
+      "gameId": "tile_placement_demo",
+      "size": 4,
+      "grid": [
+        [
+          {
+            "owner": "user_irbzsshp",
+            "symbol": "A"
+          },
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "hands": {
+        "user_irbzsshp": "A",
+        "user_irbzsshp_bot": "B"
+      },
+      "seed": 46777553,
+      "turn": 1
+    },
+    "bot": {
+      "enabled": false
+    }
   }
 ]
