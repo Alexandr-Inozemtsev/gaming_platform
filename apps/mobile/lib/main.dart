@@ -15,6 +15,7 @@ import 'i18n/strings.dart';
 import 'services/api_client.dart';
 import 'services/analytics_client.dart';
 import 'services/ws_client.dart';
+import 'shared/assets/runtime_asset_pack.dart';
 import 'shared/ui/controls.dart';
 import 'shared/ui/ui_kit.dart';
 import 'shared/ui/system_states.dart';
