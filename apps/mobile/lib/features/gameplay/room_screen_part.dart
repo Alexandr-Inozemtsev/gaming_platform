@@ -14,10 +14,12 @@ class RoomScreen extends StatefulWidget {
 }
 
 class _RoomScreenState extends State<RoomScreen> {
-
   @override
   Widget build(BuildContext context) {
     final s = widget.state;
+    final viewState = s.bigWalkerViewState;
+    final actions = s.bigWalkerActions;
+
     return Stack(children: [
       Container(
         decoration: const BoxDecoration(
@@ -32,109 +34,38 @@ class _RoomScreenState extends State<RoomScreen> {
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: Column(
               children: [
-                Row(
-                  children: [
-                    Text('Большая бродилка', style: AppTypography.h2.copyWith(color: AppColors.campaignHeader)),
-                    const Spacer(),
-                    SizedBox(
-                      width: 220,
-                      child: Slider(
-                        value: s.participantsCount.toDouble(),
-                        min: 2,
-                        max: 6,
-                        divisions: 4,
-                        label: '${s.participantsCount}',
-                        onChanged: (value) => s.setParticipantsCount(value.round()),
-                      ),
-                    )
-                  ],
+                BigWalkerRoomHeader(
+                  title: viewState.title,
+                  participantsCount: viewState.participantsCount,
+                  onParticipantsCountChanged: actions.onParticipantsCountChanged,
                 ),
-                SizedBox(
-                  height: 52,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemBuilder: (_, index) => PlayerSlot(
-                      name: index == 0 ? 'You' : 'Player ${index + 1}',
-                      ready: true,
-                      host: index == s.currentPlayerIndex,
-                    ),
-                    separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xs),
-                    itemCount: s.participantsCount,
-                  ),
+                BigWalkerPlayerStrip(
+                  participantsCount: viewState.participantsCount,
+                  currentPlayerIndex: viewState.currentPlayerIndex,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Expanded(
                   child: BigWalkerBoard(
-                    participantsCount: s.participantsCount,
-                    walkerPositions: s.walkerPositions,
+                    participantsCount: viewState.participantsCount,
+                    walkerPositions: viewState.walkerPositions,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: s.isRollingDice ? null : s.rollDiceAndMoveWalker,
-                        icon: const Icon(Icons.casino_rounded),
-                        label: Text(s.isRollingDice ? 'Бросаем...' : 'Бросить кубик'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    AnimatedScale(
-                      scale: s.isRollingDice ? 1.25 : 1,
-                      duration: const Duration(milliseconds: 120),
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text('${s.diceValue}', style: AppTypography.h2.copyWith(color: Colors.black)),
-                      ),
-                    ),
-                  ],
+                BigWalkerHud(
+                  isRollingDice: viewState.isRollingDice,
+                  diceValue: viewState.diceValue,
+                  onRollDice: actions.onRollDice,
+                  onToggleVideo: actions.onToggleVideo,
+                  onToggleMic: actions.onToggleMic,
+                  onQuickChat: actions.onQuickChat,
                 ),
               ],
             ),
           ),
         ),
       ),
-      Positioned(
-        right: 8,
-        top: 8,
-        child: Column(
-          children: [
-            _MiniIconButton(icon: Icons.videocam_rounded, onTap: s.toggleVideoOverlay),
-            const SizedBox(height: 6),
-            _MiniIconButton(icon: Icons.mic_rounded, onTap: s.toggleMic),
-            const SizedBox(height: 6),
-            _MiniIconButton(icon: Icons.chat_bubble_outline_rounded, onTap: () => s.sendChat('Привет!')),
-          ],
-        ),
-      ),
       if (s.videoOverlayVisible) VideoOverlayWidget(state: s),
     ]);
-  }
-}
-
-class _MiniIconButton extends StatelessWidget {
-  const _MiniIconButton({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(color: AppColors.bgElevated1.withOpacity(0.8), borderRadius: BorderRadius.circular(22)),
-        child: Icon(icon, size: 18, color: AppColors.textPrimary),
-      ),
-    );
   }
 }
 

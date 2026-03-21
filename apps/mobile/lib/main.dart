@@ -23,6 +23,10 @@ import 'shared/ui/ui_kit.dart';
 import 'shared/ui/system_states.dart';
 import 'theme/tokens.dart';
 import 'games/big_walker/big_walker_board.dart';
+import 'features/gameplay/big_walker/big_walker_match_state.dart';
+import 'features/gameplay/big_walker/widgets/big_walker_hud.dart';
+import 'features/gameplay/big_walker/widgets/big_walker_player_strip.dart';
+import 'features/gameplay/big_walker/widgets/big_walker_room_header.dart';
 part 'features/catalog/catalog_container_part.dart';
 part 'features/gameplay/room_screen_part.dart';
 part 'features/home/home_container_part.dart';
@@ -120,6 +124,28 @@ class AppState extends ChangeNotifier {
   bool yourTurn = true;
 
   Color get activeBoardHighlight => appliedSkinSku == 'skin.dice.neon' ? AppTokens.ok : AppTokens.boardHighlight;
+
+
+  BigWalkerMatchViewState get bigWalkerViewState => BigWalkerMatchViewState(
+    title: 'Большая бродилка',
+    participantsCount: participantsCount,
+    walkerPositions: List<int>.from(walkerPositions),
+    currentPlayerIndex: currentPlayerIndex,
+    diceValue: diceValue,
+    isRollingDice: isRollingDice,
+  );
+
+  BigWalkerMatchActions get bigWalkerActions => BigWalkerMatchActions(
+    onParticipantsCountChanged: setParticipantsCount,
+    onRollDice: () {
+      rollDiceAndMoveWalker();
+    },
+    onToggleVideo: toggleVideoOverlay,
+    onToggleMic: toggleMic,
+    onQuickChat: () {
+      sendChat('Привет!');
+    },
+  );
 
   StreamSubscription<Map<String, dynamic>>? _wsSub;
   final Random _random = Random(7);
