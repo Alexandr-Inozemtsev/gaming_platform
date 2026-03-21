@@ -10,6 +10,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:animations/animations.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'i18n/strings.dart';
 import 'services/api_client.dart';
@@ -23,11 +25,13 @@ import 'theme/tokens.dart';
 part 'features/catalog/catalog_container_part.dart';
 part 'features/gameplay/room_screen_part.dart';
 part 'features/home/home_container_part.dart';
+part 'features/campaigns/campaigns_container_part.dart';
 part 'features/profile/profile_container_part.dart';
 part 'features/settings/settings_container_part.dart';
 
 const String _apiBaseUrlFromEnv = String.fromEnvironment('API_BASE_URL', defaultValue: '');
 const String _wsUrlFromEnv = String.fromEnvironment('WS_URL', defaultValue: '');
+const String regionMode = String.fromEnvironment('REGION_MODE', defaultValue: 'global');
 const String stunUrlsRaw = String.fromEnvironment('STUN_URLS', defaultValue: '');
 const String turnUrlsRaw = String.fromEnvironment('TURN_URLS', defaultValue: '');
 const String turnUsername = String.fromEnvironment('TURN_USERNAME', defaultValue: '');
@@ -73,6 +77,10 @@ class AppState extends ChangeNotifier {
   List<dynamic> skus = const [];
   List<dynamic> inventoryItems = const [];
   List<dynamic> myVariants = const [];
+  List<dynamic> campaigns = const [];
+  List<dynamic> leaderboard = const [];
+  String leaderboardPeriod = 'all-time';
+  String purchaseStatus = '';
   String? appliedSkinSku;
   String? lastVariantLink;
   bool videoOverlayVisible = false;
@@ -134,9 +142,42 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     });
     games = await api.games();
+    campaigns = await api.campaigns();
     final skuResponse = await api.storeSkus();
     skus = skuResponse['items'] as List<dynamic>? ?? const [];
     analytics.enqueue(eventName: 'store_view', payload: {'phase': 'init'});
+    notifyListeners();
+  }
+
+  Future<void> loadCampaigns() async {
+    campaigns = await api.campaigns();
+    leaderboard = await api.leaderboard(period: leaderboardPeriod);
+    notifyListeners();
+  }
+
+  Future<void> createCampaignQuick() async {
+    final created = await api.createCampaign(
+      name: 'Save the Plumpkin',
+      description: 'Спасите Пухлю от злого волка!',
+      levels: const [
+        {'gameId': 'tile_placement_demo', 'campaignProgress': {'scoreMultiplier': 1.1}}
+      ]
+    );
+    purchaseStatus = 'Campaign created: ${created['name']}';
+    await loadCampaigns();
+  }
+
+  Future<void> startCampaignFlow(String campaignId) async {
+    if (userId == null) return;
+    final started = await api.startCampaign(campaignId: campaignId, players: [userId!, '${userId!}_bot']);
+    roomId = (started['match'] as Map<String, dynamic>)['id']?.toString();
+    tab = 4;
+    notifyListeners();
+  }
+
+  Future<void> setLeaderboardPeriod(String value) async {
+    leaderboardPeriod = value;
+    leaderboard = await api.leaderboard(period: value);
     notifyListeners();
   }
 
@@ -230,7 +271,7 @@ class AppState extends ChangeNotifier {
     mediaPermissionGranted = false;
     videoStatus = 'ready';
     analytics.enqueue(eventName: 'match_create', userId: userId, payload: {'gameId': gameId, 'roomId': roomId});
-    tab = 3;
+    tab = 4;
     notifyListeners();
   }
 
@@ -308,7 +349,7 @@ class AppState extends ChangeNotifier {
     final result = await api.createMatch(gameId, [userId!, '${userId!}_bot'], variantId: variantId);
     roomId = result['id']?.toString();
     currentGameId = gameId;
-    tab = 3;
+    tab = 4;
     notifyListeners();
   }
 
@@ -323,7 +364,7 @@ class AppState extends ChangeNotifier {
     );
     roomId = result['id']?.toString();
     currentGameId = variant['gameId'].toString();
-    tab = 3;
+    tab = 4;
     notifyListeners();
   }
 
@@ -536,8 +577,35 @@ class AppState extends ChangeNotifier {
 
   Future<void> buySku(String sku) async {
     if (userId == null) return;
-    await api.purchaseSandbox(userId!, sku);
+    if (regionMode == 'ru_by') {
+      purchaseStatus = 'Недоступно в регионе ru_by';
+      notifyListeners();
+      return;
+    }
+
+    final iap = InAppPurchase.instance;
+    final productResponse = await iap.queryProductDetails({sku});
+    if (productResponse.productDetails.isNotEmpty) {
+      final purchaseParam = PurchaseParam(productDetails: productResponse.productDetails.first);
+      await iap.buyNonConsumable(purchaseParam: purchaseParam);
+      await api.purchaseIapSuccess(userId: userId!, sku: sku, platform: defaultTargetPlatform.name, purchaseToken: 'local_receipt');
+      purchaseStatus = 'IAP purchase requested: $sku';
+    } else {
+      await api.purchaseSandbox(userId!, sku);
+      purchaseStatus = 'Sandbox fallback purchase: $sku';
+    }
     inventoryItems = await api.inventory(userId!);
+    notifyListeners();
+  }
+
+  Future<void> restorePurchases() async {
+    if (regionMode == 'ru_by') {
+      purchaseStatus = 'Недоступно в регионе ru_by';
+      notifyListeners();
+      return;
+    }
+    await InAppPurchase.instance.restorePurchases();
+    purchaseStatus = 'Restore purchases requested';
     notifyListeners();
   }
 
@@ -663,6 +731,7 @@ class MainShell extends StatelessWidget {
     final pages = [
       HomeScreen(state: state),
       CatalogScreen(state: state),
+      CampaignsScreen(state: state),
       CreateScreen(state: state),
       RoomScreen(state: state),
       StoreScreen(state: state),
@@ -672,6 +741,7 @@ class MainShell extends StatelessWidget {
     final breadcrumbItems = [
       state.t('tab.home'),
       state.t('tab.catalog'),
+      'Campaigns',
       state.t('tab.create'),
       state.t('tab.room'),
       state.t('tab.store'),
@@ -817,29 +887,59 @@ class StoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Column(children: [
-        const TabBar(tabs: [Tab(text: 'Games'), Tab(text: 'Skins'), Tab(text: 'Inventory')]),
+        const TabBar(tabs: [Tab(text: 'Games'), Tab(text: 'Skins'), Tab(text: 'Subscriptions'), Tab(text: 'Inventory')]),
         Expanded(
-          child: TabBarView(children: [
-            ListView(
-              children: state.skus
-                  .where((e) => (e as Map<String, dynamic>)['type'] == 'GAME_LICENSE')
-                  .map((e) => _StoreSkuTile(state: state, sku: e as Map<String, dynamic>))
-                  .toList()
+          child: PageTransitionSwitcher(
+            duration: AppMotion.medium,
+            transitionBuilder: (child, primary, secondary) => FadeThroughTransition(
+              animation: primary,
+              secondaryAnimation: secondary,
+              child: child,
             ),
-            ListView(
-              children: state.skus
-                  .where((e) => (e as Map<String, dynamic>)['type'] == 'COSMETIC')
-                  .map((e) => _StoreSkinTile(state: state, sku: e as Map<String, dynamic>))
-                  .toList()
-            ),
-            ListView(
-              children: state.inventoryItems
-                  .map((e) => _InventoryTile(state: state, item: e as Map<String, dynamic>))
-                  .toList()
-            )
-          ])
+            child: TabBarView(children: [
+              ListView(
+                children: state.skus
+                    .where((e) => (e as Map<String, dynamic>)['type'] == 'GAME_LICENSE')
+                    .map((e) => _StoreSkuTile(state: state, sku: e as Map<String, dynamic>))
+                    .toList()
+              ),
+              ListView(
+                children: state.skus
+                    .where((e) => (e as Map<String, dynamic>)['type'] == 'COSMETIC')
+                    .map((e) => _StoreSkinTile(state: state, sku: e as Map<String, dynamic>))
+                    .toList()
+              ),
+              ListView(
+                children: [
+                  ListTile(
+                    title: const Text('Season Pass'),
+                    subtitle: Text('Price: \$4.99', style: AppTypography.h3.copyWith(color: AppColors.storePriceAccent)),
+                    trailing: Wrap(
+                      spacing: AppSpacing.xs,
+                      children: [
+                        FilledButton(onPressed: () => state.buySku('season.pass'), child: const Text('Subscribe Now')),
+                        OutlinedButton(onPressed: state.restorePurchases, child: const Text('Restore Purchase')),
+                      ],
+                    ),
+                  ),
+                  if (state.purchaseStatus.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.all(AppSpacing.sm),
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(color: AppColors.storeAlertBg, borderRadius: BorderRadius.circular(AppTokens.uiButtonRadius)),
+                      child: Text(state.purchaseStatus),
+                    )
+                ],
+              ),
+              ListView(
+                children: state.inventoryItems
+                    .map((e) => _InventoryTile(state: state, item: e as Map<String, dynamic>))
+                    .toList()
+              )
+            ]),
+          )
         )
       ])
     );

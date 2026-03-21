@@ -96,7 +96,7 @@ class HomeScreen extends StatelessWidget {
                             child: AppButton(
                               label: state.t('home.play'),
                               icon: Icons.play_arrow_rounded,
-                              onPressed: () => state.setTab(3),
+                              onPressed: () => state.setTab(4),
                             ),
                           ),
                           const SizedBox(width: AppSpacing.xs),

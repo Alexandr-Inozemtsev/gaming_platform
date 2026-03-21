@@ -64,6 +64,12 @@ fi
 kubectl apply -f k8s/
 ```
 
+One-command:
+
+```bash
+npm run prod-up
+```
+
 ## Release checklist и one-button запуск (Prompt P)
 Быстрый запуск локального контура:
 
@@ -154,6 +160,13 @@ flutter run
 
 ## Testing contour (Prompt K)
 Документация по unit/integration/e2e/load: `docs/testing.md`.
+
+## P2 add-ons status
+- UI/UX: campaigns screen + animated transitions (`animations`), store subscription tab.
+- IAP: `in_app_purchase` integration with `REGION_MODE=ru_by` lock.
+- Video/Voice: API token endpoints `/webrtc/*` + realtime SFU coordinator scaffold.
+- Analytics: publish/query queue + Prometheus text endpoint + Sentry hook.
+- Advanced tests: `tests/load.js` + extra p2 e2e test + CI audit step.
 
 ## Internal Game Generator (Prompt L)
 Документация внутреннего генератора definitions/fixtures: `docs/game-generator.md`.

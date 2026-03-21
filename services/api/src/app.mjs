@@ -134,6 +134,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     moderationAuditLogs: [],
     sanctions: [],
     analytics: [],
+    eventQueue: [],
     securityLogs: [],
     requestLogs: [],
     technicalMetrics: {
@@ -921,6 +922,11 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       if (!allowed.has(eventName)) throw new HttpError(400, 'ANALYTICS_EVENT_UNSUPPORTED', { eventName });
       const row = { id: newId('event'), eventName, userId, sessionId, payload, source, ts: nowIso() };
       state.analytics.push(row);
+      state.eventQueue.push({
+        id: `queue_${row.id}`,
+        topic: 'analytics.events',
+        payload: { ...row, userId: row.userId ? `anon_${String(row.userId).slice(-6)}` : null }
+      });
       return { ok: true, event: row };
     },
     list: ({ limit = 200, eventName = null }) => {
@@ -954,8 +960,77 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       if (!(name in state.technicalMetrics)) throw new HttpError(400, 'UNKNOWN_TECHNICAL_METRIC', { name });
       state.technicalMetrics[name] += Number(value) || 0;
       return { ok: true, value: state.technicalMetrics[name] };
+    },
+    publish: ({ topic = 'analytics.events', payload = {} }) => {
+      assertString(topic, 'topic');
+      const item = { id: newId('queue'), topic, payload, ts: nowIso() };
+      state.eventQueue.push(item);
+      return { ok: true, queued: item };
+    },
+    queryQueue: ({ topic = null, limit = 100 }) => {
+      const rows = topic ? state.eventQueue.filter((item) => item.topic === topic) : state.eventQueue;
+      return rows.slice(-Math.max(1, Math.min(limit, 1000))).reverse();
+    },
+    prometheus: () => {
+      const matches = state.analytics.filter((row) => row.eventName === 'match_create').length;
+      const finished = state.analytics.filter((row) => row.eventName === 'match_finish').length;
+      return `# HELP tabletop_matches_created total created matches\n# TYPE tabletop_matches_created counter\ntabletop_matches_created ${matches}\n# HELP tabletop_matches_finished total finished matches\n# TYPE tabletop_matches_finished counter\ntabletop_matches_finished ${finished}\n`;
     }
   };
 
-  return { state, auth, users, catalog, matches, campaigns, leaderboards, store, variants, moderation, analytics, securityConfig, HttpError };
+  const webrtc = {
+    createToken: ({ userId, roomId, ttlSec = 3600 }) => {
+      assertString(userId, 'userId');
+      assertString(roomId, 'roomId');
+      return {
+        token: `webrtc.${userId}.${roomId}.${Date.now()}`,
+        expiresAt: new Date(Date.now() + Number(ttlSec) * 1000).toISOString(),
+        roomId
+      };
+    },
+    groupConfig: ({ roomId }) => ({
+      roomId,
+      maxParticipants: 4,
+      turnFallbackAfterIceFailures: 3
+    })
+  };
+
+  store.iapSuccess = ({ userId, sku, platform = 'unknown', purchaseToken = null }) => {
+    assertString(userId, 'userId');
+    assertString(sku, 'sku');
+    assertKnownUser(userId);
+    const inventory = state.inventory.get(userId) ?? [];
+    const record = {
+      id: newId('purchase'),
+      userId,
+      sku,
+      type: 'SUBSCRIPTION',
+      purchasedAt: nowIso(),
+      mode: 'iap',
+      platform,
+      purchaseToken,
+      applied: false
+    };
+    state.purchases.push(record);
+    inventory.push(record);
+    state.inventory.set(userId, inventory);
+    return { ok: true, item: record };
+  };
+
+  return {
+    state,
+    auth,
+    users,
+    catalog,
+    matches,
+    campaigns,
+    leaderboards,
+    webrtc,
+    store,
+    variants,
+    moderation,
+    analytics,
+    securityConfig,
+    HttpError
+  };
 };

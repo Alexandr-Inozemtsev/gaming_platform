@@ -52,6 +52,12 @@ jobs:
       - name: Validate Kubernetes manifests
         run: kubectl apply --dry-run=client -f k8s/
 
+      - name: Load test script syntax
+        run: node tests/load.js
+
+      - name: Security scan (npm audit)
+        run: npm audit --audit-level=high
+
   mobile:
     name: Flutter analyze
     runs-on: ubuntu-latest
