@@ -10,7 +10,10 @@
     "test": "npm run test --workspaces --if-present",
     "test:load:ws": "node scripts/ws-load.mjs",
     "gen:game": "node services/rules-engine/tools/generator/cli.mjs",
+    "prod-up": "scripts/prod-up.sh",
+    "smoke:p2": "scripts/smoke-p2.sh",
     "format": "echo \"Форматирование через Prettier будет доступно после установки зависимостей\"",
-    "format:check": "echo \"Проверка форматирования через Prettier будет доступна после установки зависимостей\""
+    "format:check": "echo \"Проверка форматирования через Prettier будет доступна после установки зависимостей\"",
+    "test:load:k6": "k6 run tests/load.js || node tests/load.js"
   }
 }
