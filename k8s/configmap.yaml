@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tabletop-config
+  namespace: tabletop
+data:
+  NODE_ENV: "production"
+  REGION_MODE: "global"
