@@ -69,10 +69,10 @@ class AppState extends ChangeNotifier {
 
   String lang = 'ru';
   int tab = 0;
-  bool authorized = false;
+  bool authorized = true;
   bool authBusy = false;
   String? authError;
-  String? userId;
+  String? userId = 'dev_autologin_user';
   List<dynamic> games = const [];
   List<dynamic> skus = const [];
   List<dynamic> inventoryItems = const [];
@@ -689,7 +689,8 @@ class _TabletopAppState extends State<TabletopApp> {
         debugShowCheckedModeBanner: false,
         title: 'TabletopPlatform',
         theme: AppTheme.build(),
-        home: state.authorized ? MainShell(state: state) : AuthScreen(state: state)
+        // Временный bypass auth для эмулятора: сразу открываем основной shell.
+        home: MainShell(state: state)
       )
     );
   }
