@@ -10,6 +10,7 @@ const bans = [];
 const mutes = [];
 const audit = [];
 const events = [];
+const campaigns = [];
 
 const panel = createAdminPanel({
   adminPassword: process.env.ADMIN_PASSWORD ?? 'local_admin_password',
@@ -32,6 +33,14 @@ const panel = createAdminPanel({
   analyticsApi: {
     list: ({ limit = 100 } = {}) => events.slice(-limit),
     dashboard: () => ({ matches7d: 0, dauProxy: [] })
+  },
+  campaignsApi: {
+    list: () => campaigns,
+    create: ({ name, description = '', levels = [] }) => {
+      const row = { id: `campaign_${Date.now()}`, name, description, levels, ts: new Date().toISOString() };
+      campaigns.push(row);
+      return row;
+    }
   }
 });
 
@@ -54,6 +63,8 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && url.pathname === '/reports') return send(res, 200, panel.reportsTable());
   if (req.method === 'GET' && url.pathname === '/cases') return send(res, 200, panel.moderationQueue());
   if (req.method === 'GET' && url.pathname === '/audit') return send(res, 200, panel.auditLog());
+  if (req.method === 'GET' && url.pathname === '/campaigns') return send(res, 200, panel.campaignsTable());
+  if (req.method === 'POST' && url.pathname === '/campaigns') return send(res, 201, panel.createCampaign(await parseBody(req)));
   if (req.method === 'POST' && url.pathname === '/login') {
     try {
       return send(res, 200, panel.login(await parseBody(req)));
