@@ -36,6 +36,7 @@ class ApiClient {
       return body as List<dynamic>;
     } catch (_) {
       return const [
+        {'id': 'big_walker_demo', 'title': 'Большая бродилка'},
         {'id': 'tile_placement_demo', 'title': 'Tile Placement Demo'},
         {'id': 'roll_and_write_demo', 'title': 'Roll & Write Demo'}
       ];
@@ -139,10 +140,26 @@ class ApiClient {
         'policyType': policyType
       });
 
-  Future<Map<String, dynamic>> createMatch(String gameId, List<String> players, {String? variantId}) async =>
-      _post('/matches', {'gameId': gameId, 'players': players, 'variantId': variantId});
+  Future<Map<String, dynamic>> createMatch(String gameId, List<String> players, {String? variantId, String mode = 'classic'}) async =>
+      _post('/matches', {'gameId': gameId, 'players': players, 'variantId': variantId, 'mode': mode});
+  Future<Map<String, dynamic>> nextLevel(String matchId) async => _post('/matches/$matchId/next-level', {});
   Future<Map<String, dynamic>> purchaseSandbox(String userId, String sku) async => _post('/store/purchase-sandbox', {'userId': userId, 'sku': sku});
+  Future<Map<String, dynamic>> purchaseIapSuccess({
+    required String userId,
+    required String sku,
+    required String platform,
+    String? purchaseToken
+  }) async => _post('/store/iap-success', {'userId': userId, 'sku': sku, 'platform': platform, 'purchaseToken': purchaseToken});
   Future<Map<String, dynamic>> applySkin(String userId, String sku) async => _post('/store/apply-skin', {'userId': userId, 'sku': sku});
+  Future<List<dynamic>> campaigns() async => (await _get('/campaigns')) as List<dynamic>;
+  Future<Map<String, dynamic>> createCampaign({
+    required String name,
+    String description = '',
+    List<Map<String, dynamic>> levels = const []
+  }) async => _post('/campaigns', {'name': name, 'description': description, 'levels': levels});
+  Future<Map<String, dynamic>> startCampaign({required String campaignId, required List<String> players}) async =>
+      _post('/campaigns/$campaignId/start', {'players': players});
+  Future<List<dynamic>> leaderboard({String period = 'all-time'}) async => (await _get('/leaderboard?period=$period')) as List<dynamic>;
 
   Future<dynamic> _get(String path) async {
     final uri = Uri.parse('$baseUrl$path');
