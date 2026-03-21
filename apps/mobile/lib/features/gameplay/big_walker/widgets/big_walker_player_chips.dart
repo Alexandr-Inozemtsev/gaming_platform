@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/game/big_walker_tokens.dart';
+import '../animations/big_walker_motion.dart';
 
 class BigWalkerPlayerChips extends StatelessWidget {
   const BigWalkerPlayerChips({
@@ -21,7 +22,7 @@ class BigWalkerPlayerChips extends StatelessWidget {
         itemBuilder: (_, index) {
           final active = index == currentPlayerIndex;
           return AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
+            duration: BigWalkerMotion.turnGlow,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
               color: active ? BigWalkerTokens.accentCyan.withOpacity(0.16) : BigWalkerTokens.card,

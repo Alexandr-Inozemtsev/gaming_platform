@@ -9,14 +9,21 @@ class BigWalkerActionPanel extends StatelessWidget {
     required this.isRollingDice,
     required this.diceValue,
     required this.onRollDice,
+    required this.isStarted,
+    required this.onStartMatch,
+    required this.hasWinner,
   });
 
   final bool isRollingDice;
   final int diceValue;
   final VoidCallback onRollDice;
+  final bool isStarted;
+  final VoidCallback onStartMatch;
+  final bool hasWinner;
 
   @override
   Widget build(BuildContext context) {
+    final bool canRoll = isStarted && !isRollingDice && !hasWinner;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -31,7 +38,7 @@ class BigWalkerActionPanel extends StatelessWidget {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: isRollingDice ? null : onRollDice,
+              onTap: canRoll ? onRollDice : onStartMatch,
               child: AnimatedContainer(
                 duration: BigWalkerMotion.dicePulse,
                 curve: BigWalkerMotion.dicePulseCurve,
@@ -39,21 +46,21 @@ class BigWalkerActionPanel extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
                   gradient: LinearGradient(
-                    colors: isRollingDice
-                        ? [BigWalkerTokens.bgSoft, BigWalkerTokens.bgMid]
-                        : [BigWalkerTokens.accentAmber.withOpacity(0.92), const Color(0xFFE39E3C)],
+                    colors: canRoll
+                        ? [BigWalkerTokens.accentAmber.withOpacity(0.92), const Color(0xFFE39E3C)]
+                        : [BigWalkerTokens.bgSoft, BigWalkerTokens.bgMid],
                   ),
-                  boxShadow: isRollingDice
-                      ? const []
-                      : [
+                  boxShadow: canRoll
+                      ? [
                           BoxShadow(color: BigWalkerTokens.accentAmber.withOpacity(0.4), blurRadius: 16),
-                        ],
+                        ]
+                      : const [],
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  isRollingDice ? 'Кубик крутится…' : 'Бросить кубик',
+                  _label(canRoll),
                   style: TextStyle(
-                    color: isRollingDice ? BigWalkerTokens.textSecondary : Colors.black,
+                    color: canRoll ? Colors.black : BigWalkerTokens.textSecondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -85,5 +92,12 @@ class BigWalkerActionPanel extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _label(bool canRoll) {
+    if (hasWinner) return 'Новая партия';
+    if (!isStarted) return 'Начать матч';
+    if (isRollingDice) return 'Кубик крутится…';
+    return canRoll ? 'Бросить кубик' : 'Подождите...';
   }
 }

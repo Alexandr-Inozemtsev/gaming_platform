@@ -5,6 +5,12 @@ class BigWalkerTokens {
   static const int rows = 5;
   static const int totalCells = cols * rows;
 
+  static const int minPlayers = 2;
+  static const int maxPlayers = 6;
+  static const int diceRollFrames = 8;
+  static const int diceMin = 1;
+  static const int diceMax = 6;
+
   // Core palette
   static const Color bgDeep = Color(0xFF090F1F);
   static const Color bgMid = Color(0xFF101A31);
@@ -39,6 +45,9 @@ class BigWalkerTokens {
   static const Color evenCellColor = Color(0xFF1E365A);
   static const Color oddCellColor = Color(0xFF24406A);
   static const Color specialCellIcon = Color(0xFFFFD166);
+  static const Color startCellColor = Color(0xFF3BD48E);
+  static const Color finishCellColor = Color(0xFFF8A73A);
+  static const Color activePathGlow = Color(0xAA6EE7FF);
 
   // HUD / action panel
   static const double panelRadius = 16;

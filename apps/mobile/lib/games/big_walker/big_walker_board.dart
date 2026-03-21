@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/tokens.dart';
-import '../../theme/game/big_walker_tokens.dart';
 import '../../features/gameplay/big_walker/animations/big_walker_motion.dart';
+import '../../theme/game/big_walker_tokens.dart';
+import '../../theme/tokens.dart';
 
 part '../../features/gameplay/big_walker/widgets/big_walker_board_background.dart';
 part '../../features/gameplay/big_walker/widgets/big_walker_cell.dart';
@@ -13,10 +13,21 @@ class BigWalkerBoard extends StatelessWidget {
     super.key,
     required this.participantsCount,
     required this.walkerPositions,
+    this.activePathIndex,
+    this.currentPlayerIndex,
   });
 
   final int participantsCount;
   final List<int> walkerPositions;
+  final int? activePathIndex;
+  final int? currentPlayerIndex;
+
+  int _routeToGridIndex(int routeIndex) {
+    final row = routeIndex ~/ BigWalkerTokens.cols;
+    final colInRow = routeIndex % BigWalkerTokens.cols;
+    final col = row.isEven ? colInRow : (BigWalkerTokens.cols - 1 - colInRow);
+    return row * BigWalkerTokens.cols + col;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,12 +39,19 @@ class BigWalkerBoard extends StatelessWidget {
         final boardW = cell * BigWalkerTokens.cols;
         final boardH = cell * BigWalkerTokens.rows;
 
-        final cells = List<Widget>.generate(BigWalkerTokens.totalCells, (index) {
+        final cells = List<Widget>.generate(BigWalkerTokens.totalCells, (gridIndex) {
+          final routeIndex = _gridToRouteIndex(gridIndex);
           final playersHere = <int>[];
           for (int i = 0; i < participantsCount; i += 1) {
-            if (walkerPositions[i] == index) playersHere.add(i);
+            if (walkerPositions[i] == routeIndex) playersHere.add(i);
           }
-          return _BigWalkerCell(index: index, playersHere: playersHere);
+          return _BigWalkerCell(
+            routeIndex: routeIndex,
+            playersHere: playersHere,
+            isActivePath: activePathIndex == routeIndex,
+            isStart: routeIndex == 0,
+            isFinish: routeIndex == BigWalkerTokens.totalCells - 1,
+          );
         });
 
         return Center(
@@ -65,12 +83,14 @@ class BigWalkerBoard extends StatelessWidget {
                     ),
                   ),
                   ...List<Widget>.generate(participantsCount, (playerIndex) {
-                    final position = walkerPositions[playerIndex].clamp(0, BigWalkerTokens.totalCells - 1);
+                    final routePosition = walkerPositions[playerIndex].clamp(0, BigWalkerTokens.totalCells - 1);
+                    final gridIndex = _routeToGridIndex(routePosition);
                     return _BigWalkerPawn(
                       key: ValueKey('pawn-$playerIndex'),
                       playerIndex: playerIndex,
-                      position: position,
+                      position: gridIndex,
                       cellSize: cell,
+                      active: currentPlayerIndex == playerIndex,
                     );
                   }),
                   IgnorePointer(
@@ -88,5 +108,12 @@ class BigWalkerBoard extends StatelessWidget {
         );
       },
     );
+  }
+
+  int _gridToRouteIndex(int gridIndex) {
+    final row = gridIndex ~/ BigWalkerTokens.cols;
+    final col = gridIndex % BigWalkerTokens.cols;
+    final colInRoute = row.isEven ? col : (BigWalkerTokens.cols - 1 - col);
+    return row * BigWalkerTokens.cols + colInRoute;
   }
 }

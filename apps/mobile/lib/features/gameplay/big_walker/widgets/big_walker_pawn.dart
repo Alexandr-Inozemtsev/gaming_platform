@@ -6,11 +6,13 @@ class _BigWalkerPawn extends StatelessWidget {
     required this.playerIndex,
     required this.position,
     required this.cellSize,
+    required this.active,
   });
 
   final int playerIndex;
   final int position;
   final double cellSize;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -32,15 +34,23 @@ class _BigWalkerPawn extends StatelessWidget {
         return Positioned(
           left: centerX - BigWalkerTokens.pawnRadius + offsetX,
           top: centerY - BigWalkerTokens.pawnRadius + offsetY,
-          child: Container(
+          child: AnimatedContainer(
+            duration: BigWalkerMotion.turnGlow,
             width: BigWalkerTokens.pawnRadius * 2,
             height: BigWalkerTokens.pawnRadius * 2,
             decoration: BoxDecoration(
-              color: Color.lerp(AppColors.primaryFig, AppColors.accentSecondary, playerIndex / 6) ?? AppColors.primaryFig,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(AppColors.primaryFig, AppColors.accentSecondary, playerIndex / 6) ?? AppColors.primaryFig,
+                  Colors.white,
+                ],
+              ),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.black.withOpacity(0.35), width: BigWalkerTokens.pawnStrokeWidth),
-              boxShadow: const [
-                BoxShadow(color: Color(0x55000000), blurRadius: 5, offset: Offset(0, 2)),
+              boxShadow: [
+                BoxShadow(color: active ? BigWalkerTokens.activePathGlow.withOpacity(0.6) : const Color(0x55000000), blurRadius: active ? 14 : 5, offset: const Offset(0, 2)),
               ],
             ),
             alignment: Alignment.center,

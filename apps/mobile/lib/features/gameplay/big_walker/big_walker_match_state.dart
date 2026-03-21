@@ -9,6 +9,10 @@ class BigWalkerMatchViewState {
     required this.currentPlayerIndex,
     required this.diceValue,
     required this.isRollingDice,
+    required this.turnNumber,
+    required this.activePathIndex,
+    required this.winnerIndex,
+    required this.isStarted,
   });
 
   final String title;
@@ -17,6 +21,10 @@ class BigWalkerMatchViewState {
   final int currentPlayerIndex;
   final int diceValue;
   final bool isRollingDice;
+  final int turnNumber;
+  final int? activePathIndex;
+  final int? winnerIndex;
+  final bool isStarted;
 }
 
 @immutable
@@ -27,6 +35,7 @@ class BigWalkerMatchActions {
     required this.onToggleVideo,
     required this.onToggleMic,
     required this.onQuickChat,
+    required this.onStartMatch,
   });
 
   final ValueChanged<int> onParticipantsCountChanged;
@@ -34,8 +43,8 @@ class BigWalkerMatchActions {
   final VoidCallback onToggleVideo;
   final VoidCallback onToggleMic;
   final VoidCallback onQuickChat;
+  final VoidCallback onStartMatch;
 }
-
 
 @immutable
 class BigWalkerViewModel {
