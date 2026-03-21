@@ -13,6 +13,9 @@ class BigWalkerMatchViewState {
     required this.activePathIndex,
     required this.winnerIndex,
     required this.isStarted,
+    required this.overlay,
+    required this.turnTransitionVisible,
+    required this.transitionPlayerIndex,
   });
 
   final String title;
@@ -25,6 +28,9 @@ class BigWalkerMatchViewState {
   final int? activePathIndex;
   final int? winnerIndex;
   final bool isStarted;
+  final String overlay;
+  final bool turnTransitionVisible;
+  final int? transitionPlayerIndex;
 }
 
 @immutable
@@ -36,6 +42,10 @@ class BigWalkerMatchActions {
     required this.onToggleMic,
     required this.onQuickChat,
     required this.onStartMatch,
+    required this.onOpenPause,
+    required this.onOpenRules,
+    required this.onOpenSettings,
+    required this.onCloseOverlay,
   });
 
   final ValueChanged<int> onParticipantsCountChanged;
@@ -44,6 +54,10 @@ class BigWalkerMatchActions {
   final VoidCallback onToggleMic;
   final VoidCallback onQuickChat;
   final VoidCallback onStartMatch;
+  final VoidCallback onOpenPause;
+  final VoidCallback onOpenRules;
+  final VoidCallback onOpenSettings;
+  final VoidCallback onCloseOverlay;
 }
 
 @immutable

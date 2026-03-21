@@ -32,9 +32,7 @@ class GameRoomScene extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned.fill(
-            child: _SceneImageLayer(),
-          ),
+          Positioned.fill(child: _SceneImageLayer()),
           const Positioned.fill(child: BigWalkerAtmosphere()),
           SafeArea(
             child: Padding(
@@ -50,6 +48,7 @@ class GameRoomScene extends StatelessWidget {
                     currentPlayerIndex: state.currentPlayerIndex,
                     turnNumber: state.turnNumber,
                     diceValue: state.diceValue,
+                    onOpenPause: actions.onOpenPause,
                   ),
                   const SizedBox(height: 10),
                   BigWalkerPlayerChips(
@@ -105,28 +104,92 @@ class GameRoomScene extends StatelessWidget {
               ),
             ),
           ),
-          AnimatedSwitcher(
-            duration: BigWalkerMotion.stateFade,
-            switchInCurve: BigWalkerMotion.stateFadeCurve,
-            switchOutCurve: BigWalkerMotion.stateFadeCurve,
-            child: !state.isStarted && state.winnerIndex == null
-                ? _CenterSceneModal(
-              title: 'Подготовка матча',
-              subtitle: 'Выберите число участников и нажмите «Начать матч».',
-              cta: 'Начать матч',
-              onTap: actions.onStartMatch,
-                )
-                : state.winnerIndex != null
-                    ? _CenterSceneModal(
-              title: 'Победа игрока ${state.winnerIndex! + 1}',
-              subtitle: 'Финиш достигнут за ${state.turnNumber} ходов.',
-              cta: 'Новая партия',
-              onTap: actions.onStartMatch,
-              winner: true,
-                    )
-                    : const SizedBox.shrink(),
-          ),
+          if (state.turnTransitionVisible && state.transitionPlayerIndex != null)
+            _TurnTransitionBanner(player: state.transitionPlayerIndex!),
+          _buildOverlay(state, actions),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOverlay(BigWalkerMatchViewState state, BigWalkerMatchActions actions) {
+    if (!state.isStarted && state.winnerIndex == null) {
+      return _CenterSceneModal(
+        title: 'Подготовка матча',
+        subtitle: 'Выберите число участников и нажмите «Начать матч».',
+        cta: 'Начать матч',
+        onTap: actions.onStartMatch,
+      );
+    }
+
+    if (state.winnerIndex != null) {
+      return _CenterSceneModal(
+        title: 'Победа игрока ${state.winnerIndex! + 1}',
+        subtitle: 'Финиш достигнут за ${state.turnNumber} ходов.',
+        cta: 'Новая партия',
+        onTap: actions.onStartMatch,
+        winner: true,
+      );
+    }
+
+    if (state.overlay == 'pause') {
+      return _CenterSceneModal(
+        title: 'Пауза',
+        subtitle: 'Поставьте игру на паузу или откройте правила/настройки.',
+        cta: 'Продолжить',
+        onTap: actions.onCloseOverlay,
+        secondaryActions: [
+          _SecondaryAction(label: 'Правила', onTap: actions.onOpenRules),
+          _SecondaryAction(label: 'Настройки', onTap: actions.onOpenSettings),
+        ],
+      );
+    }
+
+    if (state.overlay == 'rules') {
+      return _CenterSceneModal(
+        title: 'Правила',
+        subtitle:
+            '1) Бросайте кубик по очереди.\n2) Фишка движется на выпавшее число клеток.\n3) Кто первым дойдет до финиша — побеждает.',
+        cta: 'Понятно',
+        onTap: actions.onCloseOverlay,
+      );
+    }
+
+    if (state.overlay == 'settings') {
+      return _CenterSceneModal(
+        title: 'Настройки',
+        subtitle: 'В этой демо-версии доступны базовые настройки комнаты и интерфейса.',
+        cta: 'Закрыть',
+        onTap: actions.onCloseOverlay,
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+}
+
+class _TurnTransitionBanner extends StatelessWidget {
+  const _TurnTransitionBanner({required this.player});
+  final int player;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 98,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: AnimatedContainer(
+          duration: BigWalkerMotion.turnGlow,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: BigWalkerTokens.accentCyan.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: BigWalkerTokens.accentCyan),
+            boxShadow: [BoxShadow(color: BigWalkerTokens.accentCyan.withOpacity(0.3), blurRadius: 18)],
+          ),
+          child: Text('Ход переходит к игроку ${player + 1}', style: const TextStyle(color: BigWalkerTokens.textPrimary, fontWeight: FontWeight.w700)),
+        ),
       ),
     );
   }
@@ -140,6 +203,7 @@ class _CenterSceneModal extends StatelessWidget {
     required this.cta,
     required this.onTap,
     this.winner = false,
+    this.secondaryActions = const [],
   });
 
   final String title;
@@ -147,6 +211,7 @@ class _CenterSceneModal extends StatelessWidget {
   final String cta;
   final VoidCallback onTap;
   final bool winner;
+  final List<_SecondaryAction> secondaryActions;
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +224,7 @@ class _CenterSceneModal extends StatelessWidget {
             curve: BigWalkerMotion.winnerModalCurve,
             scale: 1,
             child: Container(
-              width: 380,
+              width: 400,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: BigWalkerTokens.card,
@@ -175,6 +240,26 @@ class _CenterSceneModal extends StatelessWidget {
                   Text(title, style: const TextStyle(color: BigWalkerTokens.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
                   Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: BigWalkerTokens.textSecondary)),
+                  if (secondaryActions.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      children: secondaryActions
+                          .map((action) => GestureDetector(
+                                onTap: action.onTap,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: BigWalkerTokens.bgSoft,
+                                    border: Border.all(color: BigWalkerTokens.cardBorder),
+                                  ),
+                                  child: Text(action.label, style: const TextStyle(color: BigWalkerTokens.textPrimary, fontSize: 12)),
+                                ),
+                              ))
+                          .toList(),
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   GestureDetector(
                     onTap: onTap,
@@ -197,6 +282,12 @@ class _CenterSceneModal extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SecondaryAction {
+  const _SecondaryAction({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
 }
 
 class _SceneImageLayer extends StatelessWidget {

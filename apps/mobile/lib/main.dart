@@ -116,6 +116,9 @@ class AppState extends ChangeNotifier {
   int turnNumber = 1;
   int? activePathIndex;
   int? winnerIndex;
+  String bigWalkerOverlay = 'none';
+  bool turnTransitionVisible = false;
+  int? transitionPlayerIndex;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -143,6 +146,9 @@ class AppState extends ChangeNotifier {
     activePathIndex: activePathIndex,
     winnerIndex: winnerIndex,
     isStarted: bigWalkerStarted,
+    overlay: bigWalkerOverlay,
+    turnTransitionVisible: turnTransitionVisible,
+    transitionPlayerIndex: transitionPlayerIndex,
   );
 
   BigWalkerMatchActions get bigWalkerActions => BigWalkerMatchActions(
@@ -156,6 +162,10 @@ class AppState extends ChangeNotifier {
       sendChat('Привет!');
     },
     onStartMatch: startBigWalkerMatch,
+    onOpenPause: () => setBigWalkerOverlay('pause'),
+    onOpenRules: () => setBigWalkerOverlay('rules'),
+    onOpenSettings: () => setBigWalkerOverlay('settings'),
+    onCloseOverlay: closeBigWalkerOverlay,
   );
 
 
@@ -719,6 +729,19 @@ class AppState extends ChangeNotifier {
     activePathIndex = 0;
     bigWalkerStarted = true;
     isRollingDice = false;
+    bigWalkerOverlay = 'none';
+    turnTransitionVisible = false;
+    transitionPlayerIndex = null;
+    notifyListeners();
+  }
+
+  void setBigWalkerOverlay(String value) {
+    bigWalkerOverlay = value;
+    notifyListeners();
+  }
+
+  void closeBigWalkerOverlay() {
+    bigWalkerOverlay = 'none';
     notifyListeners();
   }
 
@@ -765,8 +788,13 @@ class AppState extends ChangeNotifier {
     }
 
     currentPlayerIndex = (currentPlayerIndex + 1) % participantsCount;
+    transitionPlayerIndex = currentPlayerIndex;
+    turnTransitionVisible = true;
     turnNumber += 1;
     isRollingDice = false;
+    notifyListeners();
+    await Future<void>.delayed(BigWalkerMotion.turnGlow);
+    turnTransitionVisible = false;
     notifyListeners();
   }
 
@@ -795,6 +823,9 @@ class AppState extends ChangeNotifier {
     turnNumber = 1;
     activePathIndex = null;
     winnerIndex = null;
+    bigWalkerOverlay = 'none';
+    turnTransitionVisible = false;
+    transitionPlayerIndex = null;
     yourTurn = true;
     previewRow = null;
     previewCol = null;
