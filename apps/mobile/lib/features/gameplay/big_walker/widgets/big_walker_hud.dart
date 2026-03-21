@@ -14,6 +14,7 @@ class BigWalkerHud extends StatelessWidget {
     required this.currentPlayerIndex,
     required this.turnNumber,
     required this.diceValue,
+    required this.onOpenPause,
   });
 
   final int participantsCount;
@@ -24,6 +25,7 @@ class BigWalkerHud extends StatelessWidget {
   final int currentPlayerIndex;
   final int turnNumber;
   final int diceValue;
+  final VoidCallback onOpenPause;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +76,8 @@ class BigWalkerHud extends StatelessWidget {
           _CircleIcon(icon: Icons.mic_rounded, onTap: onToggleMic),
           const SizedBox(width: 6),
           _CircleIcon(icon: Icons.chat_bubble_outline_rounded, onTap: onQuickChat),
+          const SizedBox(width: 6),
+          _CircleIcon(icon: Icons.pause_rounded, onTap: onOpenPause),
         ],
       ),
     );
