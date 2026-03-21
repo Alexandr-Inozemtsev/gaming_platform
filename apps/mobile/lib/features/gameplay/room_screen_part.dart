@@ -13,122 +13,168 @@ class RoomScreen extends StatefulWidget {
   State<RoomScreen> createState() => _RoomScreenState();
 }
 
-class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
-  final chat = TextEditingController();
-
-  @override
-  void dispose() {
-    pulse.dispose();
-    super.dispose();
-  }
+class _RoomScreenState extends State<RoomScreen> {
 
   @override
   Widget build(BuildContext context) {
     final s = widget.state;
-    return Stack(
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxHeight < 700;
-            return Padding(
-              padding: const EdgeInsets.all(AppSpacing.xs),
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: OutlinedButton.icon(
-                      onPressed: () => s.setTab(0),
-                      icon: const Icon(Icons.arrow_back),
-                      label: Text(s.t('tab.home'))
+    return Stack(children: [
+      Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1A1F36), Color(0xFF0F1324)],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text('Большая бродилка', style: AppTypography.h2.copyWith(color: AppColors.campaignHeader)),
+                    const Spacer(),
+                    SizedBox(
+                      width: 220,
+                      child: Slider(
+                        value: s.participantsCount.toDouble(),
+                        min: 2,
+                        max: 6,
+                        divisions: 4,
+                        label: '${s.participantsCount}',
+                        onChanged: (value) => s.setParticipantsCount(value.round()),
+                      ),
                     )
+                  ],
+                ),
+                SizedBox(
+                  height: 52,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (_, index) => PlayerSlot(
+                      name: index == 0 ? 'You' : 'Player ${index + 1}',
+                      ready: true,
+                      host: index == s.currentPlayerIndex,
+                    ),
+                    separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xs),
+                    itemCount: s.participantsCount,
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: const [
-                      Expanded(child: SizedBox(height: 44, child: PlayerSlot(name: 'You', ready: true, host: true))),
-                      SizedBox(width: AppSpacing.xs),
-                      Expanded(child: SizedBox(height: 44, child: PlayerSlot(name: 'Bot', ready: true))),
-                      SizedBox(width: AppSpacing.xs),
-                      InviteCodeBadge(code: 'ROOM-42'),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    flex: compact ? 4 : 2,
-                    child: Card(
-                      child: Column(children: [
-                        const SizedBox(height: 8),
-                        Text(s.currentGameId),
-                        Expanded(child: s.currentGameId == 'tile_placement_demo' ? TileBoardWidget(state: s) : RollWriteBoardWidget(state: s))
-                      ])
-                    )
-                  ),
-                  if (!compact) ...[
-                    const SizedBox(height: 8),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Expanded(child: BigWalkerBoard(state: s)),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
                     Expanded(
-                      child: Row(children: [
-                        Expanded(child: Card(child: ListView(padding: const EdgeInsets.all(8), children: s.roomLog.map((e) => Text('• $e')).toList()))),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Card(
-                            child: Column(children: [
-                              Expanded(child: ListView(padding: const EdgeInsets.all(8), children: s.chat.map((e) => Text('💬 $e')).toList())),
-                              Row(children: [
-                                Expanded(child: TextField(controller: chat)),
-                                IconButton(onPressed: () { s.sendChat(chat.text); chat.clear(); }, icon: const Icon(Icons.send))
-                              ])
-                            ])
-                          )
-                        )
-                      ])
+                      child: ElevatedButton.icon(
+                        onPressed: s.isRollingDice ? null : s.rollDiceAndMoveWalker,
+                        icon: const Icon(Icons.casino_rounded),
+                        label: Text(s.isRollingDice ? 'Бросаем...' : 'Бросить кубик'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    AnimatedScale(
+                      scale: s.isRollingDice ? 1.25 : 1,
+                      duration: const Duration(milliseconds: 120),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text('${s.diceValue}', style: AppTypography.h2.copyWith(color: Colors.black)),
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AnimatedBuilder(
-                          animation: pulse,
-                          builder: (_, __) => Opacity(
-                            opacity: s.yourTurn ? 0.75 + pulse.value * 0.25 : 1,
-                            child: TurnIndicator(myTurn: s.yourTurn),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      const TimerIndicator(seconds: 24),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ActionBar(
-                    actions: [
-                      AppButton(
-                        onPressed: s.toggleVideoOverlay,
-                        icon: Icons.videocam_rounded,
-                        label: s.t('video.openOverlay'),
-                      ),
-                      AppButton(
-                        onPressed: () => s.sendRoomReport(reason: 'Токсичное сообщение в игровом чате'),
-                        icon: Icons.report_rounded,
-                        label: s.t('room.report'),
-                        variant: AppButtonVariant.secondary,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  HandTray(
-                    items: const ['A', 'B', 'C', 'D', 'E'],
-                    selectedIndex: 0,
-                    onSelect: (_) {},
-                  )
-                ]
-              )
-            );
-          }
+                ),
+              ],
+            ),
+          ),
         ),
-        if (s.videoOverlayVisible) VideoOverlayWidget(state: s)
-      ]
+      ),
+      Positioned(
+        right: 8,
+        top: 8,
+        child: Column(
+          children: [
+            _MiniIconButton(icon: Icons.videocam_rounded, onTap: s.toggleVideoOverlay),
+            const SizedBox(height: 6),
+            _MiniIconButton(icon: Icons.mic_rounded, onTap: s.toggleMic),
+            const SizedBox(height: 6),
+            _MiniIconButton(icon: Icons.chat_bubble_outline_rounded, onTap: () => s.sendChat('Привет!')),
+          ],
+        ),
+      ),
+      if (s.videoOverlayVisible) VideoOverlayWidget(state: s),
+    ]);
+  }
+}
+
+class _MiniIconButton extends StatelessWidget {
+  const _MiniIconButton({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(color: AppColors.bgElevated1.withOpacity(0.8), borderRadius: BorderRadius.circular(22)),
+        child: Icon(icon, size: 18, color: AppColors.textPrimary),
+      ),
+    );
+  }
+}
+
+class BigWalkerBoard extends StatelessWidget {
+  const BigWalkerBoard({super.key, required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    const totalCells = 40;
+    return GridView.builder(
+      itemCount: totalCells,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8, childAspectRatio: 1.1),
+      itemBuilder: (context, index) {
+        final playersHere = <int>[];
+        for (int i = 0; i < state.participantsCount; i += 1) {
+          if (state.walkerPositions[i] == index) playersHere.add(i);
+        }
+        return Container(
+          margin: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: index.isEven ? const Color(0xFF22304A) : const Color(0xFF273960),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: playersHere.isNotEmpty ? AppColors.primaryFig : AppColors.strokeSoft),
+          ),
+          child: Stack(
+            children: [
+              Positioned(left: 6, top: 4, child: Text('${index + 1}', style: AppTypography.caption)),
+              if (playersHere.isNotEmpty)
+                Center(
+                  child: Wrap(
+                    spacing: 2,
+                    children: playersHere
+                        .map((id) => CircleAvatar(
+                              radius: 7,
+                              backgroundColor: Color.lerp(AppColors.primaryFig, AppColors.accentSecondary, id / 6) ?? AppColors.primaryFig,
+                              child: Text('${id + 1}', style: const TextStyle(fontSize: 8, color: Colors.black)),
+                            ))
+                        .toList(),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -166,9 +212,10 @@ class VideoOverlayWidget extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: AppTokens.card.withOpacity(0.9),
+                        border: Border.all(color: AppColors.videoBorder),
                         borderRadius: BorderRadius.circular(AppTokens.videoTileRadius)
                       ),
-                      child: Text(id)
+                      child: Text(id == state.userId ? 'Local Video' : 'Remote: $id')
                     );
                   }).toList()
                 ),
@@ -197,6 +244,8 @@ class VideoOverlayWidget extends StatelessWidget {
                           },
                     child: Text(state.micEnabled ? state.t('video.micOn') : state.t('video.micOff'))
                   ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(onPressed: () => state.muteAllVideo(), child: const Text('Отключить всем')),
                   const SizedBox(width: 8),
                   FilledButton(onPressed: state.hangupVideo, child: Text(state.t('video.hangup')))
                 ]),
@@ -311,4 +360,3 @@ class RollWriteBoardWidget extends StatelessWidget {
     ]);
   }
 }
-
