@@ -98,6 +98,8 @@ class AppState extends ChangeNotifier {
   String? roomId;
   String currentGameId = 'tile_placement_demo';
   String botLevel = 'easy';
+  String matchMode = 'classic';
+  bool nextLevelAvailable = false;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -202,6 +204,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setMatchMode(String mode) {
+    matchMode = mode;
+    notifyListeners();
+  }
+
   Future<void> loginOrRegister(String email, String password, {required bool register}) async {
     authBusy = true;
     authError = null;
@@ -259,8 +266,9 @@ class AppState extends ChangeNotifier {
     if (userId == null) return;
     currentGameId = gameId;
     _resetBoards();
-    final result = await api.createMatch(gameId, [userId!, '${userId!}_bot']);
+    final result = await api.createMatch(gameId, [userId!, '${userId!}_bot'], mode: matchMode);
     roomId = result['id']?.toString();
+    nextLevelAvailable = (result['legacyState'] as Map<String, dynamic>?)?['nextLevelAvailable'] == true;
     roomLog.add('Room created: $roomId, game: $gameId');
     videoParticipants
       ..clear()
@@ -346,7 +354,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> startTestPlay(String variantId, String gameId) async {
     if (userId == null) return;
-    final result = await api.createMatch(gameId, [userId!, '${userId!}_bot'], variantId: variantId);
+    final result = await api.createMatch(gameId, [userId!, '${userId!}_bot'], variantId: variantId, mode: matchMode);
     roomId = result['id']?.toString();
     currentGameId = gameId;
     tab = 4;
@@ -360,7 +368,8 @@ class AppState extends ChangeNotifier {
     final result = await api.createMatch(
       variant['gameId'].toString(),
       [userId!, '${userId!}_bot'],
-      variantId: variant['id'].toString()
+      variantId: variant['id'].toString(),
+      mode: matchMode
     );
     roomId = result['id']?.toString();
     currentGameId = variant['gameId'].toString();
@@ -566,6 +575,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void muteAllVideo() {
+    micEnabled = false;
+    cameraEnabled = false;
+    videoStatus = 'muted_all';
+    notifyListeners();
+  }
+
   Future<void> sandboxPurchase() async {
     if (userId == null) return;
     final first = skus.isNotEmpty ? (skus.first as Map<String, dynamic>)['sku']?.toString() : 'skin.dice.neon';
@@ -606,6 +622,15 @@ class AppState extends ChangeNotifier {
     }
     await InAppPurchase.instance.restorePurchases();
     purchaseStatus = 'Restore purchases requested';
+    notifyListeners();
+  }
+
+  Future<void> nextLegacyLevel() async {
+    if (roomId == null) return;
+    final result = await api.nextLevel(roomId!);
+    roomId = result['id']?.toString();
+    nextLevelAvailable = false;
+    tab = 4;
     notifyListeners();
   }
 
