@@ -1,0 +1,64 @@
+{
+  "game_id": "big_walker_demo",
+  "package_name": "big_walker_codex_handoff",
+  "reference_screens": [
+    {
+      "file": "01_settings_modal_reference.png",
+      "role": "settings_modal"
+    },
+    {
+      "file": "02_match_screen_single_token_reference.png",
+      "role": "main_match_primary_reference"
+    },
+    {
+      "file": "03_match_screen_multi_token_reference.png",
+      "role": "main_match_multiplayer_reference"
+    },
+    {
+      "file": "04_dice_roll_state_reference.png",
+      "role": "dice_roll_state"
+    },
+    {
+      "file": "05_next_turn_overlay_reference.png",
+      "role": "next_turn_overlay"
+    },
+    {
+      "file": "06_match_screen_alt_layout_reference.png",
+      "role": "main_match_secondary_reference"
+    },
+    {
+      "file": "07_player_select_screen_reference.png",
+      "role": "player_select_screen"
+    },
+    {
+      "file": "08_pause_menu_reference.png",
+      "role": "pause_menu"
+    },
+    {
+      "file": "09_victory_modal_reference.png",
+      "role": "victory_modal"
+    },
+    {
+      "file": "10_rules_modal_reference.png",
+      "role": "rules_modal"
+    }
+  ],
+  "repo": {
+    "name": "Alexandr-Inozemtsev/gaming_platform",
+    "mobile_path": "apps/mobile",
+    "entry_file": "apps/mobile/lib/main.dart"
+  },
+  "target_files": [
+    "apps/mobile/lib/main.dart",
+    "apps/mobile/lib/theme/game/big_walker_tokens.dart",
+    "apps/mobile/lib/games/big_walker/big_walker_board.dart",
+    "apps/mobile/lib/features/gameplay/big_walker/game_room_scene.dart",
+    "apps/mobile/lib/features/gameplay/big_walker/big_walker_match_state.dart",
+    "apps/mobile/lib/features/gameplay/big_walker/animations/big_walker_motion.dart",
+    "apps/mobile/lib/features/gameplay/big_walker/widgets/big_walker_action_panel.dart",
+    "apps/mobile/lib/features/gameplay/big_walker/widgets/big_walker_hud.dart",
+    "apps/mobile/lib/features/gameplay/big_walker/widgets/big_walker_player_chips.dart",
+    "apps/mobile/pubspec.yaml",
+    "AGENTS.md"
+  ]
+}
