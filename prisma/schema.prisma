@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  levels      Level[]
+  matches     Match[]
+}
+
+model Level {
+  id         String   @id @default(cuid())
+  campaignId String
+  configJSON Json
+  index      Int
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, index])
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  eventName String
+  payload   Json
+  createdAt DateTime @default(now())
+}
+
+model Reward {
+  id          String   @id @default(cuid())
+  campaignId  String?
+  userId      String
+  rewardType  String
+  rewardValue String
+  createdAt   DateTime @default(now())
+}
+
+model Leaderboard {
+  id        String   @id @default(cuid())
+  userId    String
+  score     Int      @default(0)
+  period    String   @default("all-time")
+  createdAt DateTime @default(now())
+}
+
+model Match {
+  id         String  @id @default(cuid())
+  externalId String  @unique
+  campaignId String?
+  level      Int     @default(1)
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+}
+
+model LegacyState {
+  id       String @id @default(cuid())
+  matchId  String @unique
+  turnData Json
+}
+
+model LegacyGame {
+  id         String @id @default(cuid())
+  configJSON Json
+}
+
+model CoopSession {
+  id         String   @id @default(cuid())
+  matchId    String?
+  configJSON Json
+  createdAt  DateTime @default(now())
+}

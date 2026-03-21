@@ -44,8 +44,31 @@ docker compose logs -f
 
 Подробности: `docs/infra.md`.
 
-## Deploy (staging/prod templates)
-См. `docs/deploy.md` для Dockerfile сервисов, `docker-compose.prod.yml` и env-шаблонов для staging/prod.
+## Deploy P2 (staging/prod)
+См. `docs/deploy.md` для полного процесса. Коротко:
+
+```bash
+export ENV=staging
+export DB_MIGRATE=true
+
+docker build -f infra/Dockerfile --target api -t tabletop-api:${ENV} .
+docker build -f infra/Dockerfile --target matches -t tabletop-matches:${ENV} .
+docker build -f infra/Dockerfile --target campaigns -t tabletop-campaigns:${ENV} .
+docker build -f infra/Dockerfile --target analytics -t tabletop-analytics:${ENV} .
+docker build -f infra/Dockerfile --target web-socket -t tabletop-websocket:${ENV} .
+
+if [ "${DB_MIGRATE}" = "true" ]; then
+  npx prisma migrate deploy
+fi
+
+kubectl apply -f k8s/
+```
+
+One-command:
+
+```bash
+npm run prod-up
+```
 
 ## Release checklist и one-button запуск (Prompt P)
 Быстрый запуск локального контура:
@@ -137,6 +160,13 @@ flutter run
 
 ## Testing contour (Prompt K)
 Документация по unit/integration/e2e/load: `docs/testing.md`.
+
+## P2 add-ons status
+- UI/UX: campaigns screen + animated transitions (`animations`), store subscription tab.
+- IAP: `in_app_purchase` integration with `REGION_MODE=ru_by` lock.
+- Video/Voice: API token endpoints `/webrtc/*` + realtime SFU coordinator scaffold.
+- Analytics: publish/query queue + Prometheus text endpoint + Sentry hook.
+- Advanced tests: `tests/load.js` + extra p2 e2e test + CI audit step.
 
 ## Internal Game Generator (Prompt L)
 Документация внутреннего генератора definitions/fixtures: `docs/game-generator.md`.
