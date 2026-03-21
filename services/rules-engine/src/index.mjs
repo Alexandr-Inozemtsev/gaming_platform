@@ -6,7 +6,8 @@
  * Важно при изменении: не ломать формат gameState и сохранять полную детерминированность по seed.
  */
 
-export const SUPPORTED_GAMES = ['tile_placement_demo', 'roll_and_write_demo'];
+export { SUPPORTED_GAMES } from '../../../libraries/games/src/definitions.mjs';
+import { createInitialGameState as createInitialStateFromLibrary } from '../../../libraries/games/src/definitions.mjs';
 
 /**
  * Генератор псевдослучайных чисел с фиксируемым seed нужен для воспроизводимости матчей и ботов.
@@ -22,32 +23,8 @@ export const rng = (seed = 1) => {
 /**
  * Инициализируем специфичное состояние игры, чтобы API не дублировал правила в нескольких местах.
  */
-export const createInitialGameState = (gameId, players, seed = 1) => {
-  if (gameId === 'tile_placement_demo') {
-    return {
-      gameId,
-      size: 4,
-      grid: Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => null)),
-      hands: Object.fromEntries(players.map((p, idx) => [p, idx % 2 === 0 ? 'A' : 'B'])),
-      seed,
-      turn: 0
-    };
-  }
-
-  if (gameId === 'roll_and_write_demo') {
-    const r = rng(seed);
-    return {
-      gameId,
-      size: 5,
-      sheet: Object.fromEntries(players.map((p) => [p, Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => 0))])),
-      dice: [1 + Math.floor(r() * 6), 1 + Math.floor(r() * 6)],
-      seed,
-      turn: 0
-    };
-  }
-
-  throw new Error('UNSUPPORTED_GAME');
-};
+export const createInitialGameState = (gameId, players, seed = 1) =>
+  createInitialStateFromLibrary(gameId, players, seed, { rng });
 
 const inBounds = (size, row, col) => row >= 0 && col >= 0 && row < size && col < size;
 
