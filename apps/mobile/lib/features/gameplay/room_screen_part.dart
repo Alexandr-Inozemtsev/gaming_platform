@@ -18,60 +18,18 @@ class _RoomScreenState extends State<RoomScreen> {
   Widget build(BuildContext context) {
     final s = widget.state;
     final vm = s.bigWalkerViewModel;
-    final viewState = vm.state;
-    final actions = vm.actions;
 
-    return Stack(children: [
-      Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1A1F36), Color(0xFF0F1324)],
-          ),
+    return Stack(
+      children: [
+        GameRoomScene(viewModel: vm),
+        AnimatedSwitcher(
+          duration: BigWalkerMotion.turnGlow,
+          switchInCurve: BigWalkerMotion.turnGlowCurve,
+          switchOutCurve: BigWalkerMotion.turnGlowCurve,
+          child: s.videoOverlayVisible ? VideoOverlayWidget(key: const ValueKey('video-overlay'), state: s) : const SizedBox.shrink(),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Column(
-              children: [
-                BigWalkerRoomHeader(
-                  title: viewState.title,
-                  participantsCount: viewState.participantsCount,
-                  onParticipantsCountChanged: actions.onParticipantsCountChanged,
-                ),
-                BigWalkerPlayerStrip(
-                  participantsCount: viewState.participantsCount,
-                  currentPlayerIndex: viewState.currentPlayerIndex,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Expanded(
-                  child: BigWalkerBoard(
-                    participantsCount: viewState.participantsCount,
-                    walkerPositions: viewState.walkerPositions,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                BigWalkerHud(
-                  isRollingDice: viewState.isRollingDice,
-                  diceValue: viewState.diceValue,
-                  onRollDice: actions.onRollDice,
-                  onToggleVideo: actions.onToggleVideo,
-                  onToggleMic: actions.onToggleMic,
-                  onQuickChat: actions.onQuickChat,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      AnimatedSwitcher(
-        duration: BigWalkerMotion.turnGlow,
-        switchInCurve: BigWalkerMotion.turnGlowCurve,
-        switchOutCurve: BigWalkerMotion.turnGlowCurve,
-        child: s.videoOverlayVisible ? VideoOverlayWidget(key: const ValueKey('video-overlay'), state: s) : const SizedBox.shrink(),
-      ),
-    ]);
+      ],
+    );
   }
 }
 
@@ -117,8 +75,9 @@ class VideoOverlayWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  OutlinedButton(
-                    onPressed: state.mediaPermissionGranted
+                  _OverlayActionChip(
+                    label: state.cameraEnabled ? state.t('video.cameraOn') : state.t('video.cameraOff'),
+                    onTap: state.mediaPermissionGranted
                         ? state.toggleCamera
                         : () {
                             state.grantMediaPermission();
@@ -126,11 +85,11 @@ class VideoOverlayWidget extends StatelessWidget {
                               SnackBar(content: Text(state.t('video.permissionGranted')))
                             );
                           },
-                    child: Text(state.cameraEnabled ? state.t('video.cameraOn') : state.t('video.cameraOff'))
                   ),
                   const SizedBox(width: 8),
-                  OutlinedButton(
-                    onPressed: state.mediaPermissionGranted
+                  _OverlayActionChip(
+                    label: state.micEnabled ? state.t('video.micOn') : state.t('video.micOff'),
+                    onTap: state.mediaPermissionGranted
                         ? state.toggleMic
                         : () {
                             state.grantMediaPermission();
@@ -138,12 +97,11 @@ class VideoOverlayWidget extends StatelessWidget {
                               SnackBar(content: Text(state.t('video.permissionGranted')))
                             );
                           },
-                    child: Text(state.micEnabled ? state.t('video.micOn') : state.t('video.micOff'))
                   ),
                   const SizedBox(width: 8),
-                  OutlinedButton(onPressed: () => state.muteAllVideo(), child: const Text('Отключить всем')),
+                  _OverlayActionChip(label: 'Отключить всем', onTap: state.muteAllVideo),
                   const SizedBox(width: 8),
-                  FilledButton(onPressed: state.hangupVideo, child: Text(state.t('video.hangup')))
+                  _OverlayActionChip(label: state.t('video.hangup'), onTap: state.hangupVideo, danger: true),
                 ]),
                 Text('${state.t('room.videoStatus')}: ${state.videoStatus}')
               ])
@@ -151,6 +109,32 @@ class VideoOverlayWidget extends StatelessWidget {
           )
         )
       )
+    );
+  }
+}
+
+
+
+class _OverlayActionChip extends StatelessWidget {
+  const _OverlayActionChip({required this.label, required this.onTap, this.danger = false});
+
+  final String label;
+  final VoidCallback onTap;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: danger ? AppColors.error.withOpacity(0.2) : AppColors.bgElevated2,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: danger ? AppColors.error : AppColors.strokeDefault),
+        ),
+        child: Text(label, style: const TextStyle(fontSize: 12)),
+      ),
     );
   }
 }
