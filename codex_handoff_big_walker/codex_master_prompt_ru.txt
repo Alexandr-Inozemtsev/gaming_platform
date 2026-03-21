@@ -1,0 +1,150 @@
+Проанализируй текущий Flutter-клиент в репозитории `Alexandr-Inozemtsev/gaming_platform` и выполни визуальный апгрейд первой демо-игры `big_walker_demo` на основе готовых reference screens.
+
+Контекст репозитория:
+- мобильный клиент: `apps/mobile`
+- точка входа: `apps/mobile/lib/main.dart`
+- текущая механика игры уже существует и её нельзя ломать
+- уже используются:
+  - `apps/mobile/lib/theme/game/big_walker_tokens.dart`
+  - `apps/mobile/lib/games/big_walker/big_walker_board.dart`
+  - `apps/mobile/lib/features/gameplay/big_walker/game_room_scene.dart`
+  - `apps/mobile/lib/features/gameplay/big_walker/animations/big_walker_motion.dart`
+  - `apps/mobile/lib/features/gameplay/big_walker/big_walker_match_state.dart`
+
+Reference screens:
+Добавь и используй как visual references папку:
+`apps/mobile/assets/design/big_walker_reference/`
+
+Файлы:
+- 01_settings_modal_reference.png
+- 02_match_screen_single_token_reference.png
+- 03_match_screen_multi_token_reference.png
+- 04_dice_roll_state_reference.png
+- 05_next_turn_overlay_reference.png
+- 06_match_screen_alt_layout_reference.png
+- 07_player_select_screen_reference.png
+- 08_pause_menu_reference.png
+- 09_victory_modal_reference.png
+- 10_rules_modal_reference.png
+
+Главная цель:
+
+Важное уточнение:
+- текущий код Big Walker сейчас основан на 40 клетках (`BigWalkerTokens.cols * rows`)
+- reference screens местами показывают декоративную нумерацию, не совпадающую с кодом
+- treat references as visual direction, not as source of truth for exact numbering
+- если переводишь игру на 75 клеток, сделай это осознанно и консистентно через tokens + board layout + route painter, не ломая core flow: dice roll -> step-by-step token movement -> next turn -> win on last cell
+
+Сделать production-looking demo для игры “Большая бродилка”, визуально близкое к референсам:
+- dark enchanted room
+- premium fantasy tabletop
+- cyan glow + amber highlights
+- ornate board frame
+- readable 75-cell route
+- magical creature tokens
+- premium roll button
+- rich HUD
+- polished modal windows
+- no placeholder UI
+
+Критически важно:
+1. Не переписывай игровые правила.
+2. Сохрани текущую механику из `AppState.rollDiceAndMoveWalker()`.
+3. Не превращай экран в статичный screenshot-viewer.
+4. Используй reference screens как guide по композиции, цвету, атмосфере и состояниям.
+5. Реализуй UI кодом во Flutter.
+6. Не оставляй дефолтные Material controls как финальный вид.
+
+Что нужно сделать:
+1. Подключить reference screens в `pubspec.yaml`.
+2. В `big_walker_tokens.dart` расширить набор design tokens:
+   - colors
+   - gradients
+   - shadows
+   - radii
+   - spacing
+   - motion durations
+   - asset paths
+3. Пересобрать `GameRoomScene` как layered scene:
+   - background room
+   - atmosphere / particles / glow
+   - tabletop container
+   - board frame
+   - board route
+   - tokens
+   - HUD
+   - action panel
+   - modal overlays
+4. Переделать `BigWalkerBoard`:
+   - уйти от плоской grid-like snake visual
+   - сделать маршрут визуально художественным и читаемым
+   - старт и финиш сделать заметными
+   - активную клетку подсвечивать
+   - поддержать 2–6 игроков
+5. Переделать HUD:
+   - avatar/current player
+   - turn/round
+   - порядок игроков
+   - визуальное выделение активного игрока
+6. Переделать action panel:
+   - themed dice area
+   - premium roll button
+   - support idle / rolling / result states
+7. Сделать отдельные overlays/modals:
+   - player select screen 2–6
+   - pause menu
+   - rules modal
+   - settings modal
+   - victory modal
+   - next turn overlay
+8. Сохранить все тексты читаемыми и mobile-friendly.
+9. Добавить плавные анимации:
+   - dice roll
+   - token movement
+   - next turn overlay
+   - modal transitions
+   - active player glow/pulse
+10. Обновить `AGENTS.md`, добавив правила визуального качества для игровых экранов.
+
+Желаемая структура новых/изменённых файлов:
+- `apps/mobile/lib/theme/game/big_walker_tokens.dart`
+- `apps/mobile/lib/games/big_walker/big_walker_board.dart`
+- `apps/mobile/lib/features/gameplay/big_walker/game_room_scene.dart`
+- `apps/mobile/lib/features/gameplay/big_walker/widgets/big_walker_action_panel.dart`
+- `apps/mobile/lib/features/gameplay/big_walker/widgets/big_walker_hud.dart`
+- `apps/mobile/lib/features/gameplay/big_walker/widgets/big_walker_player_chips.dart`
+- при необходимости создай:
+  - `widgets/big_walker_modal_shell.dart`
+  - `widgets/big_walker_pause_menu.dart`
+  - `widgets/big_walker_rules_modal.dart`
+  - `widgets/big_walker_settings_modal.dart`
+  - `widgets/big_walker_victory_modal.dart`
+  - `widgets/big_walker_next_turn_overlay.dart`
+  - `widgets/big_walker_player_select.dart`
+  - `painters/big_walker_route_painter.dart`
+
+Технические требования:
+- Flutter only
+- landscape only
+- адаптив для Android + iPhone landscape
+- без стороннего game engine
+- чистая композиция и поддерживаемый код
+- все magic numbers вынести в tokens/constants
+- минимально инвазивно по отношению к общей архитектуре
+
+Финальные acceptance criteria:
+- экран выглядит как production demo, а не прототип
+- визуально близок к reference screens
+- механика сохранена
+- кубик анимирован
+- фишки двигаются плавно
+- переход хода понятен
+- модалки победы/правил/настроек/паузы реализованы
+- экран выбора игроков реализован
+- нет placeholder UI
+
+Формат ответа после выполнения:
+1. какие файлы изменены
+2. какие файлы созданы
+3. что сделано по визуалу
+4. что осталось желательным для следующей итерации
