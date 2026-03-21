@@ -22,6 +22,7 @@ import 'shared/ui/controls.dart';
 import 'shared/ui/ui_kit.dart';
 import 'shared/ui/system_states.dart';
 import 'theme/tokens.dart';
+import 'games/big_walker/big_walker_board.dart';
 part 'features/catalog/catalog_container_part.dart';
 part 'features/gameplay/room_screen_part.dart';
 part 'features/home/home_container_part.dart';

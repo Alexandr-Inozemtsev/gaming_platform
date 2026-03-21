@@ -63,7 +63,12 @@ class _RoomScreenState extends State<RoomScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Expanded(child: BigWalkerBoard(state: s)),
+                Expanded(
+                  child: BigWalkerBoard(
+                    participantsCount: s.participantsCount,
+                    walkerPositions: s.walkerPositions,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
@@ -129,52 +134,6 @@ class _MiniIconButton extends StatelessWidget {
         decoration: BoxDecoration(color: AppColors.bgElevated1.withOpacity(0.8), borderRadius: BorderRadius.circular(22)),
         child: Icon(icon, size: 18, color: AppColors.textPrimary),
       ),
-    );
-  }
-}
-
-class BigWalkerBoard extends StatelessWidget {
-  const BigWalkerBoard({super.key, required this.state});
-  final AppState state;
-
-  @override
-  Widget build(BuildContext context) {
-    const totalCells = 40;
-    return GridView.builder(
-      itemCount: totalCells,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8, childAspectRatio: 1.1),
-      itemBuilder: (context, index) {
-        final playersHere = <int>[];
-        for (int i = 0; i < state.participantsCount; i += 1) {
-          if (state.walkerPositions[i] == index) playersHere.add(i);
-        }
-        return Container(
-          margin: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: index.isEven ? const Color(0xFF22304A) : const Color(0xFF273960),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: playersHere.isNotEmpty ? AppColors.primaryFig : AppColors.strokeSoft),
-          ),
-          child: Stack(
-            children: [
-              Positioned(left: 6, top: 4, child: Text('${index + 1}', style: AppTypography.caption)),
-              if (playersHere.isNotEmpty)
-                Center(
-                  child: Wrap(
-                    spacing: 2,
-                    children: playersHere
-                        .map((id) => CircleAvatar(
-                              radius: 7,
-                              backgroundColor: Color.lerp(AppColors.primaryFig, AppColors.accentSecondary, id / 6) ?? AppColors.primaryFig,
-                              child: Text('${id + 1}', style: const TextStyle(fontSize: 8, color: Colors.black)),
-                            ))
-                        .toList(),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

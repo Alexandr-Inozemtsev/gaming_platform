@@ -13,6 +13,7 @@
 - `services/api` — backend API (TypeScript-заглушка)
 - `services/realtime` — realtime-шлюз (TypeScript-заглушка)
 - `services/rules-engine` — библиотека игровых правил
+- `libraries/games` — отдельная библиотека определений игр (каталог game-specific данных)
 - `services/admin` — минимальный backend для админ-функций
 - `infra` — Docker Compose, шаблоны переменных окружения, init.sql
 - `docs` — архитектурная и операционная документация
@@ -145,6 +146,9 @@ flutter run
 
 ## MVP Games
 Описание правил и ботов: `docs/games.md`.
+
+## Games library (выделение игровых файлов)
+Все game-specific определения и ассеты выносятся в `libraries/games/` и подключаются из ядра платформы. Базовые definitions: `libraries/games/src/definitions.mjs`.
 
 ## Store MVP
 Документация магазина и инвентаря: `docs/store.md`.
