@@ -242,6 +242,7 @@ class AppTheme {
 }
 
 // Совместимость с существующими экранами, пока идёт поэтапная миграция на AppColors/AppSpacing.
+// Game-specific токены (например Big Walker) выносим в `theme/game/*_tokens.dart` — см. `theme/game/big_walker_tokens.dart`.
 class AppTokens {
   static const Color bg = AppColors.bgBase;
   static const Color card = AppColors.bgElevated1;
