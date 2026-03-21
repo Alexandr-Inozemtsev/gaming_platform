@@ -96,10 +96,15 @@ class AppState extends ChangeNotifier {
   List<dynamic> moderationAuditLog = const [];
 
   String? roomId;
-  String currentGameId = 'tile_placement_demo';
+  String currentGameId = 'big_walker_demo';
   String botLevel = 'easy';
   String matchMode = 'classic';
   bool nextLevelAvailable = false;
+  int participantsCount = 2;
+  List<int> walkerPositions = List.filled(6, 0);
+  int currentPlayerIndex = 0;
+  int diceValue = 1;
+  bool isRollingDice = false;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -144,6 +149,16 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     });
     games = await api.games();
+    if (!games.any((item) => (item as Map<String, dynamic>)['id'] == 'big_walker_demo')) {
+      games = [
+        {
+          'id': 'big_walker_demo',
+          'title': 'Большая бродилка',
+          'description': 'Путешествие по сказочным землям'
+        },
+        ...games
+      ];
+    }
     campaigns = await api.campaigns();
     final skuResponse = await api.storeSkus();
     skus = skuResponse['items'] as List<dynamic>? ?? const [];
@@ -201,6 +216,13 @@ class AppState extends ChangeNotifier {
   void setCurrentGame(String gameId) {
     currentGameId = gameId;
     _resetBoards();
+    notifyListeners();
+  }
+
+  void setParticipantsCount(int value) {
+    participantsCount = value.clamp(2, 6);
+    walkerPositions = List.generate(6, (index) => index < participantsCount ? 0 : -1);
+    currentPlayerIndex = 0;
     notifyListeners();
   }
 
@@ -266,6 +288,17 @@ class AppState extends ChangeNotifier {
     if (userId == null) return;
     currentGameId = gameId;
     _resetBoards();
+    if (gameId == 'big_walker_demo') {
+      roomId = 'room_big_walker_demo';
+      nextLevelAvailable = false;
+      setParticipantsCount(participantsCount);
+      videoParticipants
+        ..clear()
+        ..addAll(List.generate(participantsCount, (index) => index == 0 ? 'You' : 'Player ${index + 1}'));
+      tab = 4;
+      notifyListeners();
+      return;
+    }
     final result = await api.createMatch(gameId, [userId!, '${userId!}_bot'], mode: matchMode);
     roomId = result['id']?.toString();
     nextLevelAvailable = (result['legacyState'] as Map<String, dynamic>?)?['nextLevelAvailable'] == true;
@@ -634,6 +667,22 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> rollDiceAndMoveWalker() async {
+    if (isRollingDice) return;
+    isRollingDice = true;
+    notifyListeners();
+    for (int i = 0; i < 8; i += 1) {
+      diceValue = 1 + _random.nextInt(6);
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 90));
+    }
+    walkerPositions[currentPlayerIndex] = (walkerPositions[currentPlayerIndex] + diceValue).clamp(0, 39);
+    roomLog.add('Player ${currentPlayerIndex + 1} бросил $diceValue и перешел на ${walkerPositions[currentPlayerIndex] + 1}');
+    currentPlayerIndex = (currentPlayerIndex + 1) % participantsCount;
+    isRollingDice = false;
+    notifyListeners();
+  }
+
   void trySkin(String sku) {
     appliedSkinSku = sku;
     notifyListeners();
@@ -651,6 +700,10 @@ class AppState extends ChangeNotifier {
     tileGrid = List.generate(4, (_) => List.filled(4, null));
     rollSheet = List.generate(5, (_) => List.filled(5, 0));
     dice = [3, 2];
+    walkerPositions = List.generate(6, (index) => index < participantsCount ? 0 : -1);
+    currentPlayerIndex = 0;
+    diceValue = 1;
+    isRollingDice = false;
     yourTurn = true;
     previewRow = null;
     previewCol = null;
@@ -778,10 +831,11 @@ class MainShell extends StatelessWidget {
       body: Column(
         children: [
           ReconnectBanner(visible: state.wsOffline, text: 'Проблемы с соединением. Пытаемся переподключиться...'),
-          Padding(
-            padding: AppLayout.safeAwarePadding(context, horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-            child: BreadcrumbNav(items: breadcrumbItems, currentIndex: state.tab, onTap: state.setTab),
-          ),
+          if (state.tab != 4)
+            Padding(
+              padding: AppLayout.safeAwarePadding(context, horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+              child: BreadcrumbNav(items: breadcrumbItems, currentIndex: state.tab, onTap: state.setTab),
+            ),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
