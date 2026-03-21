@@ -6,7 +6,8 @@
  * Важно при изменении: не ломать формат gameState и сохранять полную детерминированность по seed.
  */
 
-export const SUPPORTED_GAMES = ['tile_placement_demo', 'roll_and_write_demo'];
+export { SUPPORTED_GAMES } from '../../../libraries/games/src/definitions.mjs';
+import { createInitialGameState as createInitialStateFromLibrary } from '../../../libraries/games/src/definitions.mjs';
 
 /**
  * Генератор псевдослучайных чисел с фиксируемым seed нужен для воспроизводимости матчей и ботов.
@@ -22,32 +23,8 @@ export const rng = (seed = 1) => {
 /**
  * Инициализируем специфичное состояние игры, чтобы API не дублировал правила в нескольких местах.
  */
-export const createInitialGameState = (gameId, players, seed = 1) => {
-  if (gameId === 'tile_placement_demo') {
-    return {
-      gameId,
-      size: 4,
-      grid: Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => null)),
-      hands: Object.fromEntries(players.map((p, idx) => [p, idx % 2 === 0 ? 'A' : 'B'])),
-      seed,
-      turn: 0
-    };
-  }
-
-  if (gameId === 'roll_and_write_demo') {
-    const r = rng(seed);
-    return {
-      gameId,
-      size: 5,
-      sheet: Object.fromEntries(players.map((p) => [p, Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => 0))])),
-      dice: [1 + Math.floor(r() * 6), 1 + Math.floor(r() * 6)],
-      seed,
-      turn: 0
-    };
-  }
-
-  throw new Error('UNSUPPORTED_GAME');
-};
+export const createInitialGameState = (gameId, players, seed = 1) =>
+  createInitialStateFromLibrary(gameId, players, seed, { rng });
 
 const inBounds = (size, row, col) => row >= 0 && col >= 0 && row < size && col < size;
 
@@ -116,6 +93,9 @@ export const validateMove = (state, move) => {
     if (!Number.isInteger(row) || !Number.isInteger(col)) return { ok: false, reason: 'INVALID_COORDS' };
     if (!inBounds(state.gameState.size, row, col)) return { ok: false, reason: 'OUT_OF_BOUNDS' };
     if (state.gameState.grid[row][col] !== null) return { ok: false, reason: 'CELL_OCCUPIED' };
+    if (state.campaignProgress?.requiredAction && state.campaignProgress.requiredAction !== move.action) {
+      return { ok: false, reason: 'CAMPAIGN_ACTION_REQUIRED' };
+    }
     return { ok: true };
   }
 
@@ -127,6 +107,9 @@ export const validateMove = (state, move) => {
   if (state.gameState.sheet[move.playerId][row][col] !== 0) return { ok: false, reason: 'CELL_OCCUPIED' };
   const sum = state.gameState.dice[0] + state.gameState.dice[1];
   if (row + col + 2 !== sum) return { ok: false, reason: 'DICE_RULE_VIOLATION' };
+  if (state.campaignProgress?.maxCellValue && state.gameState.sheet[move.playerId][row][col] > state.campaignProgress.maxCellValue) {
+    return { ok: false, reason: 'CAMPAIGN_CELL_RESTRICTION' };
+  }
   return { ok: true };
 };
 
@@ -145,6 +128,10 @@ export const computeScore = (state) => {
     const leaderboard = Object.entries(scores)
       .map(([playerId, score]) => ({ playerId, score }))
       .sort((a, b) => b.score - a.score);
+    if (state.campaignProgress?.scoreMultiplier) {
+      for (const item of leaderboard) item.score = Math.round(item.score * state.campaignProgress.scoreMultiplier);
+      leaderboard.sort((a, b) => b.score - a.score);
+    }
     return { winner: leaderboard[0]?.playerId ?? null, leaderboard };
   }
 
@@ -159,7 +146,26 @@ export const computeScore = (state) => {
   const leaderboard = Object.entries(scores)
     .map(([playerId, score]) => ({ playerId, score }))
     .sort((a, b) => b.score - a.score);
+  if (state.campaignProgress?.scoreMultiplier) {
+    for (const item of leaderboard) item.score = Math.round(item.score * state.campaignProgress.scoreMultiplier);
+    leaderboard.sort((a, b) => b.score - a.score);
+  }
   return { winner: leaderboard[0]?.playerId ?? null, leaderboard };
+};
+
+export const applyLegacyConfig = (state, legacyConfig = {}) => ({
+  ...state,
+  legacyState: {
+    level: Number(legacyConfig.level ?? 1),
+    bonus: Number(legacyConfig.bonus ?? 0),
+    history: [...(state.legacyState?.history ?? []), { ts: new Date().toISOString(), level: Number(legacyConfig.level ?? 1) }]
+  }
+});
+
+export const applyEnemyMove = (state, enemyPlayerId = 'enemy_ai') => {
+  const move = chooseBotMove(state, enemyPlayerId, 'normal');
+  if (!move) return { accepted: false, reason: 'NO_ENEMY_MOVE' };
+  return applyMove(state, { ...move, playerId: enemyPlayerId, moveId: `enemy_${Date.now()}`, ts: new Date().toISOString() });
 };
 
 /**
