@@ -2,20 +2,71 @@
   "version": "1.0.0",
   "orientation": "landscape-mobile-first",
   "categories": {
-    "icons": ["ui.icon.back", "ui.icon.search", "ui.icon.timer", "ui.icon.turn"],
-    "logos": ["brand.logo.wordmark.dark"],
-    "illustrations": ["onboarding.hero.tabletop", "auth.accent.tabletop", "system.empty.no_results"],
-    "game_covers": ["catalog.cover.tile-placement", "catalog.cover.roll-write"],
-    "textures": ["global.bg.felt.dark", "gameplay.board.surface.grid"],
-    "decorative_graphics": ["home.ambient.side_glow", "catalog.decor.deck_lines"],
-    "gameplay_objects": ["gameplay.token.set.basic", "gameplay.card.back.default"],
-    "badges": ["profile.badge.rank.silver", "profile.badge.rank.gold"],
-    "trophies": ["profile.trophy.streak", "profile.trophy.victory"],
-    "ambient_backgrounds": ["home.bg.ambient", "gameplay.bg.ambient"]
+    "icons": [
+      "ui.icon.back",
+      "ui.icon.search",
+      "ui.icon.timer",
+      "ui.icon.turn",
+      "ui.icon.mic",
+      "ui.icon.camera",
+      "ui.icon.chat",
+      "ui.icon.settings"
+    ],
+    "logos": [
+      "brand.logo.wordmark.dark"
+    ],
+    "illustrations": [
+      "onboarding.hero.tabletop",
+      "auth.accent.tabletop",
+      "system.empty.no_results"
+    ],
+    "game_covers": [
+      "catalog.cover.tile-placement",
+      "catalog.cover.roll-write"
+    ],
+    "textures": [
+      "global.bg.felt.dark",
+      "gameplay.board.surface.grid",
+      "gameplay.bg.cinematic_room",
+      "gameplay.board.surface.travel_grid"
+    ],
+    "decorative_graphics": [
+      "home.ambient.side_glow",
+      "catalog.decor.deck_lines",
+      "gameplay.decor.light_rays.overlay"
+    ],
+    "gameplay_objects": [
+      "gameplay.token.set.basic",
+      "gameplay.card.back.default",
+      "gameplay.vfx.dice.d20_burst"
+    ],
+    "badges": [
+      "profile.badge.rank.silver",
+      "profile.badge.rank.gold"
+    ],
+    "trophies": [
+      "profile.trophy.streak",
+      "profile.trophy.victory"
+    ],
+    "ambient_backgrounds": [
+      "home.bg.ambient",
+      "gameplay.bg.ambient"
+    ]
   },
   "exports": {
-    "icon": ["svg"],
-    "illustration": ["svg", "png", "webp"],
-    "texture": ["png@2x", "png@3x", "webp@2x", "webp@3x"]
+    "icon": [
+      "svg"
+    ],
+    "illustration": [
+      "svg",
+      "png",
+      "webp"
+    ],
+    "texture": [
+      "png@2x",
+      "png@3x",
+      "webp@2x",
+      "webp@3x"
+    ]
   }
 }
