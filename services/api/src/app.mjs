@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   applyMove,
+  applyEnemyMove,
   SUPPORTED_GAMES,
   rng,
   createInitialGameState,
@@ -122,6 +123,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     campaigns: [],
     levels: [],
     leaderboardEntries: [],
+    legacyStates: new Map(),
     gameVariants: [],
     skuCatalog: [
       { sku: 'game.tile_pack', title: 'Tile Placement License', type: 'GAME_LICENSE', priceSandbox: 4.99, isNew: true },
@@ -250,7 +252,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   };
 
   // Служебный bot-id в MVP генерируется как "<userId>_bot", поэтому исключаем его из проверки зарегистрированных пользователей.
-  const isBotUserId = (userId) => typeof userId === 'string' && userId.endsWith('_bot');
+  const isBotUserId = (userId) => typeof userId === 'string' && (userId.endsWith('_bot') || userId === 'enemy_ai');
 
   const auth = {
     register: ({ email, password, lang = securityConfig.DEFAULT_LANG }) => {
@@ -335,7 +337,9 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         if (!state.campaigns.some((campaign) => campaign.id === campaignId)) throw new HttpError(404, 'CAMPAIGN_NOT_FOUND');
       }
       if (!SUPPORTED_GAMES.includes(gameId)) throw new HttpError(400, 'UNSUPPORTED_GAME');
-      for (const userId of players) {
+      const normalizedPlayers = [...players];
+      if (mode === 'coop' && !normalizedPlayers.includes('enemy_ai')) normalizedPlayers.push('enemy_ai');
+      for (const userId of normalizedPlayers) {
         if (!isBotUserId(userId)) assertKnownUser(userId, 'players');
         if (!isBotUserId(userId)) assertUserIsNotBanned(userId);
       }
@@ -357,25 +361,31 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
               turnTimer: variant.turnTimer ?? null
             }
           : null,
-        players,
-        currentPlayer: players[0],
+        players: normalizedPlayers,
+        currentPlayer: normalizedPlayers[0],
         moveNumber: 0,
         maxMoves: variant?.boardSize ? variant.boardSize * variant.boardSize : gameId === 'tile_placement_demo' ? 16 : 25,
-        scores: Object.fromEntries(players.map((p) => [p, 0])),
+        scores: Object.fromEntries(normalizedPlayers.map((p) => [p, 0])),
         log: [],
         status: 'active',
         winner: null,
         snapshots: [],
         acceptedMoveIds: new Set(),
-        gameState: applyVariantToInitialState({ gameId, players, seed, variant }),
-        bot: botLevel ? { enabled: true, playerId: players[1], level: botLevel } : { enabled: false }
+        gameState: applyVariantToInitialState({ gameId, players: normalizedPlayers, seed, variant }),
+        bot:
+          mode === 'coop'
+            ? { enabled: false, enemyAi: true, playerId: 'enemy_ai', level: 'normal' }
+            : botLevel
+              ? { enabled: true, playerId: normalizedPlayers[1], level: botLevel }
+              : { enabled: false },
+        legacyState: mode === 'legacy' ? { currentLevel: level, nextLevelAvailable: false, history: [] } : null
       };
       state.matches.push(match);
       gateway?.configurePrivateRoom?.(match.id, players);
       state.analytics.push({
         id: newId('event'),
         eventName: 'match_create',
-        userId: players[0] ?? null,
+        userId: normalizedPlayers[0] ?? null,
         sessionId: null,
         payload: { matchId: match.id, gameId, variantId: match.variantId },
         source: 'backend',
@@ -437,6 +447,11 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         }
       }
 
+      if (match.mode === 'coop' && match.status === 'active' && match.currentPlayer === 'enemy_ai') {
+        const enemyResult = applyEnemyMove(match, 'enemy_ai');
+        if (enemyResult.accepted) Object.assign(match, enemyResult.state);
+      }
+
       persistMatches();
       state.analytics.push({
         id: newId('event'),
@@ -457,6 +472,14 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         ts: nowIso()
       });
       if (match.status === 'finished') {
+        if (match.mode === 'legacy' && match.winner === match.players[0]) {
+          match.legacyState = {
+            currentLevel: match.level,
+            nextLevelAvailable: true,
+            history: [...(match.legacyState?.history ?? []), { level: match.level, winner: match.winner, ts: nowIso() }]
+          };
+          state.legacyStates.set(match.id, { matchId: match.id, turnData: match.log.slice(-5), level: match.level, ts: nowIso() });
+        }
         const winnerScore = match.winner ? Number(match.scores?.[match.winner] ?? 0) : 0;
         if (match.winner) state.leaderboardEntries.push({ id: newId('leaderboard'), userId: match.winner, score: winnerScore, ts: nowIso() });
         state.analytics.push({
@@ -504,6 +527,92 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       const match = state.matches.find((m) => m.id === matchId);
       if (!match) throw new HttpError(404, 'MATCH_NOT_FOUND');
       return legalMoves(match, playerId);
+    },
+    nextLevel: ({ matchId }) => {
+      assertString(matchId, 'matchId');
+      const match = state.matches.find((m) => m.id === matchId);
+      if (!match) throw new HttpError(404, 'MATCH_NOT_FOUND');
+      if (match.mode !== 'legacy') throw new HttpError(409, 'LEGACY_MODE_REQUIRED');
+      if (!match.legacyState?.nextLevelAvailable) throw new HttpError(409, 'NEXT_LEVEL_NOT_AVAILABLE');
+      return matches.create({
+        gameId: match.gameId,
+        players: match.players.filter((id) => id !== 'enemy_ai'),
+        campaignId: match.campaignId,
+        level: Number(match.level) + 1,
+        mode: 'legacy'
+      });
+    }
+  };
+
+  const campaigns = {
+    create: ({ name, description = '', levels = [] }) => {
+      assertString(name, 'name', { min: 2 });
+      if (!Array.isArray(levels)) throw new HttpError(400, 'VALIDATION_ERROR', { field: 'levels' });
+      const campaign = { id: newId('campaign'), name, description, createdAt: nowIso(), updatedAt: nowIso() };
+      state.campaigns.push(campaign);
+      state.levels.push(
+        ...levels.map((levelItem, idx) => ({
+          id: newId('level'),
+          campaignId: campaign.id,
+          levelNumber: idx + 1,
+          configJSON: JSON.stringify(levelItem ?? {})
+        }))
+      );
+      return { ...campaign, levels: state.levels.filter((item) => item.campaignId === campaign.id) };
+    },
+    list: () =>
+      state.campaigns.map((campaign) => ({
+        ...campaign,
+        levels: state.levels
+          .filter((level) => level.campaignId === campaign.id)
+          .sort((a, b) => a.levelNumber - b.levelNumber)
+      })),
+    getById: ({ campaignId }) => {
+      assertString(campaignId, 'campaignId');
+      const campaign = state.campaigns.find((item) => item.id === campaignId);
+      if (!campaign) throw new HttpError(404, 'CAMPAIGN_NOT_FOUND');
+      return {
+        ...campaign,
+        levels: state.levels.filter((item) => item.campaignId === campaignId).sort((a, b) => a.levelNumber - b.levelNumber)
+      };
+    },
+    update: ({ campaignId, patch = {} }) => {
+      const campaign = campaigns.getById({ campaignId });
+      if (patch.name !== undefined) assertString(patch.name, 'name', { min: 2 });
+      if (patch.description !== undefined && typeof patch.description !== 'string') {
+        throw new HttpError(400, 'VALIDATION_ERROR', { field: 'description' });
+      }
+      const row = state.campaigns.find((item) => item.id === campaignId);
+      Object.assign(row, { ...patch, updatedAt: nowIso() });
+      return campaigns.getById({ campaignId });
+    },
+    remove: ({ campaignId }) => {
+      assertString(campaignId, 'campaignId');
+      state.campaigns = state.campaigns.filter((item) => item.id !== campaignId);
+      state.levels = state.levels.filter((item) => item.campaignId !== campaignId);
+      return { ok: true };
+    },
+    start: ({ campaignId, players, botLevel = null }) => {
+      const campaign = campaigns.getById({ campaignId });
+      const firstLevel = campaign.levels[0] ?? { levelNumber: 1, configJSON: '{}' };
+      const levelConfig = JSON.parse(firstLevel.configJSON);
+      const initialMatch = matches.create({
+        gameId: levelConfig.gameId ?? 'tile_placement_demo',
+        players,
+        botLevel,
+        campaignId,
+        level: firstLevel.levelNumber,
+        mode: 'classic'
+      });
+      return { campaign, match: initialMatch };
+    }
+  };
+
+  const leaderboards = {
+    get: ({ period = 'all-time' } = {}) => {
+      if (!['all-time', 'weekly'].includes(period)) throw new HttpError(400, 'LEADERBOARD_PERIOD_UNSUPPORTED');
+      const data = recalculateLeaderboards();
+      return period === 'weekly' ? data.weekly : data.allTime;
     }
   };
 
@@ -991,6 +1100,18 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     groupConfig: ({ roomId }) => ({
       roomId,
       maxParticipants: 4,
+      turnFallbackAfterIceFailures: 3
+    }),
+    muteAll: ({ roomId, moderatorUserId = 'host' }) => ({
+      ok: true,
+      roomId,
+      moderatorUserId,
+      mutedAt: nowIso()
+    }),
+    connectivityTest: () => ({
+      ok: true,
+      participantsSupported: 4,
+      simulatedLatencyMs: 120,
       turnFallbackAfterIceFailures: 3
     })
   };

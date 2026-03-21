@@ -68,6 +68,29 @@ export const createHttpHandler = (deps = {}) => {
           app.matches.move({ matchId, ...(await parseBody(req)), ip: req.socket.remoteAddress ?? 'local' })
         );
       }
+      if (method === 'POST' && /^\/matches\/[^/]+\/next-level$/.test(url.pathname)) {
+        return send(res, 201, app.matches.nextLevel({ matchId: url.pathname.split('/')[2] }));
+      }
+
+      if (method === 'POST' && url.pathname === '/campaigns') return send(res, 201, app.campaigns.create(await parseBody(req)));
+      if (method === 'GET' && url.pathname === '/campaigns') return send(res, 200, app.campaigns.list());
+      if (method === 'GET' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        return send(res, 200, app.campaigns.getById({ campaignId: url.pathname.split('/')[2] }));
+      }
+      if (method === 'PUT' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        const campaignId = url.pathname.split('/')[2];
+        return send(res, 200, app.campaigns.update({ campaignId, patch: await parseBody(req) }));
+      }
+      if (method === 'DELETE' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        return send(res, 200, app.campaigns.remove({ campaignId: url.pathname.split('/')[2] }));
+      }
+      if (method === 'POST' && /^\/campaigns\/[^/]+\/start$/.test(url.pathname)) {
+        const campaignId = url.pathname.split('/')[2];
+        return send(res, 201, app.campaigns.start({ campaignId, ...(await parseBody(req)) }));
+      }
+      if (method === 'GET' && url.pathname === '/leaderboard') {
+        return send(res, 200, app.leaderboards.get({ period: url.searchParams.get('period') ?? 'all-time' }));
+      }
 
       if (method === 'POST' && url.pathname === '/campaigns') return send(res, 201, app.campaigns.create(await parseBody(req)));
       if (method === 'GET' && url.pathname === '/campaigns') return send(res, 200, app.campaigns.list());
@@ -151,6 +174,10 @@ export const createHttpHandler = (deps = {}) => {
       if (method === 'GET' && /^\/webrtc\/[^/]+\/config$/.test(url.pathname)) {
         return send(res, 200, app.webrtc.groupConfig({ roomId: url.pathname.split('/')[2] }));
       }
+      if (method === 'POST' && /^\/webrtc\/[^/]+\/mute-all$/.test(url.pathname)) {
+        return send(res, 200, app.webrtc.muteAll({ roomId: url.pathname.split('/')[2], ...(await parseBody(req)) }));
+      }
+      if (method === 'GET' && url.pathname === '/webrtc/connectivity-test') return send(res, 200, app.webrtc.connectivityTest());
 
       return send(res, 404, { error: 'NOT_FOUND' });
     } catch (error) {

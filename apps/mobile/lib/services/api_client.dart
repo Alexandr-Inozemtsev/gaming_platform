@@ -139,8 +139,9 @@ class ApiClient {
         'policyType': policyType
       });
 
-  Future<Map<String, dynamic>> createMatch(String gameId, List<String> players, {String? variantId}) async =>
-      _post('/matches', {'gameId': gameId, 'players': players, 'variantId': variantId});
+  Future<Map<String, dynamic>> createMatch(String gameId, List<String> players, {String? variantId, String mode = 'classic'}) async =>
+      _post('/matches', {'gameId': gameId, 'players': players, 'variantId': variantId, 'mode': mode});
+  Future<Map<String, dynamic>> nextLevel(String matchId) async => _post('/matches/$matchId/next-level', {});
   Future<Map<String, dynamic>> purchaseSandbox(String userId, String sku) async => _post('/store/purchase-sandbox', {'userId': userId, 'sku': sku});
   Future<Map<String, dynamic>> purchaseIapSuccess({
     required String userId,

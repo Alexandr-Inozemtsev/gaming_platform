@@ -31,6 +31,11 @@ fi
 kubectl apply -f k8s/
 kubectl get pods -n tabletop
 kubectl get ingress -n tabletop
+kubectl wait --for=condition=available --timeout=180s deployment/api -n tabletop
+kubectl wait --for=condition=available --timeout=180s deployment/matches -n tabletop
+kubectl wait --for=condition=available --timeout=180s deployment/campaigns -n tabletop
+kubectl wait --for=condition=available --timeout=180s deployment/analytics -n tabletop
+kubectl wait --for=condition=available --timeout=180s deployment/websocket -n tabletop
 ```
 
 ## One-command deploy
