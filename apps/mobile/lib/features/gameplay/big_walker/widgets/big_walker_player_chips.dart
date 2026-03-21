@@ -16,31 +16,43 @@ class BigWalkerPlayerChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: 52,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemBuilder: (_, index) {
           final active = index == currentPlayerIndex;
           return AnimatedContainer(
             duration: BigWalkerMotion.turnGlow,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            curve: BigWalkerMotion.turnGlowCurve,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: active ? BigWalkerTokens.accentCyan.withOpacity(0.16) : BigWalkerTokens.card,
+              color: active ? BigWalkerTokens.accentCyan.withOpacity(0.18) : BigWalkerTokens.card,
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: active ? BigWalkerTokens.accentCyan : BigWalkerTokens.cardBorder),
               boxShadow: active
                   ? [
-                      BoxShadow(color: BigWalkerTokens.accentCyan.withOpacity(0.35), blurRadius: 16, spreadRadius: 1),
+                      BoxShadow(color: BigWalkerTokens.accentCyan.withOpacity(0.38), blurRadius: 18, spreadRadius: 1),
                     ]
                   : const [],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircleAvatar(
-                  radius: 11,
-                  backgroundColor: Color.lerp(BigWalkerTokens.accentCyan, BigWalkerTokens.accentAmber, index / 6),
-                  child: Text('${index + 1}', style: const TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.w700)),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        Color.lerp(BigWalkerTokens.accentCyan, BigWalkerTokens.accentAmber, index / 6) ?? BigWalkerTokens.accentCyan,
+                        Colors.white,
+                      ],
+                    ),
+                    border: Border.all(color: Colors.black.withOpacity(0.2)),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text('${index + 1}', style: const TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.w800)),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -48,9 +60,13 @@ class BigWalkerPlayerChips extends StatelessWidget {
                   style: TextStyle(
                     color: BigWalkerTokens.textPrimary,
                     fontSize: 12,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: active ? FontWeight.w800 : FontWeight.w500,
                   ),
                 ),
+                if (active) ...[
+                  const SizedBox(width: 6),
+                  const Icon(Icons.flash_on_rounded, size: 14, color: BigWalkerTokens.accentAmber),
+                ],
               ],
             ),
           );

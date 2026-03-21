@@ -28,10 +28,26 @@ class _BigWalkerAtmosphereState extends State<BigWalkerAtmosphere> with SingleTi
     return AnimatedBuilder(
       animation: _controller,
       builder: (_, __) {
-        return CustomPaint(
-          painter: _ParticlePainter(t: _controller.value),
-          child: const SizedBox.expand(),
-        );
+        return Stack(children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.12 + (_controller.value * 0.08),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment(-1 + _controller.value * 2, -0.4),
+                    end: Alignment(0.6 + _controller.value, 1),
+                    colors: [BigWalkerTokens.accentCyan.withOpacity(0.16), Colors.transparent],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          CustomPaint(
+            painter: _ParticlePainter(t: _controller.value),
+            child: const SizedBox.expand(),
+          ),
+        ]);
       },
     );
   }

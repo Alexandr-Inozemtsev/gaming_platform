@@ -56,7 +56,7 @@ class GameRoomScene extends StatelessWidget {
                     participantsCount: state.participantsCount,
                     currentPlayerIndex: state.currentPlayerIndex,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Expanded(
                     child: Align(
                       alignment: Alignment.center,
@@ -105,21 +105,27 @@ class GameRoomScene extends StatelessWidget {
               ),
             ),
           ),
-          if (!state.isStarted && state.winnerIndex == null)
-            _CenterSceneModal(
+          AnimatedSwitcher(
+            duration: BigWalkerMotion.stateFade,
+            switchInCurve: BigWalkerMotion.stateFadeCurve,
+            switchOutCurve: BigWalkerMotion.stateFadeCurve,
+            child: !state.isStarted && state.winnerIndex == null
+                ? _CenterSceneModal(
               title: 'Подготовка матча',
               subtitle: 'Выберите число участников и нажмите «Начать матч».',
               cta: 'Начать матч',
               onTap: actions.onStartMatch,
-            ),
-          if (state.winnerIndex != null)
-            _CenterSceneModal(
+                )
+                : state.winnerIndex != null
+                    ? _CenterSceneModal(
               title: 'Победа игрока ${state.winnerIndex! + 1}',
               subtitle: 'Финиш достигнут за ${state.turnNumber} ходов.',
               cta: 'Новая партия',
               onTap: actions.onStartMatch,
               winner: true,
-            ),
+                    )
+                    : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -128,6 +134,7 @@ class GameRoomScene extends StatelessWidget {
 
 class _CenterSceneModal extends StatelessWidget {
   const _CenterSceneModal({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.cta,
@@ -149,6 +156,7 @@ class _CenterSceneModal extends StatelessWidget {
         child: Center(
           child: AnimatedScale(
             duration: BigWalkerMotion.winnerModal,
+            curve: BigWalkerMotion.winnerModalCurve,
             scale: 1,
             child: Container(
               width: 380,
