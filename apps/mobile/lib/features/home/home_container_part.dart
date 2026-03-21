@@ -96,7 +96,7 @@ class HomeScreen extends StatelessWidget {
                             child: AppButton(
                               label: state.t('home.play'),
                               icon: Icons.play_arrow_rounded,
-                              onPressed: () => state.setTab(4),
+                              onPressed: () => state.createPrivateRoom('big_walker_demo'),
                             ),
                           ),
                           const SizedBox(width: AppSpacing.xs),

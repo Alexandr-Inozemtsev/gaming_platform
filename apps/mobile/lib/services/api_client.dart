@@ -36,6 +36,7 @@ class ApiClient {
       return body as List<dynamic>;
     } catch (_) {
       return const [
+        {'id': 'big_walker_demo', 'title': 'Большая бродилка'},
         {'id': 'tile_placement_demo', 'title': 'Tile Placement Demo'},
         {'id': 'roll_and_write_demo', 'title': 'Roll & Write Demo'}
       ];
