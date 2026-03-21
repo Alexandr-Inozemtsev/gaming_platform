@@ -13,6 +13,8 @@ import { MODULE_DESCRIPTOR as MatchesModule } from './modules/matches.module';
 import { MODULE_DESCRIPTOR as StoreModule } from './modules/store.module';
 import { MODULE_DESCRIPTOR as ModerationModule } from './modules/moderation.module';
 import { MODULE_DESCRIPTOR as AnalyticsModule } from './modules/analytics.module';
+import { MODULE_DESCRIPTOR as CampaignsModule } from './modules/campaigns.module';
+import { MODULE_DESCRIPTOR as LeaderboardModule } from './modules/leaderboard.module';
 
 export const ApiModules = [
   AuthModule,
@@ -21,5 +23,7 @@ export const ApiModules = [
   MatchesModule,
   StoreModule,
   ModerationModule,
-  AnalyticsModule
+  AnalyticsModule,
+  CampaignsModule,
+  LeaderboardModule
 ];
