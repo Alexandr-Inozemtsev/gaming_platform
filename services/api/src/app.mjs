@@ -119,6 +119,9 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     matches: [],
     inventory: new Map(),
     purchases: [],
+    campaigns: [],
+    levels: [],
+    leaderboardEntries: [],
     gameVariants: [],
     skuCatalog: [
       { sku: 'game.tile_pack', title: 'Tile Placement License', type: 'GAME_LICENSE', priceSandbox: 4.99, isNew: true },
@@ -144,6 +147,20 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     const target = securityConfig.MATCH_STORE_FILE;
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.writeFileSync(target, JSON.stringify(state.matches.map(toSerializableMatch), null, 2));
+  };
+
+  const recalculateLeaderboards = () => {
+    const now = Date.now();
+    const weekMs = 7 * 86_400_000;
+    const aggregate = (rows) => {
+      const totals = new Map();
+      for (const row of rows) totals.set(row.userId, (totals.get(row.userId) ?? 0) + row.score);
+      return [...totals.entries()].map(([userId, score]) => ({ userId, score })).sort((a, b) => b.score - a.score);
+    };
+    return {
+      allTime: aggregate(state.leaderboardEntries),
+      weekly: aggregate(state.leaderboardEntries.filter((row) => now - Date.parse(row.ts) <= weekMs))
+    };
   };
 
   const loadMatches = () => {
@@ -306,9 +323,16 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   };
 
   const matches = {
-    create: ({ gameId, players, botLevel = null, variantId = null }) => {
+    create: ({ gameId, players, botLevel = null, variantId = null, campaignId = null, level = 1, mode = 'classic' }) => {
       assertString(gameId, 'gameId');
       assertArray(players, 'players', { min: 2 });
+      assertNumber(level, 'level', { min: 1, max: 10_000 });
+      assertString(mode, 'mode');
+      if (!['classic', 'legacy', 'coop'].includes(mode)) throw new HttpError(400, 'MODE_UNSUPPORTED');
+      if (campaignId !== null) {
+        assertString(campaignId, 'campaignId');
+        if (!state.campaigns.some((campaign) => campaign.id === campaignId)) throw new HttpError(404, 'CAMPAIGN_NOT_FOUND');
+      }
       if (!SUPPORTED_GAMES.includes(gameId)) throw new HttpError(400, 'UNSUPPORTED_GAME');
       for (const userId of players) {
         if (!isBotUserId(userId)) assertKnownUser(userId, 'players');
@@ -320,6 +344,9 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       const match = {
         id: newId('match'),
         gameId,
+        campaignId,
+        level,
+        mode,
         variantId: variant?.id ?? null,
         variantConfig: variant
           ? {
@@ -429,6 +456,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         ts: nowIso()
       });
       if (match.status === 'finished') {
+        const winnerScore = match.winner ? Number(match.scores?.[match.winner] ?? 0) : 0;
+        if (match.winner) state.leaderboardEntries.push({ id: newId('leaderboard'), userId: match.winner, score: winnerScore, ts: nowIso() });
         state.analytics.push({
           id: newId('event'),
           eventName: 'match_finish',
@@ -438,6 +467,29 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
           source: 'backend',
           ts: nowIso()
         });
+        if (match.campaignId) {
+          state.analytics.push({
+            id: newId('event'),
+            eventName: 'level_complete',
+            userId: playerId,
+            sessionId: null,
+            payload: { matchId, campaignId: match.campaignId, level: match.level, winner: match.winner },
+            source: 'backend',
+            ts: nowIso()
+          });
+          const nextLevelExists = state.levels.some((item) => item.campaignId === match.campaignId && item.levelNumber === match.level + 1);
+          if (!nextLevelExists) {
+            state.analytics.push({
+              id: newId('event'),
+              eventName: 'campaign_finished',
+              userId: playerId,
+              sessionId: null,
+              payload: { campaignId: match.campaignId, matchId },
+              source: 'backend',
+              ts: nowIso()
+            });
+          }
+        }
       }
       gateway?.emitMatchState(match.id, toSerializableMatch(match));
       gateway?.emitRoomEvent(match.id, 'match.move.applied', { matchId, moveNumber: match.moveNumber });
@@ -451,6 +503,78 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       const match = state.matches.find((m) => m.id === matchId);
       if (!match) throw new HttpError(404, 'MATCH_NOT_FOUND');
       return legalMoves(match, playerId);
+    }
+  };
+
+  const campaigns = {
+    create: ({ name, description = '', levels = [] }) => {
+      assertString(name, 'name', { min: 2 });
+      if (!Array.isArray(levels)) throw new HttpError(400, 'VALIDATION_ERROR', { field: 'levels' });
+      const campaign = { id: newId('campaign'), name, description, createdAt: nowIso(), updatedAt: nowIso() };
+      state.campaigns.push(campaign);
+      state.levels.push(
+        ...levels.map((levelItem, idx) => ({
+          id: newId('level'),
+          campaignId: campaign.id,
+          levelNumber: idx + 1,
+          configJSON: JSON.stringify(levelItem ?? {})
+        }))
+      );
+      return { ...campaign, levels: state.levels.filter((item) => item.campaignId === campaign.id) };
+    },
+    list: () =>
+      state.campaigns.map((campaign) => ({
+        ...campaign,
+        levels: state.levels
+          .filter((level) => level.campaignId === campaign.id)
+          .sort((a, b) => a.levelNumber - b.levelNumber)
+      })),
+    getById: ({ campaignId }) => {
+      assertString(campaignId, 'campaignId');
+      const campaign = state.campaigns.find((item) => item.id === campaignId);
+      if (!campaign) throw new HttpError(404, 'CAMPAIGN_NOT_FOUND');
+      return {
+        ...campaign,
+        levels: state.levels.filter((item) => item.campaignId === campaignId).sort((a, b) => a.levelNumber - b.levelNumber)
+      };
+    },
+    update: ({ campaignId, patch = {} }) => {
+      const campaign = campaigns.getById({ campaignId });
+      if (patch.name !== undefined) assertString(patch.name, 'name', { min: 2 });
+      if (patch.description !== undefined && typeof patch.description !== 'string') {
+        throw new HttpError(400, 'VALIDATION_ERROR', { field: 'description' });
+      }
+      const row = state.campaigns.find((item) => item.id === campaignId);
+      Object.assign(row, { ...patch, updatedAt: nowIso() });
+      return campaigns.getById({ campaignId });
+    },
+    remove: ({ campaignId }) => {
+      assertString(campaignId, 'campaignId');
+      state.campaigns = state.campaigns.filter((item) => item.id !== campaignId);
+      state.levels = state.levels.filter((item) => item.campaignId !== campaignId);
+      return { ok: true };
+    },
+    start: ({ campaignId, players, botLevel = null }) => {
+      const campaign = campaigns.getById({ campaignId });
+      const firstLevel = campaign.levels[0] ?? { levelNumber: 1, configJSON: '{}' };
+      const levelConfig = JSON.parse(firstLevel.configJSON);
+      const initialMatch = matches.create({
+        gameId: levelConfig.gameId ?? 'tile_placement_demo',
+        players,
+        botLevel,
+        campaignId,
+        level: firstLevel.levelNumber,
+        mode: 'classic'
+      });
+      return { campaign, match: initialMatch };
+    }
+  };
+
+  const leaderboards = {
+    get: ({ period = 'all-time' } = {}) => {
+      if (!['all-time', 'weekly'].includes(period)) throw new HttpError(400, 'LEADERBOARD_PERIOD_UNSUPPORTED');
+      const data = recalculateLeaderboards();
+      return period === 'weekly' ? data.weekly : data.allTime;
     }
   };
 
@@ -788,6 +912,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         'variant_publish',
         'report_sent',
         'latency_move',
+        'level_complete',
+        'campaign_finished',
         'reconnect_count',
         'ws_disconnects',
         'video_connect_failures'
@@ -831,5 +957,5 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     }
   };
 
-  return { state, auth, users, catalog, matches, store, variants, moderation, analytics, securityConfig, HttpError };
+  return { state, auth, users, catalog, matches, campaigns, leaderboards, store, variants, moderation, analytics, securityConfig, HttpError };
 };

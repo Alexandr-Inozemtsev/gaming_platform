@@ -63,6 +63,26 @@ export const createHttpHandler = (deps = {}) => {
         );
       }
 
+      if (method === 'POST' && url.pathname === '/campaigns') return send(res, 201, app.campaigns.create(await parseBody(req)));
+      if (method === 'GET' && url.pathname === '/campaigns') return send(res, 200, app.campaigns.list());
+      if (method === 'GET' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        return send(res, 200, app.campaigns.getById({ campaignId: url.pathname.split('/')[2] }));
+      }
+      if (method === 'PUT' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        const campaignId = url.pathname.split('/')[2];
+        return send(res, 200, app.campaigns.update({ campaignId, patch: await parseBody(req) }));
+      }
+      if (method === 'DELETE' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        return send(res, 200, app.campaigns.remove({ campaignId: url.pathname.split('/')[2] }));
+      }
+      if (method === 'POST' && /^\/campaigns\/[^/]+\/start$/.test(url.pathname)) {
+        const campaignId = url.pathname.split('/')[2];
+        return send(res, 201, app.campaigns.start({ campaignId, ...(await parseBody(req)) }));
+      }
+      if (method === 'GET' && url.pathname === '/leaderboard') {
+        return send(res, 200, app.leaderboards.get({ period: url.searchParams.get('period') ?? 'all-time' }));
+      }
+
       if (method === 'GET' && url.pathname === '/store/skus') return send(res, 200, app.store.skus());
       if (method === 'POST' && url.pathname === '/store/purchase-sandbox') return send(res, 200, app.store.purchaseSandbox(await parseBody(req)));
       if (method === 'POST' && url.pathname === '/store/apply-skin') return send(res, 200, app.store.applySkin(await parseBody(req)));

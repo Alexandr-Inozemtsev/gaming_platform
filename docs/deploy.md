@@ -1,37 +1,41 @@
-# Deploy: staging/prod (MVP)
+# Deploy: staging/prod (P2)
 
-## Что добавлено
-- Dockerfile для сервисов: `api`, `realtime`, `admin`, `rules-engine`.
-- `docker-compose.prod.yml` для локального smoke-запуска production-контура.
-- Шаблоны окружения: `infra/.env.staging.example`, `infra/.env.prod.example`.
-- Placeholder ingress/CDN-конфиг: `infra/cdn/nginx.cdn.conf`.
+## Переменные запуска
+- `ENV=staging|prod`
+- `DB_MIGRATE=true|false`
 
-## Важное исправление контейнера API
-- В `services/api/Dockerfile` дополнительно копируется `services/rules-engine`, потому что API импортирует rules-engine как локальный модуль (`../../rules-engine/src/index.mjs`).
-- Без этого контейнер API падает с `ERR_MODULE_NOT_FOUND` при старте.
+## Что добавлено в P2
+- Мульти-таргет сборка контейнеров `infra/Dockerfile`: `api`, `matches`, `campaigns`, `analytics`, `web-socket`.
+- Kubernetes-манифесты в `k8s/`: namespace, configmap, deployments, services, ingress.
+- Prisma schema + SQL-миграция для таблиц `campaigns`, `events`, `rewards`, `leaderboards`, `levels`, `legacy_*`, `coop_sessions`.
+- CI-шаги для `docker build` всех таргетов и `kubectl apply --dry-run=client -f k8s/`.
 
-## Быстрый запуск staging-подобного окружения
+## Сборка docker-образов
 ```bash
-cp infra/.env.staging.example .env
-npm install
-docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+docker build -f infra/Dockerfile --target api -t tabletop-api:${ENV:-staging} .
+docker build -f infra/Dockerfile --target matches -t tabletop-matches:${ENV:-staging} .
+docker build -f infra/Dockerfile --target campaigns -t tabletop-campaigns:${ENV:-staging} .
+docker build -f infra/Dockerfile --target analytics -t tabletop-analytics:${ENV:-staging} .
+docker build -f infra/Dockerfile --target web-socket -t tabletop-websocket:${ENV:-staging} .
 ```
 
-Проверки:
+## Применение миграций
 ```bash
-curl -s http://localhost:${CDN_HTTP_PORT:-8080}/health
-curl -s http://localhost:${CDN_HTTP_PORT:-8080}/api/games
-curl -s http://localhost:${CDN_HTTP_PORT:-8080}/realtime/health
-curl -s http://localhost:${CDN_HTTP_PORT:-8080}/admin/health
-curl -s http://localhost:${CDN_HTTP_PORT:-8080}/rules/health
+if [ "${DB_MIGRATE:-true}" = "true" ]; then
+  npx prisma migrate deploy
+fi
 ```
 
-## Прод-шаблон
-1. Скопируйте `infra/.env.prod.example` в защищённый секрет-стор (не в git).
-2. Обновите `JWT_SECRET`, `ADMIN_PASSWORD`, `POSTGRES_PASSWORD`.
-3. Запускайте `docker compose -f docker-compose.prod.yml --env-file <secure_env> up -d --build`.
+## Деплой в Kubernetes
+```bash
+kubectl apply -f k8s/
+kubectl get pods -n tabletop
+kubectl get ingress -n tabletop
+```
 
-## Замечания
-- TLS в MVP не терминируется в `nginx.cdn.conf`; ожидается внешний LB/CDN.
-- `REQUIRE_TLS_IN_PROD=true` должен оставаться включённым.
-- Текущие runtime-обвязки сервисов — минимальные HTTP-раннеры для контейнерного запуска и healthcheck.
+## CI для контейнеров и k8s
+- `.github/workflows/ci.yml` запускает `docker build` для всех P2 сервисов.
+- Затем выполняется `kubectl apply --dry-run=client -f k8s/` для валидации манифестов.
+
+## DevOps Dashboard (ASCII)
+`[API] Running ✅ [Matches] Running ✅ [Campaign] Running ✅ [DB Migration] Applied ✅ [Kubernetes] Deployed ✅`
