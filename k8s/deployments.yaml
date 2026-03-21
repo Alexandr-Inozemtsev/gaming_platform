@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: tabletop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/example/tabletop-api:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: tabletop-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matches
+  namespace: tabletop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matches
+  template:
+    metadata:
+      labels:
+        app: matches
+    spec:
+      containers:
+        - name: matches
+          image: ghcr.io/example/tabletop-matches:latest
+          ports:
+            - containerPort: 3101
+          env:
+            - name: API_PORT
+              value: "3101"
+          envFrom:
+            - configMapRef:
+                name: tabletop-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campaigns
+  namespace: tabletop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: campaigns
+  template:
+    metadata:
+      labels:
+        app: campaigns
+    spec:
+      containers:
+        - name: campaigns
+          image: ghcr.io/example/tabletop-campaigns:latest
+          ports:
+            - containerPort: 3102
+          env:
+            - name: API_PORT
+              value: "3102"
+          envFrom:
+            - configMapRef:
+                name: tabletop-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics
+  namespace: tabletop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics
+  template:
+    metadata:
+      labels:
+        app: analytics
+    spec:
+      containers:
+        - name: analytics
+          image: ghcr.io/example/tabletop-analytics:latest
+          ports:
+            - containerPort: 3103
+          env:
+            - name: API_PORT
+              value: "3103"
+          envFrom:
+            - configMapRef:
+                name: tabletop-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket
+  namespace: tabletop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: websocket
+  template:
+    metadata:
+      labels:
+        app: websocket
+    spec:
+      containers:
+        - name: websocket
+          image: ghcr.io/example/tabletop-websocket:latest
+          ports:
+            - containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: tabletop-config
