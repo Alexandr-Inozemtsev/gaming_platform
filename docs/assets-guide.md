@@ -24,3 +24,9 @@ SVG-заглушки: `apps/mobile/assets/design/placeholders/*.svg`.
 ## Runtime integration
 - Runtime загрузка manifest реализована в `apps/mobile/lib/shared/assets/runtime_asset_pack.dart`.
 - UI-контейнеры могут запрашивать категории ассетов (например `ambient_backgrounds`) без хардкода путей.
+
+
+## Cinematic Gameplay Room pack
+- Для визуала “как на референсе” используйте блок `Cinematic Gameplay Room (Reference-Match Pack)` в `apps/mobile/assets/design/image-prompts.md`.
+- Минимальный пакет: master background + board surface + light overlay + mic/camera/chat/settings icons + d20 burst VFX.
+- Рекомендованный экспорт: WebP 1920x1080 @2x для фонов/эффектов и SVG для HUD-иконок.
