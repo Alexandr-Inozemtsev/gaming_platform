@@ -8,6 +8,7 @@
 
 import http from 'node:http';
 import { createApiApp } from './app.mjs';
+import { createSentry } from './sentry.mjs';
 
 const parseBody = async (req) => {
   const chunks = [];
@@ -20,9 +21,14 @@ const send = (res, status, data) => {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(data));
 };
+const sendText = (res, status, text, type = 'text/plain; charset=utf-8') => {
+  res.writeHead(status, { 'content-type': type });
+  res.end(text);
+};
 
 export const createHttpHandler = (deps = {}) => {
   const app = createApiApp(deps);
+  const sentry = createSentry({ dsn: process.env.SENTRY_DSN ?? '' });
   const logLevel = process.env.LOG_LEVEL ?? 'info';
 
   return async (req, res) => {
@@ -62,9 +68,33 @@ export const createHttpHandler = (deps = {}) => {
           app.matches.move({ matchId, ...(await parseBody(req)), ip: req.socket.remoteAddress ?? 'local' })
         );
       }
+      if (method === 'POST' && /^\/matches\/[^/]+\/next-level$/.test(url.pathname)) {
+        return send(res, 201, app.matches.nextLevel({ matchId: url.pathname.split('/')[2] }));
+      }
+
+      if (method === 'POST' && url.pathname === '/campaigns') return send(res, 201, app.campaigns.create(await parseBody(req)));
+      if (method === 'GET' && url.pathname === '/campaigns') return send(res, 200, app.campaigns.list());
+      if (method === 'GET' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        return send(res, 200, app.campaigns.getById({ campaignId: url.pathname.split('/')[2] }));
+      }
+      if (method === 'PUT' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        const campaignId = url.pathname.split('/')[2];
+        return send(res, 200, app.campaigns.update({ campaignId, patch: await parseBody(req) }));
+      }
+      if (method === 'DELETE' && /^\/campaigns\/[^/]+$/.test(url.pathname)) {
+        return send(res, 200, app.campaigns.remove({ campaignId: url.pathname.split('/')[2] }));
+      }
+      if (method === 'POST' && /^\/campaigns\/[^/]+\/start$/.test(url.pathname)) {
+        const campaignId = url.pathname.split('/')[2];
+        return send(res, 201, app.campaigns.start({ campaignId, ...(await parseBody(req)) }));
+      }
+      if (method === 'GET' && url.pathname === '/leaderboard') {
+        return send(res, 200, app.leaderboards.get({ period: url.searchParams.get('period') ?? 'all-time' }));
+      }
 
       if (method === 'GET' && url.pathname === '/store/skus') return send(res, 200, app.store.skus());
       if (method === 'POST' && url.pathname === '/store/purchase-sandbox') return send(res, 200, app.store.purchaseSandbox(await parseBody(req)));
+      if (method === 'POST' && url.pathname === '/store/iap-success') return send(res, 200, app.store.iapSuccess(await parseBody(req)));
       if (method === 'POST' && url.pathname === '/store/apply-skin') return send(res, 200, app.store.applySkin(await parseBody(req)));
       if (method === 'GET' && url.pathname === '/inventory') return send(res, 200, app.users.inventory({ userId: url.searchParams.get('userId') }));
       if (method === 'GET' && url.pathname === '/variants') return send(res, 200, app.variants.listMine({ userId: url.searchParams.get('userId') }));
@@ -115,9 +145,23 @@ export const createHttpHandler = (deps = {}) => {
       }
       if (method === 'GET' && url.pathname === '/admin/analytics/dashboard') return send(res, 200, app.analytics.dashboard());
       if (method === 'POST' && url.pathname === '/analytics/metrics') return send(res, 200, app.analytics.incMetric((await parseBody(req)).name));
+      if (method === 'POST' && url.pathname === '/analytics/publish') return send(res, 200, app.analytics.publish(await parseBody(req)));
+      if (method === 'GET' && url.pathname === '/analytics/query') {
+        return send(res, 200, app.analytics.queryQueue({ topic: url.searchParams.get('topic'), limit: Number(url.searchParams.get('limit') ?? 200) }));
+      }
+      if (method === 'GET' && url.pathname === '/metrics/prometheus') return sendText(res, 200, app.analytics.prometheus());
+      if (method === 'POST' && url.pathname === '/webrtc/token') return send(res, 201, app.webrtc.createToken(await parseBody(req)));
+      if (method === 'GET' && /^\/webrtc\/[^/]+\/config$/.test(url.pathname)) {
+        return send(res, 200, app.webrtc.groupConfig({ roomId: url.pathname.split('/')[2] }));
+      }
+      if (method === 'POST' && /^\/webrtc\/[^/]+\/mute-all$/.test(url.pathname)) {
+        return send(res, 200, app.webrtc.muteAll({ roomId: url.pathname.split('/')[2], ...(await parseBody(req)) }));
+      }
+      if (method === 'GET' && url.pathname === '/webrtc/connectivity-test') return send(res, 200, app.webrtc.connectivityTest());
 
       return send(res, 404, { error: 'NOT_FOUND' });
     } catch (error) {
+      sentry.captureException(error, { path: req.url, method: req.method });
       if (typeof error?.status === 'number') {
         return send(res, error.status, { error: error.code ?? 'HTTP_ERROR', details: error.details ?? null });
       }

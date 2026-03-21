@@ -7,6 +7,16 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  static const Color primaryFig = Color(0xFF6EE7FF);
+  static const Color campaignHeader = Color(0xFF6EE7FF);
+  static const Color campaignBg = Color(0xFF141B2D);
+  static const Color deploySuccess = Color(0xFF4EE59A);
+  static const Color deployWarn = Color(0xFFFFB020);
+  static const Color gameModeBadge = Color(0xFFFFD166);
+  static const Color storePriceAccent = Color(0xFFFFB020);
+  static const Color storeAlertBg = Color(0xFF222831);
+  static const Color videoActive = Color(0xFF4EE59A);
+  static const Color videoBorder = Color(0xFFFFFFFF);
   static const Color bgBase = Color(0xFF0F1115);
   static const Color bgElevated1 = Color(0xFF171A21);
   static const Color bgElevated2 = Color(0xFF1E2430);
@@ -258,6 +268,9 @@ class AppTokens {
   static const String fontFamily = AppTypography.bodyFamily;
 
   static const double h1 = 24;
+  static const double uiButtonRadius = 20;
+  static const double uiPadding = 16;
+  static const double textItalic = 12;
   static const double h2 = 20;
   static const double editorSectionTitle = 18;
   static const double videoTileRadius = AppRadius.sm;
