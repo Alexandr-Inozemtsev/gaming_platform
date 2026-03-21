@@ -17,8 +17,9 @@ class _RoomScreenState extends State<RoomScreen> {
   @override
   Widget build(BuildContext context) {
     final s = widget.state;
-    final viewState = s.bigWalkerViewState;
-    final actions = s.bigWalkerActions;
+    final vm = s.bigWalkerViewModel;
+    final viewState = vm.state;
+    final actions = vm.actions;
 
     return Stack(children: [
       Container(
@@ -64,7 +65,12 @@ class _RoomScreenState extends State<RoomScreen> {
           ),
         ),
       ),
-      if (s.videoOverlayVisible) VideoOverlayWidget(state: s),
+      AnimatedSwitcher(
+        duration: BigWalkerMotion.turnGlow,
+        switchInCurve: BigWalkerMotion.turnGlowCurve,
+        switchOutCurve: BigWalkerMotion.turnGlowCurve,
+        child: s.videoOverlayVisible ? VideoOverlayWidget(key: const ValueKey('video-overlay'), state: s) : const SizedBox.shrink(),
+      ),
     ]);
   }
 }

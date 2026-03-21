@@ -35,3 +35,12 @@ class BigWalkerMatchActions {
   final VoidCallback onToggleMic;
   final VoidCallback onQuickChat;
 }
+
+
+@immutable
+class BigWalkerViewModel {
+  const BigWalkerViewModel({required this.state, required this.actions});
+
+  final BigWalkerMatchViewState state;
+  final BigWalkerMatchActions actions;
+}

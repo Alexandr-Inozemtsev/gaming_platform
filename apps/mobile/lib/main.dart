@@ -27,6 +27,7 @@ import 'features/gameplay/big_walker/big_walker_match_state.dart';
 import 'features/gameplay/big_walker/widgets/big_walker_hud.dart';
 import 'features/gameplay/big_walker/widgets/big_walker_player_strip.dart';
 import 'features/gameplay/big_walker/widgets/big_walker_room_header.dart';
+import 'features/gameplay/big_walker/animations/big_walker_motion.dart';
 part 'features/catalog/catalog_container_part.dart';
 part 'features/gameplay/room_screen_part.dart';
 part 'features/home/home_container_part.dart';
@@ -101,6 +102,8 @@ class AppState extends ChangeNotifier {
   List<dynamic> moderationAuditLog = const [];
 
   String? roomId;
+
+  // Big Walker match state (источник истины остаётся в AppState).
   String currentGameId = 'big_walker_demo';
   String botLevel = 'easy';
   String matchMode = 'classic';
@@ -145,6 +148,12 @@ class AppState extends ChangeNotifier {
     onQuickChat: () {
       sendChat('Привет!');
     },
+  );
+
+
+  BigWalkerViewModel get bigWalkerViewModel => BigWalkerViewModel(
+    state: bigWalkerViewState,
+    actions: bigWalkerActions,
   );
 
   StreamSubscription<Map<String, dynamic>>? _wsSub;
@@ -694,6 +703,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Big Walker mechanics (без изменения правил).
   Future<void> rollDiceAndMoveWalker() async {
     if (isRollingDice) return;
     isRollingDice = true;
@@ -701,7 +711,7 @@ class AppState extends ChangeNotifier {
     for (int i = 0; i < 8; i += 1) {
       diceValue = 1 + _random.nextInt(6);
       notifyListeners();
-      await Future<void>.delayed(const Duration(milliseconds: 90));
+      await Future<void>.delayed(BigWalkerMotion.dicePulse);
     }
     walkerPositions[currentPlayerIndex] = (walkerPositions[currentPlayerIndex] + diceValue).clamp(0, 39);
     roomLog.add('Player ${currentPlayerIndex + 1} бросил $diceValue и перешел на ${walkerPositions[currentPlayerIndex] + 1}');
