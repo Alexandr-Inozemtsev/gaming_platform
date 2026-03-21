@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/tokens.dart';
+import '../animations/big_walker_motion.dart';
 
 class BigWalkerHud extends StatelessWidget {
   const BigWalkerHud({
@@ -36,7 +37,8 @@ class BigWalkerHud extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             AnimatedScale(
               scale: isRollingDice ? 1.25 : 1,
-              duration: const Duration(milliseconds: 120),
+              duration: BigWalkerMotion.dicePulse,
+              curve: BigWalkerMotion.dicePulseCurve,
               child: Container(
                 width: 56,
                 height: 56,

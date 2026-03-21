@@ -16,8 +16,8 @@ class _BigWalkerPawn extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: position.toDouble()),
-      duration: BigWalkerTokens.pawnMoveDuration,
-      curve: BigWalkerTokens.pawnMoveCurve,
+      duration: BigWalkerMotion.pawnMove,
+      curve: BigWalkerMotion.pawnMoveCurve,
       builder: (context, value, _) {
         final index = value.round().clamp(0, BigWalkerTokens.totalCells - 1);
         final row = index ~/ BigWalkerTokens.cols;

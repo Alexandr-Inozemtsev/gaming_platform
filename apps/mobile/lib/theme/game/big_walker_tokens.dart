@@ -12,9 +12,6 @@ class BigWalkerTokens {
   static const double pawnRadius = 9;
   static const double pawnStrokeWidth = 1.5;
 
-  static const Duration pawnMoveDuration = Duration(milliseconds: 300);
-  static const Curve pawnMoveCurve = Curves.easeOutCubic;
-
   static const Color boardGradientStart = Color(0xFF0F2748);
   static const Color boardGradientMid = Color(0xFF173961);
   static const Color boardGradientEnd = Color(0xFF0F2748);
