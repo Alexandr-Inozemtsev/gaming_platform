@@ -32,3 +32,18 @@
 
 ## 11. System States
 - Prompt: `Set of minimal state illustrations for loading error empty reconnect offline interrupted server unavailable, consistent dark teal amber style, compact landscape composition, high clarity icons`.
+
+
+## 12. Cinematic Gameplay Room (Reference-Match Pack)
+- Prompt (master background): `Cinematic dark fantasy tabletop room, magical travel board game setup, full table visible in frame, fixed wide camera, neon teal and warm orange rim lighting, premium mobile game background, clean negative space for minimal HUD icons, no text, no logos, no watermark, high detail, 16:9 landscape, ultra sharp, game-ready.`
+- Prompt (board surface pass): `Top-down board surface texture for a magical travel game, readable cells and routes, subtle embossed materials, clean center area for pieces, dark teal base with amber accents, no UI, no text, 16:9.`
+- Prompt (decorative light pass): `Volumetric teal and amber god rays for premium tabletop room, edge-focused light only, transparent-friendly composition, no subjects, no text, no logos.`
+- Prompt (icon set): `Minimal monochrome HUD icon set for mic, camera, chat, and settings, rounded modern strokes, high legibility on dark background, SVG-ready.`
+- Prompt (dice VFX): `Single d20 dice burst effect with teal sparks and amber glow trails, transparent background, game HUD compatible, no text.`
+- Negative prompt: `text, logos, watermark, blurry, lowres, distorted perspective, cropped table, crowded UI, heavy fog over gameplay area`.
+- Recommended outputs:
+  - `gameplay.bg.cinematic_room.1920x1080@2x.webp`
+  - `gameplay.board.surface.travel_grid.1920x1080@2x.webp`
+  - `gameplay.decor.light_rays.overlay.1920x1080@2x.webp`
+  - `ui.icon.mic.svg`, `ui.icon.camera.svg`, `ui.icon.chat.svg`, `ui.icon.settings.svg`
+  - `gameplay.vfx.dice.d20_burst@2x.webp`
