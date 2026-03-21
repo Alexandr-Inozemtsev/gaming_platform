@@ -10,6 +10,9 @@ class BigWalkerHud extends StatelessWidget {
     required this.onToggleVideo,
     required this.onToggleMic,
     required this.onQuickChat,
+    required this.currentPlayerIndex,
+    required this.turnNumber,
+    required this.diceValue,
   });
 
   final int participantsCount;
@@ -17,6 +20,9 @@ class BigWalkerHud extends StatelessWidget {
   final VoidCallback onToggleVideo;
   final VoidCallback onToggleMic;
   final VoidCallback onQuickChat;
+  final int currentPlayerIndex;
+  final int turnNumber;
+  final int diceValue;
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +40,10 @@ class BigWalkerHud extends StatelessWidget {
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text('Большая бродилка', style: TextStyle(color: BigWalkerTokens.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
-              SizedBox(height: 2),
-              Text('Сказочное путешествие', style: TextStyle(color: BigWalkerTokens.textSecondary, fontSize: 12)),
+            children: [
+              const Text('Большая бродилка', style: TextStyle(color: BigWalkerTokens.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text('Ход $turnNumber • Игрок ${currentPlayerIndex + 1} • d$diceValue', style: const TextStyle(color: BigWalkerTokens.textSecondary, fontSize: 12)),
             ],
           ),
           const Spacer(),

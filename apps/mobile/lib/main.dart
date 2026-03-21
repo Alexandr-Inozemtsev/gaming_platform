@@ -22,6 +22,7 @@ import 'shared/ui/controls.dart';
 import 'shared/ui/ui_kit.dart';
 import 'shared/ui/system_states.dart';
 import 'theme/tokens.dart';
+import 'theme/game/big_walker_tokens.dart';
 import 'games/big_walker/big_walker_board.dart';
 import 'features/gameplay/big_walker/big_walker_match_state.dart';
 import 'features/gameplay/big_walker/game_room_scene.dart';
@@ -111,6 +112,10 @@ class AppState extends ChangeNotifier {
   int currentPlayerIndex = 0;
   int diceValue = 1;
   bool isRollingDice = false;
+  bool bigWalkerStarted = false;
+  int turnNumber = 1;
+  int? activePathIndex;
+  int? winnerIndex;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -134,6 +139,10 @@ class AppState extends ChangeNotifier {
     currentPlayerIndex: currentPlayerIndex,
     diceValue: diceValue,
     isRollingDice: isRollingDice,
+    turnNumber: turnNumber,
+    activePathIndex: activePathIndex,
+    winnerIndex: winnerIndex,
+    isStarted: bigWalkerStarted,
   );
 
   BigWalkerMatchActions get bigWalkerActions => BigWalkerMatchActions(
@@ -146,6 +155,7 @@ class AppState extends ChangeNotifier {
     onQuickChat: () {
       sendChat('Привет!');
     },
+    onStartMatch: startBigWalkerMatch,
   );
 
 
@@ -254,9 +264,13 @@ class AppState extends ChangeNotifier {
   }
 
   void setParticipantsCount(int value) {
-    participantsCount = value.clamp(2, 6);
+    participantsCount = value.clamp(BigWalkerTokens.minPlayers, BigWalkerTokens.maxPlayers);
     walkerPositions = List.generate(6, (index) => index < participantsCount ? 0 : -1);
     currentPlayerIndex = 0;
+    winnerIndex = null;
+    turnNumber = 1;
+    bigWalkerStarted = false;
+    activePathIndex = null;
     notifyListeners();
   }
 
@@ -326,6 +340,8 @@ class AppState extends ChangeNotifier {
       roomId = 'room_big_walker_demo';
       nextLevelAvailable = false;
       setParticipantsCount(participantsCount);
+      bigWalkerStarted = false;
+      winnerIndex = null;
       videoParticipants
         ..clear()
         ..addAll(List.generate(participantsCount, (index) => index == 0 ? 'You' : 'Player ${index + 1}'));
@@ -692,6 +708,20 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+
+
+  void startBigWalkerMatch() {
+    walkerPositions = List.generate(6, (index) => index < participantsCount ? 0 : -1);
+    currentPlayerIndex = 0;
+    diceValue = 1;
+    turnNumber = 1;
+    winnerIndex = null;
+    activePathIndex = 0;
+    bigWalkerStarted = true;
+    isRollingDice = false;
+    notifyListeners();
+  }
+
   Future<void> nextLegacyLevel() async {
     if (roomId == null) return;
     final result = await api.nextLevel(roomId!);
@@ -703,17 +733,39 @@ class AppState extends ChangeNotifier {
 
   // Big Walker mechanics (без изменения правил).
   Future<void> rollDiceAndMoveWalker() async {
-    if (isRollingDice) return;
+    if (!bigWalkerStarted || isRollingDice || winnerIndex != null) return;
     isRollingDice = true;
     notifyListeners();
-    for (int i = 0; i < 8; i += 1) {
-      diceValue = 1 + _random.nextInt(6);
+
+    for (int i = 0; i < BigWalkerTokens.diceRollFrames; i += 1) {
+      diceValue = BigWalkerTokens.diceMin + _random.nextInt(BigWalkerTokens.diceMax);
       notifyListeners();
       await Future<void>.delayed(BigWalkerMotion.dicePulse);
     }
-    walkerPositions[currentPlayerIndex] = (walkerPositions[currentPlayerIndex] + diceValue).clamp(0, 39);
-    roomLog.add('Player ${currentPlayerIndex + 1} бросил $diceValue и перешел на ${walkerPositions[currentPlayerIndex] + 1}');
+
+    final rolled = diceValue;
+    final startPos = walkerPositions[currentPlayerIndex].clamp(0, BigWalkerTokens.totalCells - 1);
+    for (int step = 1; step <= rolled; step += 1) {
+      final nextPos = (startPos + step).clamp(0, BigWalkerTokens.totalCells - 1);
+      walkerPositions[currentPlayerIndex] = nextPos;
+      activePathIndex = nextPos;
+      notifyListeners();
+      await Future<void>.delayed(BigWalkerMotion.cellStep);
+      if (nextPos >= BigWalkerTokens.totalCells - 1) break;
+    }
+
+    final finalPos = walkerPositions[currentPlayerIndex];
+    roomLog.add('Player ${currentPlayerIndex + 1} бросил $rolled и перешел на ${finalPos + 1}');
+
+    if (finalPos >= BigWalkerTokens.totalCells - 1) {
+      winnerIndex = currentPlayerIndex;
+      isRollingDice = false;
+      notifyListeners();
+      return;
+    }
+
     currentPlayerIndex = (currentPlayerIndex + 1) % participantsCount;
+    turnNumber += 1;
     isRollingDice = false;
     notifyListeners();
   }
@@ -739,6 +791,10 @@ class AppState extends ChangeNotifier {
     currentPlayerIndex = 0;
     diceValue = 1;
     isRollingDice = false;
+    bigWalkerStarted = false;
+    turnNumber = 1;
+    activePathIndex = null;
+    winnerIndex = null;
     yourTurn = true;
     previewRow = null;
     previewCol = null;

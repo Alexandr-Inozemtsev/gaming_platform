@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../games/big_walker/big_walker_board.dart';
 import '../../../theme/game/big_walker_tokens.dart';
+import 'animations/big_walker_motion.dart';
 import 'big_walker_match_state.dart';
 import 'widgets/big_walker_action_panel.dart';
 import 'widgets/big_walker_atmosphere.dart';
@@ -46,6 +47,9 @@ class GameRoomScene extends StatelessWidget {
                     onToggleVideo: actions.onToggleVideo,
                     onToggleMic: actions.onToggleMic,
                     onQuickChat: actions.onQuickChat,
+                    currentPlayerIndex: state.currentPlayerIndex,
+                    turnNumber: state.turnNumber,
+                    diceValue: state.diceValue,
                   ),
                   const SizedBox(height: 10),
                   BigWalkerPlayerChips(
@@ -79,6 +83,8 @@ class GameRoomScene extends StatelessWidget {
                               child: BigWalkerBoard(
                                 participantsCount: state.participantsCount,
                                 walkerPositions: state.walkerPositions,
+                                activePathIndex: state.activePathIndex,
+                                currentPlayerIndex: state.currentPlayerIndex,
                               ),
                             ),
                           ),
@@ -91,12 +97,95 @@ class GameRoomScene extends StatelessWidget {
                     isRollingDice: state.isRollingDice,
                     diceValue: state.diceValue,
                     onRollDice: actions.onRollDice,
+                    isStarted: state.isStarted,
+                    onStartMatch: actions.onStartMatch,
+                    hasWinner: state.winnerIndex != null,
                   ),
                 ],
               ),
             ),
           ),
+          if (!state.isStarted && state.winnerIndex == null)
+            _CenterSceneModal(
+              title: 'Подготовка матча',
+              subtitle: 'Выберите число участников и нажмите «Начать матч».',
+              cta: 'Начать матч',
+              onTap: actions.onStartMatch,
+            ),
+          if (state.winnerIndex != null)
+            _CenterSceneModal(
+              title: 'Победа игрока ${state.winnerIndex! + 1}',
+              subtitle: 'Финиш достигнут за ${state.turnNumber} ходов.',
+              cta: 'Новая партия',
+              onTap: actions.onStartMatch,
+              winner: true,
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _CenterSceneModal extends StatelessWidget {
+  const _CenterSceneModal({
+    required this.title,
+    required this.subtitle,
+    required this.cta,
+    required this.onTap,
+    this.winner = false,
+  });
+
+  final String title;
+  final String subtitle;
+  final String cta;
+  final VoidCallback onTap;
+  final bool winner;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withOpacity(0.45),
+        child: Center(
+          child: AnimatedScale(
+            duration: BigWalkerMotion.winnerModal,
+            scale: 1,
+            child: Container(
+              width: 380,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: BigWalkerTokens.card,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: winner ? BigWalkerTokens.accentAmber : BigWalkerTokens.cardBorder),
+                boxShadow: [
+                  BoxShadow(color: (winner ? BigWalkerTokens.accentAmber : BigWalkerTokens.accentCyan).withOpacity(0.28), blurRadius: 24),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(title, style: const TextStyle(color: BigWalkerTokens.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: BigWalkerTokens.textSecondary)),
+                  const SizedBox(height: 14),
+                  GestureDetector(
+                    onTap: onTap,
+                    child: Container(
+                      width: double.infinity,
+                      height: 46,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(colors: [BigWalkerTokens.accentAmber, BigWalkerTokens.accentAmber.withOpacity(0.82)]),
+                      ),
+                      child: Text(cta, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
