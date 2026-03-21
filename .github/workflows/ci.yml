@@ -41,6 +41,17 @@ jobs:
           LOAD_TEST_DURATION_SEC: 3
         run: npm run test:load:ws
 
+      - name: Build P2 container targets
+        run: |
+          docker build -f infra/Dockerfile --target api -t tabletop-api:ci .
+          docker build -f infra/Dockerfile --target matches -t tabletop-matches:ci .
+          docker build -f infra/Dockerfile --target campaigns -t tabletop-campaigns:ci .
+          docker build -f infra/Dockerfile --target analytics -t tabletop-analytics:ci .
+          docker build -f infra/Dockerfile --target web-socket -t tabletop-websocket:ci .
+
+      - name: Validate Kubernetes manifests
+        run: kubectl apply --dry-run=client -f k8s/
+
   mobile:
     name: Flutter analyze
     runs-on: ubuntu-latest

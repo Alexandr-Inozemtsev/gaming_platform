@@ -44,8 +44,25 @@ docker compose logs -f
 
 Подробности: `docs/infra.md`.
 
-## Deploy (staging/prod templates)
-См. `docs/deploy.md` для Dockerfile сервисов, `docker-compose.prod.yml` и env-шаблонов для staging/prod.
+## Deploy P2 (staging/prod)
+См. `docs/deploy.md` для полного процесса. Коротко:
+
+```bash
+export ENV=staging
+export DB_MIGRATE=true
+
+docker build -f infra/Dockerfile --target api -t tabletop-api:${ENV} .
+docker build -f infra/Dockerfile --target matches -t tabletop-matches:${ENV} .
+docker build -f infra/Dockerfile --target campaigns -t tabletop-campaigns:${ENV} .
+docker build -f infra/Dockerfile --target analytics -t tabletop-analytics:${ENV} .
+docker build -f infra/Dockerfile --target web-socket -t tabletop-websocket:${ENV} .
+
+if [ "${DB_MIGRATE}" = "true" ]; then
+  npx prisma migrate deploy
+fi
+
+kubectl apply -f k8s/
+```
 
 ## Release checklist и one-button запуск (Prompt P)
 Быстрый запуск локального контура:
