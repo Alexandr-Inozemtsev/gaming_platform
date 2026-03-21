@@ -616,6 +616,78 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     }
   };
 
+  const campaigns = {
+    create: ({ name, description = '', levels = [] }) => {
+      assertString(name, 'name', { min: 2 });
+      if (!Array.isArray(levels)) throw new HttpError(400, 'VALIDATION_ERROR', { field: 'levels' });
+      const campaign = { id: newId('campaign'), name, description, createdAt: nowIso(), updatedAt: nowIso() };
+      state.campaigns.push(campaign);
+      state.levels.push(
+        ...levels.map((levelItem, idx) => ({
+          id: newId('level'),
+          campaignId: campaign.id,
+          levelNumber: idx + 1,
+          configJSON: JSON.stringify(levelItem ?? {})
+        }))
+      );
+      return { ...campaign, levels: state.levels.filter((item) => item.campaignId === campaign.id) };
+    },
+    list: () =>
+      state.campaigns.map((campaign) => ({
+        ...campaign,
+        levels: state.levels
+          .filter((level) => level.campaignId === campaign.id)
+          .sort((a, b) => a.levelNumber - b.levelNumber)
+      })),
+    getById: ({ campaignId }) => {
+      assertString(campaignId, 'campaignId');
+      const campaign = state.campaigns.find((item) => item.id === campaignId);
+      if (!campaign) throw new HttpError(404, 'CAMPAIGN_NOT_FOUND');
+      return {
+        ...campaign,
+        levels: state.levels.filter((item) => item.campaignId === campaignId).sort((a, b) => a.levelNumber - b.levelNumber)
+      };
+    },
+    update: ({ campaignId, patch = {} }) => {
+      const campaign = campaigns.getById({ campaignId });
+      if (patch.name !== undefined) assertString(patch.name, 'name', { min: 2 });
+      if (patch.description !== undefined && typeof patch.description !== 'string') {
+        throw new HttpError(400, 'VALIDATION_ERROR', { field: 'description' });
+      }
+      const row = state.campaigns.find((item) => item.id === campaignId);
+      Object.assign(row, { ...patch, updatedAt: nowIso() });
+      return campaigns.getById({ campaignId });
+    },
+    remove: ({ campaignId }) => {
+      assertString(campaignId, 'campaignId');
+      state.campaigns = state.campaigns.filter((item) => item.id !== campaignId);
+      state.levels = state.levels.filter((item) => item.campaignId !== campaignId);
+      return { ok: true };
+    },
+    start: ({ campaignId, players, botLevel = null }) => {
+      const campaign = campaigns.getById({ campaignId });
+      const firstLevel = campaign.levels[0] ?? { levelNumber: 1, configJSON: '{}' };
+      const levelConfig = JSON.parse(firstLevel.configJSON);
+      const initialMatch = matches.create({
+        gameId: levelConfig.gameId ?? 'tile_placement_demo',
+        players,
+        botLevel,
+        campaignId,
+        level: firstLevel.levelNumber,
+        mode: 'classic'
+      });
+      return { campaign, match: initialMatch };
+    }
+  };
+
+  const leaderboards = {
+    get: ({ period = 'all-time' } = {}) => {
+      if (!['all-time', 'weekly'].includes(period)) throw new HttpError(400, 'LEADERBOARD_PERIOD_UNSUPPORTED');
+      const data = recalculateLeaderboards();
+      return period === 'weekly' ? data.weekly : data.allTime;
+    }
+  };
+
   const store = {
     skus: () => ({
       ...(() => {
