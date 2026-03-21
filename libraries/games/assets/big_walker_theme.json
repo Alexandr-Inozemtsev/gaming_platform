@@ -1,0 +1,11 @@
+{
+  "id": "big_walker_demo",
+  "name": "Большая бродилка",
+  "world": "Сказочные земли",
+  "palette": {
+    "forest": "#3AA76D",
+    "lake": "#5AA9FF",
+    "mountain": "#8C7AE6",
+    "castle": "#FFD166"
+  }
+}
