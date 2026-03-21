@@ -44,6 +44,24 @@ class _RoomScreenState extends State<RoomScreen> with SingleTickerProviderStateM
                     )
                   ),
                   const SizedBox(height: 8),
+                  Wrap(
+                    spacing: AppSpacing.xs,
+                    children: [
+                      AppChoiceTab(label: 'Classic', selected: s.matchMode == 'classic', onSelected: () => s.setMatchMode('classic')),
+                      AppChoiceTab(label: 'Legacy', selected: s.matchMode == 'legacy', onSelected: () => s.setMatchMode('legacy')),
+                      AppChoiceTab(label: 'Co-op', selected: s.matchMode == 'coop', onSelected: () => s.setMatchMode('coop')),
+                    ],
+                  ),
+                  if (s.matchMode == 'legacy' && s.nextLevelAvailable)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xs),
+                      child: AppButton(
+                        onPressed: s.nextLegacyLevel,
+                        icon: Icons.skip_next_rounded,
+                        label: 'Следующий уровень',
+                      ),
+                    ),
+                  const SizedBox(height: 8),
                   Row(
                     children: const [
                       Expanded(child: SizedBox(height: 44, child: PlayerSlot(name: 'You', ready: true, host: true))),
@@ -166,9 +184,10 @@ class VideoOverlayWidget extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: AppTokens.card.withOpacity(0.9),
+                        border: Border.all(color: AppColors.videoBorder),
                         borderRadius: BorderRadius.circular(AppTokens.videoTileRadius)
                       ),
-                      child: Text(id)
+                      child: Text(id == state.userId ? 'Local Video' : 'Remote: $id')
                     );
                   }).toList()
                 ),
@@ -197,6 +216,8 @@ class VideoOverlayWidget extends StatelessWidget {
                           },
                     child: Text(state.micEnabled ? state.t('video.micOn') : state.t('video.micOff'))
                   ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(onPressed: () => state.muteAllVideo(), child: const Text('Отключить всем')),
                   const SizedBox(width: 8),
                   FilledButton(onPressed: state.hangupVideo, child: Text(state.t('video.hangup')))
                 ]),
@@ -311,4 +332,3 @@ class RollWriteBoardWidget extends StatelessWidget {
     ]);
   }
 }
-
