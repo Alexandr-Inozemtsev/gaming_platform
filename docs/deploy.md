@@ -33,6 +33,12 @@ kubectl get pods -n tabletop
 kubectl get ingress -n tabletop
 ```
 
+## One-command deploy
+Из корня репозитория:
+```bash
+npm run prod-up
+```
+
 ## CI для контейнеров и k8s
 - `.github/workflows/ci.yml` запускает `docker build` для всех P2 сервисов.
 - Затем выполняется `kubectl apply --dry-run=client -f k8s/` для валидации манифестов.
