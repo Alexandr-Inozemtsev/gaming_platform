@@ -118,13 +118,28 @@ class BigWalkerTokens {
     BoxShadow(color: Color(0x5547D5FF), blurRadius: 20, offset: Offset(0, 4)),
   ];
 
-  static const String roomBgAsset = 'assets/design/gameplay.bg.cinematic_room.1920x1080@2x.webp';
-  static const String roomLightRaysAsset = 'assets/design/gameplay.decor.light_rays.overlay.1920x1080@2x.webp';
+  static const List<String> backgroundEnhancementLayers = <String>[];
 
-  static const List<String> backgroundLayers = [
-    roomBgAsset,
-    roomLightRaysAsset,
-  ];
+  static const LinearGradient roomAtmosphereGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF0D1B30), Color(0x220D3555), Colors.transparent],
+    stops: [0.0, 0.52, 1.0],
+  );
+
+  static const RadialGradient roomWarmSpotGradient = RadialGradient(
+    center: Alignment(0, 0.72),
+    radius: 1.06,
+    colors: [Color(0x3DA46537), Color(0x14000000), Colors.transparent],
+    stops: [0.0, 0.58, 1.0],
+  );
+
+  static const RadialGradient roomCeilingGlowGradient = RadialGradient(
+    center: Alignment(0, -0.9),
+    radius: 1.18,
+    colors: [Color(0x3368CBFF), Color(0x0A355A94), Colors.transparent],
+    stops: [0.0, 0.52, 1.0],
+  );
 
   static const String refDir = 'codex_handoff_big_walker/reference_screens';
   static const List<String> referenceScreens = [
