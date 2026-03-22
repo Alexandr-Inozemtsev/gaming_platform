@@ -27,9 +27,10 @@ class _BigWalkerPawn extends StatelessWidget {
         final centerX = (col * cellSize) + (cellSize / 2);
         final centerY = (row * cellSize) + (cellSize / 2);
 
-        final ringRadius = BigWalkerTokens.pawnRadius * 1.4;
-        final offsetX = ringRadius * 0.2 * ((playerIndex % 3) - 1);
-        final offsetY = ringRadius * 0.2 * ((playerIndex ~/ 3) - 0.5);
+        final ringRadius = BigWalkerTokens.pawnRadius * 1.5;
+        final offsetX = ringRadius * 0.24 * ((playerIndex % 3) - 1);
+        final offsetY = ringRadius * 0.24 * ((playerIndex ~/ 3) - 0.5);
+        final color = BigWalkerTokens.pawnPalette[playerIndex % BigWalkerTokens.pawnPalette.length];
 
         return Positioned(
           left: centerX - BigWalkerTokens.pawnRadius + offsetX,
@@ -39,22 +40,23 @@ class _BigWalkerPawn extends StatelessWidget {
             width: BigWalkerTokens.pawnRadius * 2,
             height: BigWalkerTokens.pawnRadius * 2,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.lerp(AppColors.primaryFig, AppColors.accentSecondary, playerIndex / 6) ?? AppColors.primaryFig,
-                  Colors.white,
-                ],
-              ),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black.withOpacity(0.35), width: BigWalkerTokens.pawnStrokeWidth),
+              gradient: RadialGradient(
+                colors: [Colors.white, color, color.withOpacity(0.75)],
+                stops: const [0.1, 0.55, 1],
+              ),
+              border: Border.all(color: Colors.black.withOpacity(0.45), width: BigWalkerTokens.pawnStrokeWidth),
               boxShadow: [
-                BoxShadow(color: active ? BigWalkerTokens.activePathGlow.withOpacity(0.6) : const Color(0x55000000), blurRadius: active ? 14 : 5, offset: const Offset(0, 2)),
+                BoxShadow(
+                  color: active ? BigWalkerTokens.accentCyan.withOpacity(0.7) : Colors.black.withOpacity(0.45),
+                  blurRadius: active ? 18 : 8,
+                  spreadRadius: active ? 1.5 : 0,
+                  offset: const Offset(0, 2),
+                ),
               ],
             ),
             alignment: Alignment.center,
-            child: Text('${playerIndex + 1}', style: const TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.w700)),
+            child: Text('${playerIndex + 1}', style: const TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.w800)),
           ),
         );
       },
