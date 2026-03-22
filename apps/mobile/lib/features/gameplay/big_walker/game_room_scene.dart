@@ -36,7 +36,7 @@ class GameRoomScene extends StatelessWidget {
                 gradient: RadialGradient(
                   center: const Alignment(0, -0.2),
                   radius: 1.2,
-                  colors: [Colors.transparent, BigWalkerTokens.roomVignette.withOpacity(0.85)],
+                  colors: [Colors.transparent, BigWalkerTokens.roomVignette.withOpacity(0.86)],
                 ),
               ),
             ),
@@ -109,39 +109,38 @@ class GameRoomScene extends StatelessWidget {
   }
 
   Widget _buildOverlay(BigWalkerMatchViewState state, BigWalkerMatchActions actions) {
+    Widget child = const SizedBox.shrink();
+
     if (!state.isStarted && state.winnerIndex == null) {
-      return BigWalkerPlayerSelect(
+      child = BigWalkerPlayerSelect(
         participantsCount: state.participantsCount,
         onParticipantsCountChanged: actions.onParticipantsCountChanged,
         onStart: actions.onStartMatch,
       );
-    }
-
-    if (state.winnerIndex != null) {
-      return BigWalkerVictoryModal(
+    } else if (state.winnerIndex != null) {
+      child = BigWalkerVictoryModal(
         winnerIndex: state.winnerIndex!,
         turnNumber: state.turnNumber,
         onRestart: actions.onStartMatch,
       );
-    }
-
-    if (state.overlay == 'pause') {
-      return BigWalkerPauseMenu(
+    } else if (state.overlay == 'pause') {
+      child = BigWalkerPauseMenu(
         onResume: actions.onCloseOverlay,
         onOpenRules: actions.onOpenRules,
         onOpenSettings: actions.onOpenSettings,
       );
+    } else if (state.overlay == 'rules') {
+      child = BigWalkerRulesModal(onClose: actions.onCloseOverlay);
+    } else if (state.overlay == 'settings') {
+      child = BigWalkerSettingsModal(onClose: actions.onCloseOverlay);
     }
 
-    if (state.overlay == 'rules') {
-      return BigWalkerRulesModal(onClose: actions.onCloseOverlay);
-    }
-
-    if (state.overlay == 'settings') {
-      return BigWalkerSettingsModal(onClose: actions.onCloseOverlay);
-    }
-
-    return const SizedBox.shrink();
+    return AnimatedSwitcher(
+      duration: BigWalkerTokens.modal,
+      switchInCurve: Curves.easeOutBack,
+      switchOutCurve: Curves.easeInCubic,
+      child: child,
+    );
   }
 }
 
@@ -155,7 +154,7 @@ class _SceneImageLayer extends StatelessWidget {
       children: [
         ...BigWalkerTokens.backgroundLayers.map(
           (asset) => Opacity(
-            opacity: 0.24,
+            opacity: asset == BigWalkerTokens.roomBgAsset ? 0.24 : 0.18,
             child: Image.asset(asset, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
           ),
         ),

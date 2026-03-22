@@ -7,13 +7,9 @@ class _BigWalkerBoardBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: const RadialGradient(
-          center: Alignment(0, -0.4),
-          radius: 1.1,
-          colors: [Color(0x553AE8FF), Color(0x222A5A80), Colors.transparent],
-        ),
+        gradient: BigWalkerTokens.boardAuraGradient,
         image: DecorationImage(
-          image: const AssetImage('assets/design/gameplay.bg.cinematic_room.1920x1080@2x.webp'),
+          image: const AssetImage(BigWalkerTokens.roomBgAsset),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.65), BlendMode.darken),
           onError: (_, __) {},

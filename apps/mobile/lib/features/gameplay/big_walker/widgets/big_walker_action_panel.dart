@@ -76,7 +76,7 @@ class _RollButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           gradient: active ? BigWalkerTokens.rollButtonGradient : BigWalkerTokens.panelGradient,
           border: Border.all(color: active ? BigWalkerTokens.accentAmber : BigWalkerTokens.panelBorder),
-          boxShadow: active ? const [BoxShadow(color: Color(0x99DA9B45), blurRadius: 18)] : null,
+          boxShadow: active ? BigWalkerTokens.buttonGlow : null,
         ),
         child: Center(
           child: Text(
@@ -98,11 +98,15 @@ class _DiceArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 108,
+      width: 126,
       height: BigWalkerTokens.actionButtonHeight,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: BigWalkerTokens.bgSoft,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF14253E), Color(0xFF0D172B)],
+        ),
         border: Border.all(color: BigWalkerTokens.panelBorder),
       ),
       child: Center(
@@ -111,15 +115,16 @@ class _DiceArea extends StatelessWidget {
           duration: BigWalkerMotion.diceShake,
           builder: (_, t, __) {
             return Transform.rotate(
-              angle: math.sin(t * math.pi * 8) * 0.09,
+              angle: math.sin(t * math.pi * 10) * 0.09,
               child: AnimatedScale(
                 duration: BigWalkerMotion.dicePulse,
-                scale: isRollingDice ? 1.1 : 1,
+                curve: Curves.easeOutBack,
+                scale: isRollingDice ? 1.12 : 1,
                 child: Container(
-                  width: 40,
-                  height: 40,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    gradient: const LinearGradient(colors: [Color(0xFFFDFEFF), Color(0xFFD6EBFF)]),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: const [BoxShadow(color: Color(0x7747DEFF), blurRadius: 12)],
                   ),

@@ -11,41 +11,41 @@ class BigWalkerTokens {
   static const int diceMin = 1;
   static const int diceMax = 6;
 
-  static const Color bgDeep = Color(0xFF050913);
-  static const Color bgMid = Color(0xFF0B1325);
-  static const Color bgSoft = Color(0xFF131F36);
-  static const Color roomVignette = Color(0xCC02050D);
+  static const Color bgDeep = Color(0xFF04070F);
+  static const Color bgMid = Color(0xFF091324);
+  static const Color bgSoft = Color(0xFF121E34);
+  static const Color roomVignette = Color(0xDD01040B);
 
-  static const Color panel = Color(0xCC0D172C);
-  static const Color panelSoft = Color(0xCC15243D);
-  static const Color panelBorder = Color(0x664C89B8);
-  static const Color panelBorderActive = Color(0xAA7AE7FF);
+  static const Color panel = Color(0xCC0F1B31);
+  static const Color panelSoft = Color(0xCC192B47);
+  static const Color panelBorder = Color(0x665FA8DA);
+  static const Color panelBorderActive = Color(0xBB7AE7FF);
 
-  static const Color accentCyan = Color(0xFF72EDFF);
-  static const Color accentCyanSoft = Color(0xFF3CAFD0);
-  static const Color accentAmber = Color(0xFFFFC977);
-  static const Color accentAmberDeep = Color(0xFFE19033);
+  static const Color accentCyan = Color(0xFF74EDFF);
+  static const Color accentCyanSoft = Color(0xFF2C9FC8);
+  static const Color accentAmber = Color(0xFFFFCC7A);
+  static const Color accentAmberDeep = Color(0xFFD78938);
   static const Color textPrimary = Color(0xFFF4F8FF);
-  static const Color textSecondary = Color(0xFFB5C9E3);
-  static const Color textMuted = Color(0xFF87A1BF);
+  static const Color textSecondary = Color(0xFFB9CBE4);
+  static const Color textMuted = Color(0xFF89A2BF);
 
-  static const Color boardWoodTop = Color(0xFF2E1E14);
-  static const Color boardWoodBottom = Color(0xFF1A110C);
-  static const Color boardInnerTop = Color(0xFF15253E);
-  static const Color boardInnerBottom = Color(0xFF0D182C);
-  static const Color boardBorder = Color(0xCC7DEEFF);
-  static const Color boardPathBase = Color(0xFF223F5F);
-  static const Color boardPathAlt = Color(0xFF1C3551);
-  static const Color boardSpecial = Color(0xFF2D4E76);
-  static const Color boardStart = Color(0xFF3ED28B);
-  static const Color boardFinish = Color(0xFFF0A44A);
+  static const Color boardWoodTop = Color(0xFF372418);
+  static const Color boardWoodBottom = Color(0xFF170E09);
+  static const Color boardInnerTop = Color(0xFF162B47);
+  static const Color boardInnerBottom = Color(0xFF0B1324);
+  static const Color boardBorder = Color(0xCC89E7FF);
+  static const Color boardPathBase = Color(0xFF25476D);
+  static const Color boardPathAlt = Color(0xFF193A58);
+  static const Color boardSpecial = Color(0xFF2A587E);
+  static const Color boardStart = Color(0xFF39D495);
+  static const Color boardFinish = Color(0xFFF5A64C);
 
   static const double scenePadding = 12;
   static const double sceneRadius = 24;
   static const double tableRadius = 28;
   static const double tableHeightFactor = 0.76;
   static const double boardRadius = 20;
-  static const double panelRadius = 16;
+  static const double panelRadius = 18;
   static const double chipRadius = 999;
   static const double cellRadius = 16;
   static const double cellGap = 4;
@@ -64,6 +64,8 @@ class BigWalkerTokens {
   static const Duration fast = Duration(milliseconds: 140);
   static const Duration normal = Duration(milliseconds: 260);
   static const Duration slow = Duration(milliseconds: 360);
+  static const Duration modal = Duration(milliseconds: 320);
+  static const Duration pulse = Duration(milliseconds: 1000);
 
   static const LinearGradient roomGradient = LinearGradient(
     begin: Alignment.topCenter,
@@ -74,7 +76,7 @@ class BigWalkerTokens {
   static const LinearGradient tableGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF2A1E17), Color(0xFF1A130F), Color(0xFF110D0A)],
+    colors: [Color(0xFF2A1E17), Color(0xFF19120E), Color(0xFF110D0A)],
   );
 
   static const LinearGradient panelGradient = LinearGradient(
@@ -95,6 +97,12 @@ class BigWalkerTokens {
     colors: [accentAmber, accentAmberDeep],
   );
 
+  static const RadialGradient boardAuraGradient = RadialGradient(
+    center: Alignment(0, -0.35),
+    radius: 1.1,
+    colors: [Color(0x553AE8FF), Color(0x222A5A80), Colors.transparent],
+  );
+
   static const List<BoxShadow> panelShadow = [
     BoxShadow(color: Color(0x3D5DDAFF), blurRadius: 24, spreadRadius: 1),
     BoxShadow(color: Color(0x2FB98A4D), blurRadius: 30, offset: Offset(0, 8)),
@@ -105,9 +113,17 @@ class BigWalkerTokens {
     BoxShadow(color: Color(0x335BE8FF), blurRadius: 24, spreadRadius: 2),
   ];
 
+  static const List<BoxShadow> buttonGlow = [
+    BoxShadow(color: Color(0x99DA9B45), blurRadius: 18),
+    BoxShadow(color: Color(0x5547D5FF), blurRadius: 20, offset: Offset(0, 4)),
+  ];
+
+  static const String roomBgAsset = 'assets/design/gameplay.bg.cinematic_room.1920x1080@2x.webp';
+  static const String roomLightRaysAsset = 'assets/design/gameplay.decor.light_rays.overlay.1920x1080@2x.webp';
+
   static const List<String> backgroundLayers = [
-    'assets/design/gameplay.bg.cinematic_room.1920x1080@2x.webp',
-    'assets/design/gameplay.decor.light_rays.overlay.1920x1080@2x.webp',
+    roomBgAsset,
+    roomLightRaysAsset,
   ];
 
   static const String refDir = 'codex_handoff_big_walker/reference_screens';

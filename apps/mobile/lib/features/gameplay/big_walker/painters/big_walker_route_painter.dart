@@ -25,26 +25,32 @@ class BigWalkerRoutePainter extends CustomPainter {
       }
     }
 
-    final routePaint = Paint()
+    final routeGlow = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 9
+      ..strokeWidth = 18
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
+      ..color = BigWalkerTokens.accentCyan.withOpacity(0.18);
+
+    final routeCore = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
       ..strokeCap = StrokeCap.round
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [BigWalkerTokens.accentAmberDeep, BigWalkerTokens.accentCyanSoft],
-      ).createShader(Offset.zero & size)
-      ..color = BigWalkerTokens.accentAmber;
+      ).createShader(Offset.zero & size);
 
-    final glowPaint = Paint()
+    final routeSpark = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 16
+      ..strokeWidth = 2
       ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
-      ..color = BigWalkerTokens.accentCyan.withOpacity(0.2);
+      ..color = Colors.white.withOpacity(0.18);
 
-    canvas.drawPath(path, glowPaint);
-    canvas.drawPath(path, routePaint);
+    canvas.drawPath(path, routeGlow);
+    canvas.drawPath(path, routeCore);
+    canvas.drawPath(path, routeSpark);
 
     if (activePathIndex != null) {
       final i = activePathIndex!.clamp(0, BigWalkerTokens.totalCells - 1);
@@ -52,10 +58,14 @@ class BigWalkerRoutePainter extends CustomPainter {
       final colInRow = i % BigWalkerTokens.cols;
       final col = row.isEven ? colInRow : (BigWalkerTokens.cols - 1 - colInRow);
       final activeCenter = Offset((col + 0.5) * cellW, (row + 0.5) * cellH);
-      final activePaint = Paint()
+
+      final activeAura = Paint()
         ..color = BigWalkerTokens.accentCyan.withOpacity(0.28)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-      canvas.drawCircle(activeCenter, 22, activePaint);
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+      final activeCore = Paint()..color = BigWalkerTokens.accentAmber.withOpacity(0.7);
+
+      canvas.drawCircle(activeCenter, 26, activeAura);
+      canvas.drawCircle(activeCenter, 6, activeCore);
     }
   }
 
