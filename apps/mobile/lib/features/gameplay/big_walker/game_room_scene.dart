@@ -154,7 +154,7 @@ class _ProceduralRoomLayer extends StatelessWidget {
     return RepaintBoundary(
       child: Stack(
         fit: StackFit.expand,
-        children: const [
+        children: [
           DecoratedBox(
             decoration: BoxDecoration(gradient: BigWalkerTokens.roomAtmosphereGradient),
           ),
