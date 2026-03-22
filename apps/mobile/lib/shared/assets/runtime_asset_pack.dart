@@ -34,18 +34,23 @@ class RuntimeAssetPack {
     return list.first.toString();
   }
 
-  Future<String?> resolveAsset(String key, {String variant = 'webp@2x'}) async {
+  Future<String?> resolveAsset(String key, {String variant = 'raster@2x'}) async {
     await warmup();
     final assets = _manifest?['assets'] as Map<String, dynamic>?;
     final entry = assets?[key] as Map<String, dynamic>?;
     if (entry == null) return null;
 
-    final resolved = entry[variant] ?? entry['runtime@procedural'] ?? entry['svg'] ?? entry['webp@2x'];
+    final resolved =
+        entry[variant] ??
+        entry['raster@2x'] ??
+        entry['runtime@procedural'] ??
+        entry['svg'] ??
+        entry['webp@2x'];
     return resolved?.toString();
   }
 
   // Controlled fallback: placeholders разрешены только как запасной вариант, а не базовая стратегия.
-  Future<String> resolveAssetOrFallback(String key, {String variant = 'webp@2x'}) async {
+  Future<String> resolveAssetOrFallback(String key, {String variant = 'raster@2x'}) async {
     final resolvedAsset = await resolveAsset(key, variant: variant);
     if (resolvedAsset != null) return resolvedAsset;
 
