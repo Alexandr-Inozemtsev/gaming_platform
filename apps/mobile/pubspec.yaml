@@ -22,3 +22,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/design/
+    - assets/design/big_walker_reference/

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../games/big_walker/big_walker_board.dart';
@@ -17,6 +18,20 @@ import 'widgets/big_walker_victory_modal.dart';
 
 class GameRoomScene extends StatelessWidget {
   const GameRoomScene({super.key, required this.viewModel});
+
+  static const bool _debugReferenceOverlayEnabled = bool.fromEnvironment(
+    'BIG_WALKER_REFERENCE_OVERLAY',
+    defaultValue: false,
+  );
+  static const String _debugReferenceOverlayAsset = String.fromEnvironment(
+    'BIG_WALKER_REFERENCE_ASSET',
+    defaultValue:
+        'assets/design/big_walker_reference/02_match_screen_single_token_reference.png',
+  );
+  static const double _debugReferenceOverlayOpacity = double.fromEnvironment(
+    'BIG_WALKER_REFERENCE_OPACITY',
+    defaultValue: 0.35,
+  );
 
   final BigWalkerViewModel viewModel;
 
@@ -97,6 +112,7 @@ class GameRoomScene extends StatelessWidget {
           ),
           if (state.turnTransitionVisible && state.transitionPlayerIndex != null)
             BigWalkerNextTurnOverlay(playerIndex: state.transitionPlayerIndex!),
+          const _DebugReferenceOverlayLayer(),
           _buildOverlay(state, actions),
         ],
       ),
@@ -135,6 +151,31 @@ class GameRoomScene extends StatelessWidget {
       switchInCurve: Curves.easeOutBack,
       switchOutCurve: Curves.easeInCubic,
       child: child,
+    );
+  }
+}
+
+class _DebugReferenceOverlayLayer extends StatelessWidget {
+  const _DebugReferenceOverlayLayer();
+
+  @override
+  Widget build(BuildContext context) {
+    if (!kDebugMode || !GameRoomScene._debugReferenceOverlayEnabled) {
+      return const SizedBox.shrink();
+    }
+
+    final opacity = GameRoomScene._debugReferenceOverlayOpacity.clamp(0.0, 1.0).toDouble();
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Opacity(
+          opacity: opacity,
+          child: Image.asset(
+            GameRoomScene._debugReferenceOverlayAsset,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        ),
+      ),
     );
   }
 }
