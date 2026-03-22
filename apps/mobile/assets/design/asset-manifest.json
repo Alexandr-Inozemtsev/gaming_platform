@@ -1,90 +1,142 @@
 {
-  "version": "1.0.0",
-  "orientation": "landscape-mobile-first",
-  "categories": {
-    "icons": [
-      "ui.icon.back",
-      "ui.icon.search",
-      "ui.icon.timer",
-      "ui.icon.turn",
-      "ui.icon.mic",
-      "ui.icon.camera",
-      "ui.icon.chat",
-      "ui.icon.settings"
-    ],
-    "logos": [
-      "brand.logo.wordmark.dark"
-    ],
-    "illustrations": [
-      "onboarding.hero.tabletop",
-      "auth.accent.tabletop",
-      "system.empty.no_results"
-    ],
-    "game_covers": [
-      "catalog.cover.tile-placement",
-      "catalog.cover.roll-write"
-    ],
-    "textures": [
-      "global.bg.felt.dark",
-      "gameplay.board.surface.grid",
-      "gameplay.board.surface.travel_grid"
-    ],
-    "decorative_graphics": [
-      "home.ambient.side_glow",
-      "catalog.decor.deck_lines"
-    ],
-    "gameplay_objects": [
-      "gameplay.token.set.basic",
-      "gameplay.card.back.default",
-      "gameplay.vfx.dice.d20_burst"
-    ],
-    "badges": [
-      "profile.badge.rank.silver",
-      "profile.badge.rank.gold"
-    ],
-    "trophies": [
-      "profile.trophy.streak",
-      "profile.trophy.victory"
-    ],
-    "ambient_backgrounds": [
-      "home.bg.ambient",
-      "gameplay.bg.ambient",
-      "gameplay.bg.procedural_room"
-    ]
-  },
-  "exports": {
-    "icon": [
-      "svg"
-    ],
-    "illustration": [
-      "svg",
-      "png",
-      "webp"
-    ],
-    "texture": [
-      "raster@2x",
-      "raster@3x"
-    ]
-  },
-  "variant_policy": {
-    "raster@2x": "Logical raster variant key (preferred). Runtime may point to .webp or .png files.",
-    "raster@3x": "Logical raster variant key for high-density displays.",
-    "webp@2x": "Legacy compatibility key; avoid for new entries.",
-    "webp@3x": "Legacy compatibility key; avoid for new entries."
-  },
-  "assets": {
-    "gameplay.board.surface.travel_grid": {
-      "raster@2x": {
-        "remote": "/assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
-        "fallback": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
-      },
-      "webp@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
-      "svg": "assets/design/gameplay.board.surface.travel_grid.svg"
+    "version": "1.0.0",
+    "orientation": "landscape-mobile-first",
+    "categories": {
+        "icons": [
+            "ui.icon.back",
+            "ui.icon.search",
+            "ui.icon.timer",
+            "ui.icon.turn",
+            "ui.icon.mic",
+            "ui.icon.camera",
+            "ui.icon.chat",
+            "ui.icon.settings"
+        ],
+        "logos": [
+            "brand.logo.wordmark.dark"
+        ],
+        "illustrations": [
+            "onboarding.hero.tabletop",
+            "auth.accent.tabletop",
+            "system.empty.no_results"
+        ],
+        "game_covers": [
+            "catalog.cover.tile-placement",
+            "catalog.cover.roll-write"
+        ],
+        "textures": [
+            "global.bg.felt.dark",
+            "gameplay.board.surface.grid",
+            "gameplay.board.surface.travel_grid"
+        ],
+        "decorative_graphics": [
+            "home.ambient.side_glow",
+            "catalog.decor.deck_lines"
+        ],
+        "gameplay_objects": [
+            "gameplay.token.set.basic",
+            "gameplay.card.back.default",
+            "gameplay.vfx.dice.d20_burst"
+        ],
+        "badges": [
+            "profile.badge.rank.silver",
+            "profile.badge.rank.gold"
+        ],
+        "trophies": [
+            "profile.trophy.streak",
+            "profile.trophy.victory"
+        ],
+        "ambient_backgrounds": [
+            "home.bg.ambient",
+            "gameplay.bg.ambient",
+            "gameplay.bg.procedural_room"
+        ],
+        "reference_layers": [
+            "debug.big_walker.reference.settings_modal",
+            "debug.big_walker.reference.match_single_token",
+            "debug.big_walker.reference.match_multi_token",
+            "debug.big_walker.reference.dice_roll_state",
+            "debug.big_walker.reference.next_turn_overlay",
+            "debug.big_walker.reference.match_alt_layout",
+            "debug.big_walker.reference.player_select",
+            "debug.big_walker.reference.pause_menu",
+            "debug.big_walker.reference.victory_modal",
+            "debug.big_walker.reference.rules_modal"
+        ]
     },
-    "gameplay.bg.procedural_room": {
-      "runtime@procedural": "apps/mobile/lib/features/gameplay/big_walker/game_room_scene.dart#_ProceduralRoomLayer",
-      "note": "Binary-free layered gradient + painter background for Big Walker gameplay.",
-      "svg": "assets/design/gameplay.bg.procedural_room.svg"
+    "exports": {
+        "icon": [
+            "svg"
+        ],
+        "illustration": [
+            "svg",
+            "png",
+            "webp"
+        ],
+        "texture": [
+            "raster@2x",
+            "raster@3x"
+        ]
+    },
+    "variant_policy": {
+        "raster@2x": "Logical raster variant key (preferred). Runtime may point to .webp or .png files.",
+        "raster@3x": "Logical raster variant key for high-density displays.",
+        "webp@2x": "Legacy compatibility key; avoid for new entries.",
+        "webp@3x": "Legacy compatibility key; avoid for new entries."
+    },
+    "assets": {
+        "gameplay.board.surface.travel_grid": {
+            "raster@2x": {
+                "remote": "/assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
+                "fallback": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
+            },
+            "webp@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
+            "svg": "assets/design/gameplay.board.surface.travel_grid.svg"
+        },
+        "gameplay.bg.procedural_room": {
+            "runtime@procedural": "apps/mobile/lib/features/gameplay/big_walker/game_room_scene.dart#_ProceduralRoomLayer",
+            "note": "Binary-free layered gradient + painter background for Big Walker gameplay.",
+            "svg": "assets/design/gameplay.bg.procedural_room.svg"
+        },
+        "debug.big_walker.reference.settings_modal": {
+            "png": "assets/design/big_walker_reference/01_settings_modal_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.match_single_token": {
+            "png": "assets/design/big_walker_reference/02_match_screen_single_token_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.match_multi_token": {
+            "png": "assets/design/big_walker_reference/03_match_screen_multi_token_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.dice_roll_state": {
+            "png": "assets/design/big_walker_reference/04_dice_roll_state_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.next_turn_overlay": {
+            "png": "assets/design/big_walker_reference/05_next_turn_overlay_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.match_alt_layout": {
+            "png": "assets/design/big_walker_reference/06_match_screen_alt_layout_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.player_select": {
+            "png": "assets/design/big_walker_reference/07_player_select_screen_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.pause_menu": {
+            "png": "assets/design/big_walker_reference/08_pause_menu_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.victory_modal": {
+            "png": "assets/design/big_walker_reference/09_victory_modal_reference.png",
+            "debug_only": true
+        },
+        "debug.big_walker.reference.rules_modal": {
+            "png": "assets/design/big_walker_reference/10_rules_modal_reference.png",
+            "debug_only": true
+        }
     }
-  }
 }
