@@ -1,0 +1,25 @@
+{
+  "description": "Binary-free baseline manifest for Big Walker golden states. PNG files are delivered outside Codex PR and placed locally next to this manifest.",
+  "required_states": [
+    {
+      "state": "idle",
+      "file": "big_walker_idle.png"
+    },
+    {
+      "state": "roll",
+      "file": "big_walker_roll.png"
+    },
+    {
+      "state": "next_turn",
+      "file": "big_walker_next_turn.png"
+    },
+    {
+      "state": "pause",
+      "file": "big_walker_pause.png"
+    },
+    {
+      "state": "victory",
+      "file": "big_walker_victory.png"
+    }
+  ]
+}

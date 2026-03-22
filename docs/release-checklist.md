@@ -59,6 +59,16 @@ cd apps/mobile && flutter run -d "iPhone 15"
 - PR в этом репозитории должен оставаться binary-free, если это не согласовано отдельно.
 - Перед публикацией бинарников проверьте, что `ASSET_BASE_URL` зафиксирован для dev/stage/prod и runtime успешно резолвит remote URL.
 
+## Блокирующие UI-gates для Big Walker
+- Нельзя закрывать UI-задачу без приложенного сравнения `mockup vs build` на одинаковых viewport и состояниях.
+- Для golden-проверок обязательны состояния:
+  - `idle`
+  - `roll`
+  - `next_turn`
+  - `pause`
+  - `victory`
+- Baseline PNG-файлы для golden проверяются вне Codex PR (binary-free режим), но список обязательных файлов фиксируется в `apps/mobile/test/golden/goldens/big_walker_baselines.manifest.json`.
+
 ## Остановка
 ```bash
 scripts/dev-down.sh
