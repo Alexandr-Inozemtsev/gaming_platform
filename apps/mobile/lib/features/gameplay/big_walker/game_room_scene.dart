@@ -282,13 +282,28 @@ class _ResolvedRuntimeAssetLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String>(
-      future: RuntimeAssetPack.instance.resolveAssetOrFallback(assetKey),
+      future: RuntimeAssetPack.instance.resolveAsset(assetKey),
       builder: (context, snapshot) {
         final assetPath = snapshot.data;
-        if (assetPath == null || assetPath.isEmpty) return fallback;
+        if (assetPath == null || assetPath.isEmpty) {
+          assert(() {
+            debugPrint('[GameRoomScene] Missing runtime asset key="$assetKey". Using controlled fallback widget.');
+            return true;
+          }());
+          return fallback;
+        }
 
         final resolved = _buildImage(assetPath);
-        if (resolved == null) return fallback;
+        if (resolved == null) {
+          assert(() {
+            debugPrint(
+              '[GameRoomScene] Runtime asset key="$assetKey" resolved as non-raster marker "$assetPath". '
+              'Using controlled fallback widget.',
+            );
+            return true;
+          }());
+          return fallback;
+        }
         if (opacity >= 1) return resolved;
         return Opacity(opacity: opacity, child: resolved);
       },
@@ -300,7 +315,7 @@ class _ResolvedRuntimeAssetLayer extends StatelessWidget {
       return Image.network(path, fit: fit, errorBuilder: (context, error, stackTrace) => fallback);
     }
 
-    if (path.endsWith('.svg')) return fallback;
+    if (path.endsWith('.svg') || path.contains('#')) return null;
     return Image.asset(path, fit: fit, errorBuilder: (context, error, stackTrace) => fallback);
   }
 }
