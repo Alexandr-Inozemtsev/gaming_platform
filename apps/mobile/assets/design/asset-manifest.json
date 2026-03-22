@@ -74,12 +74,17 @@
   },
   "assets": {
     "gameplay.board.surface.travel_grid": {
-      "raster@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
-      "webp@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
+      "raster@2x": {
+        "remote": "/assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
+        "fallback": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
+      },
+      "webp@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
+      "svg": "assets/design/gameplay.board.surface.travel_grid.svg"
     },
     "gameplay.bg.procedural_room": {
       "runtime@procedural": "apps/mobile/lib/features/gameplay/big_walker/game_room_scene.dart#_ProceduralRoomLayer",
-      "note": "Binary-free layered gradient + painter background for Big Walker gameplay."
+      "note": "Binary-free layered gradient + painter background for Big Walker gameplay.",
+      "svg": "assets/design/gameplay.bg.procedural_room.svg"
     }
   }
 }

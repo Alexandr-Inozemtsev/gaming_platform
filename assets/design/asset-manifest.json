@@ -27,13 +27,11 @@
     "textures": [
       "global.bg.felt.dark",
       "gameplay.board.surface.grid",
-      "gameplay.bg.cinematic_room",
       "gameplay.board.surface.travel_grid"
     ],
     "decorative_graphics": [
       "home.ambient.side_glow",
-      "catalog.decor.deck_lines",
-      "gameplay.decor.light_rays.overlay"
+      "catalog.decor.deck_lines"
     ],
     "gameplay_objects": [
       "gameplay.token.set.basic",
@@ -50,7 +48,8 @@
     ],
     "ambient_backgrounds": [
       "home.bg.ambient",
-      "gameplay.bg.ambient"
+      "gameplay.bg.ambient",
+      "gameplay.bg.procedural_room"
     ]
   },
   "exports": {
@@ -63,10 +62,29 @@
       "webp"
     ],
     "texture": [
-      "png@2x",
-      "png@3x",
-      "webp@2x",
-      "webp@3x"
+      "raster@2x",
+      "raster@3x"
     ]
+  },
+  "variant_policy": {
+    "raster@2x": "Logical raster variant key (preferred). Runtime may point to .webp or .png files.",
+    "raster@3x": "Logical raster variant key for high-density displays.",
+    "webp@2x": "Legacy compatibility key; avoid for new entries.",
+    "webp@3x": "Legacy compatibility key; avoid for new entries."
+  },
+  "assets": {
+    "gameplay.board.surface.travel_grid": {
+      "raster@2x": {
+        "remote": "/assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
+        "fallback": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
+      },
+      "webp@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
+      "svg": "assets/design/gameplay.board.surface.travel_grid.svg"
+    },
+    "gameplay.bg.procedural_room": {
+      "runtime@procedural": "apps/mobile/lib/features/gameplay/big_walker/game_room_scene.dart#_ProceduralRoomLayer",
+      "note": "Binary-free layered gradient + painter background for Big Walker gameplay.",
+      "svg": "assets/design/gameplay.bg.procedural_room.svg"
+    }
   }
 }

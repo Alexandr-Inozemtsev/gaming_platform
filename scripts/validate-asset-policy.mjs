@@ -52,18 +52,35 @@ assertCondition(
 );
 
 const assets = manifest.assets ?? {};
+assertCondition(errors, manifest.assets && typeof manifest.assets === 'object', 'asset-manifest.assets секция отсутствует.');
 const travelGridEntry = assets[travelGridKey];
 assertCondition(errors, Boolean(travelGridEntry), `asset-manifest.assets[${travelGridKey}] отсутствует.`);
 if (travelGridEntry) {
+  const defaultVariantEntry = travelGridEntry[tokenDefaultVariant];
   assertCondition(
     errors,
-    travelGridEntry[tokenDefaultVariant] === travelGridPath,
-    `asset-manifest.assets[${travelGridKey}].${tokenDefaultVariant} должен совпадать с token path.`,
+    typeof defaultVariantEntry === 'object' && defaultVariantEntry !== null,
+    `asset-manifest.assets[${travelGridKey}].${tokenDefaultVariant} должен быть объектом c remote/fallback.`,
+  );
+  assertCondition(
+    errors,
+    defaultVariantEntry?.fallback === travelGridPath,
+    `asset-manifest.assets[${travelGridKey}].${tokenDefaultVariant}.fallback должен совпадать с token path.`,
+  );
+  assertCondition(
+    errors,
+    typeof defaultVariantEntry?.remote === 'string' && defaultVariantEntry.remote.length > 0,
+    `asset-manifest.assets[${travelGridKey}].${tokenDefaultVariant}.remote должен быть задан.`,
   );
   assertCondition(
     errors,
     typeof travelGridEntry[tokenLegacyVariant] === 'string',
     `asset-manifest.assets[${travelGridKey}].${tokenLegacyVariant} должен быть задан для legacy-совместимости.`,
+  );
+  assertCondition(
+    errors,
+    typeof travelGridEntry.svg === 'string' && travelGridEntry.svg.length > 0,
+    `asset-manifest.assets[${travelGridKey}].svg должен быть задан для fallback preview/дизайн-пайплайна.`,
   );
 }
 
@@ -74,6 +91,11 @@ if (proceduralRoomEntry) {
     errors,
     typeof proceduralRoomEntry['runtime@procedural'] === 'string',
     `asset-manifest.assets[${proceduralRoomKey}].runtime@procedural должен быть строкой.`,
+  );
+  assertCondition(
+    errors,
+    typeof proceduralRoomEntry.svg === 'string' && proceduralRoomEntry.svg.length > 0,
+    `asset-manifest.assets[${proceduralRoomKey}].svg должен быть задан для дизайн-документации и CI snapshot-проверок.`,
   );
 }
 
@@ -96,6 +118,19 @@ assertCondition(
   errors,
   resolverRaw.includes(resolverOrderSnippet),
   'RuntimeAssetPack.resolveAsset должен сохранять порядок policy: requested -> raster@2x -> runtime@procedural -> svg -> webp@2x.',
+);
+
+assertCondition(
+  errors,
+  resolverRaw.includes("final strategy = (resolvedRemote?.isNotEmpty ?? false) ? 'remote' : 'local_manifest_fallback';") &&
+    resolverRaw.includes('strategy="$strategy"'),
+  'RuntimeAssetPack должен логировать диагностику remote/local_manifest_fallback при resolve variant.',
+);
+
+assertCondition(
+  errors,
+  resolverRaw.includes("strategy=\"fallback\""),
+  'RuntimeAssetPack должен логировать controlled fallback для ключей вне manifest.',
 );
 
 if (errors.length > 0) {
