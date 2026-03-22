@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../games/big_walker/big_walker_board.dart';
@@ -29,7 +28,8 @@ class GameRoomScene extends StatelessWidget {
       decoration: const BoxDecoration(gradient: BigWalkerTokens.roomGradient),
       child: Stack(
         children: [
-          const Positioned.fill(child: _SceneImageLayer()),
+          const Positioned.fill(child: _ProceduralRoomLayer()),
+          const Positioned.fill(child: _SceneEnhancementImageLayer()),
           const Positioned.fill(child: BigWalkerAtmosphere()),
           Positioned.fill(
             child: DecoratedBox(
@@ -145,92 +145,108 @@ class GameRoomScene extends StatelessWidget {
   }
 }
 
-class _SceneImageLayer extends StatelessWidget {
-  const _SceneImageLayer();
+class _ProceduralRoomLayer extends StatelessWidget {
+  const _ProceduralRoomLayer();
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        ...BigWalkerTokens.backgroundLayers.map(
-          (asset) => Opacity(
-            opacity: asset == BigWalkerTokens.roomBgAsset ? 0.24 : 0.18,
-            child: Image.asset(
-              asset,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _MissingSceneAssetFallback(assetPath: asset),
-            ),
+    return RepaintBoundary(
+      child: Stack(
+        fit: StackFit.expand,
+        children: const [
+          DecoratedBox(
+            decoration: BoxDecoration(gradient: BigWalkerTokens.roomAtmosphereGradient),
           ),
-        ),
-      ],
+          DecoratedBox(
+            decoration: BoxDecoration(gradient: BigWalkerTokens.roomWarmSpotGradient),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(gradient: BigWalkerTokens.roomCeilingGlowGradient),
+          ),
+          _SceneParticles(),
+        ],
+      ),
     );
   }
 }
 
-class _MissingSceneAssetFallback extends StatelessWidget {
-  const _MissingSceneAssetFallback({required this.assetPath});
-
-  final String assetPath;
+class _SceneParticles extends StatelessWidget {
+  const _SceneParticles();
 
   @override
   Widget build(BuildContext context) {
-    assert(() {
-      debugPrint('[BigWalker] Missing scene asset: $assetPath');
-      return true;
-    }());
+    return CustomPaint(
+      painter: _SceneParticlesPainter(),
+      isComplex: true,
+      willChange: false,
+    );
+  }
+}
 
-    if (kDebugMode) {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              BigWalkerTokens.bgDeep.withOpacity(0.84),
-              const Color(0xFF41251E).withOpacity(0.84),
-            ],
-          ),
-          border: Border.all(color: BigWalkerTokens.accentAmber.withOpacity(0.65), width: 1.4),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.broken_image_rounded, color: BigWalkerTokens.accentAmber, size: 34),
-                const SizedBox(height: 8),
-                const Text(
-                  'Missing Big Walker asset',
-                  style: TextStyle(
-                    color: BigWalkerTokens.textPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  assetPath,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: BigWalkerTokens.textSecondary, fontSize: 11),
-                ),
-              ],
+class _SceneParticlesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dustPaint = Paint()..style = PaintingStyle.fill;
+    const particles = <({double x, double y, double r, double opacity})>[
+      (x: 0.08, y: 0.19, r: 36, opacity: 0.08),
+      (x: 0.19, y: 0.27, r: 22, opacity: 0.09),
+      (x: 0.32, y: 0.16, r: 26, opacity: 0.07),
+      (x: 0.45, y: 0.24, r: 28, opacity: 0.08),
+      (x: 0.58, y: 0.2, r: 30, opacity: 0.07),
+      (x: 0.67, y: 0.3, r: 24, opacity: 0.09),
+      (x: 0.8, y: 0.22, r: 32, opacity: 0.08),
+      (x: 0.9, y: 0.17, r: 20, opacity: 0.1),
+      (x: 0.12, y: 0.62, r: 42, opacity: 0.05),
+      (x: 0.31, y: 0.56, r: 38, opacity: 0.04),
+      (x: 0.53, y: 0.64, r: 44, opacity: 0.05),
+      (x: 0.74, y: 0.58, r: 34, opacity: 0.04),
+      (x: 0.88, y: 0.68, r: 40, opacity: 0.05),
+    ];
+
+    for (final particle in particles) {
+      dustPaint.color = BigWalkerTokens.accentCyan.withOpacity(particle.opacity);
+      canvas.drawCircle(Offset(size.width * particle.x, size.height * particle.y), particle.r, dustPaint);
+    }
+
+    final horizonPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0x441C324E), Colors.transparent],
+      ).createShader(Offset.zero & size);
+
+    canvas.drawRect(Offset.zero & size, horizonPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _SceneEnhancementImageLayer extends StatelessWidget {
+  const _SceneEnhancementImageLayer();
+
+  @override
+  Widget build(BuildContext context) {
+    if (BigWalkerTokens.backgroundEnhancementLayers.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ...BigWalkerTokens.backgroundEnhancementLayers.map(
+          (asset) => IgnorePointer(
+            child: Opacity(
+              opacity: 0.12,
+              child: Image.asset(
+                asset,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
             ),
           ),
         ),
-      );
-    }
-
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF0B1528), Color(0xFF060C18)],
-        ),
-      ),
-      child: const Center(
-        child: Icon(Icons.image_not_supported_rounded, color: Color(0x889AB5D6), size: 20),
-      ),
+      ],
     );
   }
 }
