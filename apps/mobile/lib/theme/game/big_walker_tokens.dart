@@ -44,7 +44,7 @@ class BigWalkerTokens {
   static const double scenePadding = 12;
   static const double sceneRadius = 24;
   static const double tableRadius = 28;
-  static const double tableHeightFactor = 0.76;
+  static const double tableHeightFactor = 0.8;
   static const double boardRadius = 20;
   static const double panelRadius = 18;
   static const double modalRadius = 22;
