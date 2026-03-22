@@ -28,5 +28,22 @@ void main() {
     };
 
     expect(actual, expected);
+
+    for (final fileName in expected.values) {
+
+      final encodedBaselineFile = File('test/golden/goldens/$fileName.base64');
+      expect(
+        encodedBaselineFile.existsSync(),
+        isTrue,
+        reason: 'Missing committed encoded baseline: ${encodedBaselineFile.path}',
+      );
+
+      final baselineFile = File('test/golden/goldens/$fileName');
+      expect(
+        baselineFile.existsSync(),
+        isTrue,
+        reason: 'Missing committed baseline PNG: ${baselineFile.path}',
+      );
+    }
   });
 }
