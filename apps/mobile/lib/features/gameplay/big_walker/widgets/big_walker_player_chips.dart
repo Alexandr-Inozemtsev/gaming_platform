@@ -16,63 +16,50 @@ class BigWalkerPlayerChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 52,
+      height: 56,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        itemCount: participantsCount,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, index) {
           final active = index == currentPlayerIndex;
+          final color = BigWalkerTokens.pawnPalette[index % BigWalkerTokens.pawnPalette.length];
           return AnimatedContainer(
             duration: BigWalkerMotion.turnGlow,
-            curve: BigWalkerMotion.turnGlowCurve,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: active ? BigWalkerTokens.accentCyan.withOpacity(0.18) : BigWalkerTokens.card,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: active ? BigWalkerTokens.accentCyan : BigWalkerTokens.cardBorder),
-              boxShadow: active
-                  ? [
-                      BoxShadow(color: BigWalkerTokens.accentCyan.withOpacity(0.38), blurRadius: 18, spreadRadius: 1),
-                    ]
-                  : const [],
+              borderRadius: BorderRadius.circular(BigWalkerTokens.chipRadius),
+              gradient: active
+                  ? LinearGradient(colors: [color.withOpacity(0.9), BigWalkerTokens.panelSoft])
+                  : BigWalkerTokens.panelGradient,
+              border: Border.all(color: active ? BigWalkerTokens.accentCyan : BigWalkerTokens.panelBorder),
+              boxShadow: active ? [BoxShadow(color: BigWalkerTokens.accentCyan.withOpacity(0.32), blurRadius: 16)] : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 24,
-                  height: 24,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        Color.lerp(BigWalkerTokens.accentCyan, BigWalkerTokens.accentAmber, index / 6) ?? BigWalkerTokens.accentCyan,
-                        Colors.white,
-                      ],
-                    ),
-                    border: Border.all(color: Colors.black.withOpacity(0.2)),
+                    gradient: RadialGradient(colors: [Colors.white, color]),
                   ),
                   alignment: Alignment.center,
-                  child: Text('${index + 1}', style: const TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.w800)),
+                  child: Text('${index + 1}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black)),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  index == 0 ? 'You' : 'Player ${index + 1}',
+                  'Игрок ${index + 1}',
                   style: TextStyle(
                     color: BigWalkerTokens.textPrimary,
-                    fontSize: 12,
-                    fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+                    fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                   ),
                 ),
-                if (active) ...[
-                  const SizedBox(width: 6),
-                  const Icon(Icons.flash_on_rounded, size: 14, color: BigWalkerTokens.accentAmber),
-                ],
               ],
             ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemCount: participantsCount,
       ),
     );
   }
