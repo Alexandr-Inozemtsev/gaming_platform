@@ -3,6 +3,7 @@
 ## Переменные запуска
 - `ENV=staging|prod`
 - `DB_MIGRATE=true|false`
+- `ASSET_BASE_URL=https://cdn.<env>.tabletopplatform.example` (фиксируется отдельно для dev/stage/prod)
 
 ## Что добавлено в P2
 - Мульти-таргет сборка контейнеров `infra/Dockerfile`: `api`, `matches`, `campaigns`, `analytics`, `web-socket`.
