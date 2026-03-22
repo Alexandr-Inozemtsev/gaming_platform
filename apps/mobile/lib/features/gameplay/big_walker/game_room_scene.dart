@@ -29,7 +29,6 @@ class GameRoomScene extends StatelessWidget {
       child: Stack(
         children: [
           const Positioned.fill(child: _ProceduralRoomLayer()),
-          const Positioned.fill(child: _SceneEnhancementImageLayer()),
           const Positioned.fill(child: BigWalkerAtmosphere()),
           Positioned.fill(
             child: DecoratedBox(
@@ -96,6 +95,8 @@ class GameRoomScene extends StatelessWidget {
                     isStarted: state.isStarted,
                     onStartMatch: actions.onStartMatch,
                     hasWinner: state.winnerIndex != null,
+                    currentPlayerIndex: state.currentPlayerIndex,
+                    turnNumber: state.turnNumber,
                   ),
                 ],
               ),
@@ -156,6 +157,18 @@ class _ProceduralRoomLayer extends StatelessWidget {
         children: const [
           DecoratedBox(
             decoration: BoxDecoration(gradient: BigWalkerTokens.roomAtmosphereGradient),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, 0.36),
+                radius: 0.9,
+                colors: [
+                  BigWalkerTokens.accentAmber.withOpacity(0.08),
+                  Colors.transparent,
+                ],
+              ),
+            ),
           ),
           DecoratedBox(
             decoration: BoxDecoration(gradient: BigWalkerTokens.roomWarmSpotGradient),
@@ -220,33 +233,4 @@ class _SceneParticlesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _SceneEnhancementImageLayer extends StatelessWidget {
-  const _SceneEnhancementImageLayer();
-
-  @override
-  Widget build(BuildContext context) {
-    if (BigWalkerTokens.backgroundEnhancementLayers.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        ...BigWalkerTokens.backgroundEnhancementLayers.map(
-          (asset) => IgnorePointer(
-            child: Opacity(
-              opacity: 0.12,
-              child: Image.asset(
-                asset,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }

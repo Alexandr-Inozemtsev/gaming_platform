@@ -34,15 +34,11 @@ class BigWalkerModalShell extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 520),
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xE61B2E4A), Color(0xE60D182B)],
-                ),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: BigWalkerTokens.panelBorderActive),
+                gradient: BigWalkerTokens.panelGradient,
+                borderRadius: BorderRadius.circular(BigWalkerTokens.modalRadius),
+                border: Border.all(color: BigWalkerTokens.panelBorderStrong),
                 boxShadow: [
-                  ...BigWalkerTokens.panelShadow,
+                  ...BigWalkerTokens.modalShadow,
                   const BoxShadow(color: Color(0x774FE8FF), blurRadius: 28, spreadRadius: 1),
                 ],
               ),
@@ -58,7 +54,7 @@ class BigWalkerModalShell extends StatelessWidget {
                           height: 34,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: const LinearGradient(colors: [Color(0xFF223D60), Color(0xFF14263E)]),
+                            gradient: BigWalkerTokens.panelGradient,
                             border: Border.all(color: BigWalkerTokens.panelBorder),
                           ),
                           child: Icon(icon, color: BigWalkerTokens.accentAmber, size: 18),
@@ -105,12 +101,12 @@ class BigWalkerModalButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(BigWalkerTokens.cardRadius),
       child: Ink(
         height: 44,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(BigWalkerTokens.cardRadius),
           gradient: primary ? BigWalkerTokens.rollButtonGradient : null,
           color: primary ? null : BigWalkerTokens.bgSoft,
           border: Border.all(color: primary ? Colors.transparent : BigWalkerTokens.panelBorder),
@@ -130,6 +126,25 @@ class BigWalkerModalButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class BigWalkerModalCard extends StatelessWidget {
+  const BigWalkerModalCard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BigWalkerTokens.cardRadius),
+        gradient: BigWalkerTokens.panelGradient,
+        border: Border.all(color: BigWalkerTokens.panelBorder),
+      ),
+      child: child,
     );
   }
 }
