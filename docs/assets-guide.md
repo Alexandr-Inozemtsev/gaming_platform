@@ -4,6 +4,13 @@
 Источник: `apps/mobile/assets/design/asset-manifest.json`.
 Категории: icons, logos, illustrations, game_covers, textures, decorative_graphics, gameplay_objects, badges, trophies, ambient_backgrounds.
 
+### Единая policy variant-ключей (P1)
+- `variant` — это **логический профиль доставки**, а не гарантия физического формата файла.
+- Базовый ключ runtime для растровых ассетов: `raster@2x` (и при необходимости `raster@3x`).
+- Ключи `webp@2x`/`webp@3x` считаются legacy-совместимостью и не должны быть основными для новых записей.
+- Физический файл может быть `.webp` или `.png`, если это не противоречит manifest и runtime-resolver.
+- Для процедурных экранов допускается `runtime@procedural` как отдельный runtime source.
+
 ## Naming
 `{screen}.{block}.{theme}.{size}@{scale}.{ext}`
 Пример: `gameplay.board.bg.dark.1920x1080@3x.webp`.
@@ -11,7 +18,7 @@
 ## Export rules
 - Иконки: SVG.
 - Иллюстрации: SVG или PNG/WebP high-res.
-- Текстуры/screen art: PNG/WebP 2x/3x.
+- Текстуры/screen art: логические варианты `raster@2x`/`raster@3x` (физически PNG/WebP).
 - Варианты dark-optimized обязательны.
 
 ## Fallback placeholders
@@ -27,6 +34,12 @@ SVG-заглушки: `apps/mobile/assets/design/placeholders/*.svg`.
 - Для Big Walker основной runtime-визуал должен работать без бинарных фонов: используется процедурный слой (градиенты + painter-атмосфера).
 - `reference_screens` и любые PNG/WebP допускаются только как локальная сверка дизайна и не должны быть runtime dependency.
 - Image-слои с бинарными файлами разрешены только как необязательный enhancement, который безопасно деградирует до `SizedBox.shrink()`.
+
+### Контракт консистентности (обязателен для CI)
+- `apps/mobile/lib/theme/game/big_walker_tokens.dart` фиксирует ключи и default variant для Big Walker (`raster@2x`).
+- `apps/mobile/assets/design/asset-manifest.json` хранит каноничные variant-ключи и runtime mapping.
+- `apps/mobile/lib/shared/assets/runtime_asset_pack.dart` резолвит ассеты в порядке policy (`requested -> raster@2x -> runtime@procedural -> svg -> webp@2x`).
+- Скрипт `npm run validate:asset-policy` проверяет непротиворечивость tokens ↔ manifest ↔ resolver.
 
 ## Runtime integration
 - Runtime загрузка manifest реализована в `apps/mobile/lib/shared/assets/runtime_asset_pack.dart`.

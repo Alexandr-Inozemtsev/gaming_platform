@@ -62,14 +62,19 @@
       "webp"
     ],
     "texture": [
-      "png@2x",
-      "png@3x",
-      "webp@2x",
-      "webp@3x"
+      "raster@2x",
+      "raster@3x"
     ]
+  },
+  "variant_policy": {
+    "raster@2x": "Logical raster variant key (preferred). Runtime may point to .webp or .png files.",
+    "raster@3x": "Logical raster variant key for high-density displays.",
+    "webp@2x": "Legacy compatibility key; avoid for new entries.",
+    "webp@3x": "Legacy compatibility key; avoid for new entries."
   },
   "assets": {
     "gameplay.board.surface.travel_grid": {
+      "raster@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
       "webp@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
     },
     "gameplay.bg.procedural_room": {
