@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../features/gameplay/big_walker/animations/big_walker_motion.dart';
@@ -218,12 +219,28 @@ class _ResolvedBoardAssetLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String>(
-      future: RuntimeAssetPack.instance.resolveAssetOrFallback(assetKey),
+      future: RuntimeAssetPack.instance.resolveAsset(assetKey),
       builder: (context, snapshot) {
         final assetPath = snapshot.data;
-        if (assetPath == null || assetPath.isEmpty) return fallback;
+        if (assetPath == null || assetPath.isEmpty) {
+          assert(() {
+            debugPrint('[BigWalkerBoard] Missing runtime asset key="$assetKey". Using controlled fallback widget.');
+            return true;
+          }());
+          return fallback;
+        }
         final image = _buildImage(assetPath);
-        return image ?? fallback;
+        if (image == null) {
+          assert(() {
+            debugPrint(
+              '[BigWalkerBoard] Runtime asset key="$assetKey" resolved as non-raster marker "$assetPath". '
+              'Using controlled fallback widget.',
+            );
+            return true;
+          }());
+          return fallback;
+        }
+        return image;
       },
     );
   }
@@ -232,7 +249,7 @@ class _ResolvedBoardAssetLayer extends StatelessWidget {
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return Image.network(path, fit: fit, errorBuilder: (context, error, stackTrace) => fallback);
     }
-    if (path.endsWith('.svg')) return fallback;
+    if (path.endsWith('.svg') || path.contains('#')) return null;
     return Image.asset(path, fit: fit, errorBuilder: (context, error, stackTrace) => fallback);
   }
 }
