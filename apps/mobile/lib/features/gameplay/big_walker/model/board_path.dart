@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import '../../../../theme/game/big_walker_tokens.dart';
+import 'path_presets.dart';
 
 enum BigWalkerTileStyle { normal, bonus, risk }
 
@@ -9,6 +10,8 @@ class BigWalkerPathNode {
     required this.routeIndex,
     required this.gridRow,
     required this.gridCol,
+    required this.u,
+    required this.v,
     this.tileStyle = BigWalkerTileStyle.normal,
     this.isStart = false,
     this.isFinish = false,
@@ -17,12 +20,14 @@ class BigWalkerPathNode {
   final int routeIndex;
   final int gridRow;
   final int gridCol;
+  final double u;
+  final double v;
   final BigWalkerTileStyle tileStyle;
   final bool isStart;
   final bool isFinish;
 
-  Offset toBoardOffset({required double cellWidth, required double cellHeight}) {
-    return Offset((gridCol + 0.5) * cellWidth, (gridRow + 0.5) * cellHeight);
+  Offset toBoardOffset({required double boardWidth, required double boardHeight}) {
+    return Offset(u * boardWidth, v * boardHeight);
   }
 }
 
@@ -37,27 +42,30 @@ class BigWalkerBoardPath {
   const BigWalkerBoardPath._({required this.nodes, required this.segments});
 
   factory BigWalkerBoardPath.standard() {
-    final nodes = <BigWalkerPathNode>[];
-
-    for (int routeIndex = 0; routeIndex < BigWalkerTokens.totalCells; routeIndex += 1) {
-      final row = routeIndex ~/ BigWalkerTokens.cols;
-      final colInRow = routeIndex % BigWalkerTokens.cols;
-      final col = row.isEven ? colInRow : (BigWalkerTokens.cols - 1 - colInRow);
-
-      final isStart = routeIndex == 0;
-      final isFinish = routeIndex == BigWalkerTokens.totalCells - 1;
-
-      nodes.add(
-        BigWalkerPathNode(
-          routeIndex: routeIndex,
-          gridRow: row,
-          gridCol: col,
-          isStart: isStart,
-          isFinish: isFinish,
-          tileStyle: _resolveTileStyle(routeIndex: routeIndex, isStart: isStart, isFinish: isFinish),
-        ),
+    if (bigWalkerStandardPathPreset.length != BigWalkerTokens.totalCells) {
+      throw StateError(
+        'Big Walker path preset must provide exactly ${BigWalkerTokens.totalCells} nodes; '
+        'got ${bigWalkerStandardPathPreset.length}.',
       );
     }
+
+    final nodes = <BigWalkerPathNode>[
+      for (final presetNode in bigWalkerStandardPathPreset)
+        BigWalkerPathNode(
+          routeIndex: presetNode.routeIndex,
+          gridRow: presetNode.gridRow,
+          gridCol: presetNode.gridCol,
+          u: presetNode.u,
+          v: presetNode.v,
+          isStart: presetNode.routeIndex == 0,
+          isFinish: presetNode.routeIndex == BigWalkerTokens.totalCells - 1,
+          tileStyle: _resolveTileStyle(
+            routeIndex: presetNode.routeIndex,
+            isStart: presetNode.routeIndex == 0,
+            isFinish: presetNode.routeIndex == BigWalkerTokens.totalCells - 1,
+          ),
+        ),
+    ]..sort((left, right) => left.routeIndex.compareTo(right.routeIndex));
 
     final segments = <BigWalkerPathSegment>[
       for (int i = 0; i < nodes.length - 1; i += 1)

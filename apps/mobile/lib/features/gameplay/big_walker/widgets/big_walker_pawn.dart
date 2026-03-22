@@ -5,14 +5,16 @@ class _BigWalkerPawn extends StatefulWidget {
     super.key,
     required this.playerIndex,
     required this.routeIndex,
-    required this.cellSize,
+    required this.boardWidth,
+    required this.boardHeight,
     required this.path,
     required this.active,
   });
 
   final int playerIndex;
   final int routeIndex;
-  final double cellSize;
+  final double boardWidth;
+  final double boardHeight;
   final BigWalkerBoardPath path;
   final bool active;
 
@@ -71,8 +73,8 @@ class _BigWalkerPawnState extends State<_BigWalkerPawn> with SingleTickerProvide
 
         final lowerNode = widget.path.nodeForRouteIndex(lowerRouteIndex);
         final upperNode = widget.path.nodeForRouteIndex(upperRouteIndex);
-        final lowerCenter = lowerNode.toBoardOffset(cellWidth: widget.cellSize, cellHeight: widget.cellSize);
-        final upperCenter = upperNode.toBoardOffset(cellWidth: widget.cellSize, cellHeight: widget.cellSize);
+        final lowerCenter = lowerNode.toBoardOffset(boardWidth: widget.boardWidth, boardHeight: widget.boardHeight);
+        final upperCenter = upperNode.toBoardOffset(boardWidth: widget.boardWidth, boardHeight: widget.boardHeight);
         final center = Offset.lerp(lowerCenter, upperCenter, segmentT)!;
 
         final lowerOffset = _stackOffsetForRoute(

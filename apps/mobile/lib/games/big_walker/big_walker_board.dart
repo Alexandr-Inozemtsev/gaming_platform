@@ -105,7 +105,8 @@ class BigWalkerBoard extends StatelessWidget {
                           key: ValueKey('pawn-$playerIndex'),
                           playerIndex: playerIndex,
                           routeIndex: routePosition,
-                          cellSize: cell,
+                          boardWidth: boardW,
+                          boardHeight: boardH,
                           path: boardPath,
                           active: currentPlayerIndex == playerIndex,
                         );
@@ -142,7 +143,9 @@ class _BigWalkerPathMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final center = node.toBoardOffset(cellWidth: cellSize, cellHeight: cellSize);
+    final boardWidth = cellSize * BigWalkerTokens.cols;
+    final boardHeight = cellSize * BigWalkerTokens.rows;
+    final center = node.toBoardOffset(boardWidth: boardWidth, boardHeight: boardHeight);
 
     return Positioned(
       left: center.dx - (cellSize * 0.32),

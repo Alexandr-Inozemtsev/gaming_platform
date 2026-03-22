@@ -11,12 +11,9 @@ class BigWalkerRoutePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cellW = size.width / BigWalkerTokens.cols;
-    final cellH = size.height / BigWalkerTokens.rows;
-
     final route = Path();
     for (int i = 0; i < path.nodes.length; i += 1) {
-      final point = path.nodes[i].toBoardOffset(cellWidth: cellW, cellHeight: cellH);
+      final point = path.nodes[i].toBoardOffset(boardWidth: size.width, boardHeight: size.height);
       if (i == 0) {
         route.moveTo(point.dx, point.dy);
       } else {
@@ -53,7 +50,7 @@ class BigWalkerRoutePainter extends CustomPainter {
 
     if (activePathIndex != null) {
       final activeNode = path.nodeForRouteIndex(activePathIndex!);
-      final activeCenter = activeNode.toBoardOffset(cellWidth: cellW, cellHeight: cellH);
+      final activeCenter = activeNode.toBoardOffset(boardWidth: size.width, boardHeight: size.height);
 
       final activeAura = Paint()
         ..color = BigWalkerTokens.accentCyan.withOpacity(0.28)
