@@ -1,5 +1,5 @@
 {
-  "description": "Binary-free baseline manifest for Big Walker golden states. PNG files are delivered outside Codex PR and placed locally next to this manifest.",
+  "description": "Canonical Big Walker golden baselines. PNG files are materialized from committed .png.base64 files for CI/local checks.",
   "required_states": [
     {
       "state": "idle",
