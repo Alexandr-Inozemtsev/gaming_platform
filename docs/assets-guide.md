@@ -41,6 +41,12 @@ SVG-заглушки: `apps/mobile/assets/design/placeholders/*.svg`.
 - `apps/mobile/lib/shared/assets/runtime_asset_pack.dart` резолвит ассеты в порядке policy (`requested -> raster@2x -> runtime@procedural -> svg -> webp@2x`).
 - Скрипт `npm run validate:asset-policy` проверяет непротиворечивость tokens ↔ manifest ↔ resolver.
 
+## Canonical manifest for mobile runtime
+- Каноничный файл runtime-манифеста: `apps/mobile/assets/design/asset-manifest.json`.
+- Зеркало для корневых tooling-процессов: `assets/design/asset-manifest.json` (не редактируется вручную).
+- Для синхронизации зеркала используйте `npm run sync:mobile-runtime-manifest`.
+- CI guard `npm run check:mobile-runtime-manifest-sync` падает при рассинхроне.
+
 ## Runtime integration
 - Runtime загрузка manifest реализована в `apps/mobile/lib/shared/assets/runtime_asset_pack.dart`.
 - UI-контейнеры могут запрашивать категории ассетов (например `ambient_backgrounds`) без хардкода путей.
