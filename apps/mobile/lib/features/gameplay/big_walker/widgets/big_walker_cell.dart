@@ -49,16 +49,42 @@ class _BigWalkerCell extends StatelessWidget {
       ),
       child: Stack(
         children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(BigWalkerTokens.cellRadius),
+                gradient: RadialGradient(
+                  center: const Alignment(-0.4, -0.6),
+                  radius: 1.1,
+                  colors: [
+                    Colors.white.withOpacity(isActivePath ? 0.26 : 0.12),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
           Positioned(
             left: 6,
             top: 4,
             child: Text(
               '${routeIndex + 1}',
-              style: TextStyle(color: Colors.white.withOpacity(0.72), fontSize: 10, fontWeight: FontWeight.w700),
+              style: TextStyle(color: Colors.white.withOpacity(0.86), fontSize: 10, fontWeight: FontWeight.w800),
             ),
           ),
           if (isSpecial && !isStart && !isFinish)
-            const Center(child: Icon(Icons.auto_awesome_rounded, size: 14, color: BigWalkerTokens.accentAmber)),
+            Center(
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black.withOpacity(0.28),
+                  border: Border.all(color: BigWalkerTokens.accentAmber.withOpacity(0.8)),
+                ),
+                child: const Icon(Icons.auto_awesome_rounded, size: 12, color: BigWalkerTokens.accentAmber),
+              ),
+            ),
           if (isStart)
             const Align(
               alignment: Alignment.bottomLeft,

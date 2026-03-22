@@ -20,6 +20,7 @@ class BigWalkerTokens {
   static const Color panelSoft = Color(0xCC192B47);
   static const Color panelBorder = Color(0x665FA8DA);
   static const Color panelBorderActive = Color(0xBB7AE7FF);
+  static const Color panelBorderStrong = Color(0xCC9FE9FF);
 
   static const Color accentCyan = Color(0xFF74EDFF);
   static const Color accentCyanSoft = Color(0xFF2C9FC8);
@@ -46,6 +47,8 @@ class BigWalkerTokens {
   static const double tableHeightFactor = 0.76;
   static const double boardRadius = 20;
   static const double panelRadius = 18;
+  static const double modalRadius = 22;
+  static const double cardRadius = 14;
   static const double chipRadius = 999;
   static const double cellRadius = 16;
   static const double cellGap = 4;
@@ -66,6 +69,7 @@ class BigWalkerTokens {
   static const Duration slow = Duration(milliseconds: 360);
   static const Duration modal = Duration(milliseconds: 320);
   static const Duration pulse = Duration(milliseconds: 1000);
+  static const Duration emphasis = Duration(milliseconds: 700);
 
   static const LinearGradient roomGradient = LinearGradient(
     begin: Alignment.topCenter,
@@ -118,6 +122,16 @@ class BigWalkerTokens {
     BoxShadow(color: Color(0x5547D5FF), blurRadius: 20, offset: Offset(0, 4)),
   ];
 
+  static const List<BoxShadow> modalShadow = [
+    BoxShadow(color: Color(0x3D5DDAFF), blurRadius: 26, spreadRadius: 1),
+    BoxShadow(color: Color(0x3277A9D9), blurRadius: 38, offset: Offset(0, 14)),
+  ];
+
+  static const List<BoxShadow> emphasisGlow = [
+    BoxShadow(color: Color(0x7D59E6FF), blurRadius: 18, spreadRadius: 1),
+    BoxShadow(color: Color(0x665CFFC8), blurRadius: 24, spreadRadius: 1),
+  ];
+
   static const List<String> backgroundEnhancementLayers = <String>[];
 
   // Asset policy contract (tokens <-> manifest <-> runtime resolver).
@@ -148,20 +162,6 @@ class BigWalkerTokens {
     colors: [Color(0x3368CBFF), Color(0x0A355A94), Colors.transparent],
     stops: [0.0, 0.52, 1.0],
   );
-
-  static const String refDir = 'codex_handoff_big_walker/reference_screens';
-  static const List<String> referenceScreens = [
-    '$refDir/01_settings_modal_reference.png',
-    '$refDir/02_match_screen_single_token_reference.png',
-    '$refDir/03_match_screen_multi_token_reference.png',
-    '$refDir/04_dice_roll_state_reference.png',
-    '$refDir/05_next_turn_overlay_reference.png',
-    '$refDir/06_match_screen_alt_layout_reference.png',
-    '$refDir/07_player_select_screen_reference.png',
-    '$refDir/08_pause_menu_reference.png',
-    '$refDir/09_victory_modal_reference.png',
-    '$refDir/10_rules_modal_reference.png',
-  ];
 
   static const List<Color> pawnPalette = [
     Color(0xFF6CEEFF),

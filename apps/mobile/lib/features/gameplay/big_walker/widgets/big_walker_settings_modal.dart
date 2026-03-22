@@ -35,13 +35,7 @@ class _SettingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: BigWalkerTokens.bgSoft.withOpacity(0.6),
-        border: Border.all(color: BigWalkerTokens.panelBorder),
-      ),
+    return BigWalkerModalCard(
       child: Row(
         children: [
           Expanded(child: Text(label, style: const TextStyle(color: BigWalkerTokens.textSecondary))),

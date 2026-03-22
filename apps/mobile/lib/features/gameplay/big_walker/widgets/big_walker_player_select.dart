@@ -63,9 +63,11 @@ class BigWalkerPlayerSelect extends StatelessWidget {
             }),
           ),
           const SizedBox(height: 10),
-          Text(
-            'Активный ход подсвечивается в HUD и на фишке. Побеждает тот, кто первым достигнет финиша.',
-            style: TextStyle(color: BigWalkerTokens.textSecondary.withOpacity(0.9), fontSize: 12),
+          BigWalkerModalCard(
+            child: Text(
+              'Активный ход подсвечивается в HUD и на фишке. Побеждает тот, кто первым достигнет финиша.',
+              style: TextStyle(color: BigWalkerTokens.textSecondary.withOpacity(0.9), fontSize: 12),
+            ),
           ),
         ],
       ),
