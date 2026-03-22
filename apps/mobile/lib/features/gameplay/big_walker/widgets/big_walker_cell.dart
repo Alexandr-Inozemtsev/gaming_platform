@@ -5,34 +5,31 @@ class _BigWalkerCell extends StatelessWidget {
     required this.routeIndex,
     required this.playersHere,
     required this.isActivePath,
-    required this.isStart,
-    required this.isFinish,
+    required this.tileStyle,
   });
 
   final int routeIndex;
   final List<int> playersHere;
   final bool isActivePath;
-  final bool isStart;
-  final bool isFinish;
+  final BigWalkerTileStyle tileStyle;
 
   @override
   Widget build(BuildContext context) {
-    final isSpecial = routeIndex % 7 == 0;
-    final base = isSpecial
-        ? BigWalkerTokens.boardSpecial
-        : (routeIndex.isEven ? BigWalkerTokens.boardPathBase : BigWalkerTokens.boardPathAlt);
-
-    final gradientColors = isStart
-        ? [BigWalkerTokens.boardStart.withOpacity(0.95), BigWalkerTokens.boardStart.withOpacity(0.6)]
-        : isFinish
-            ? [BigWalkerTokens.boardFinish.withOpacity(0.96), BigWalkerTokens.boardFinish.withOpacity(0.65)]
-            : [base.withOpacity(0.94), base.withOpacity(0.66)];
+    final base = switch (tileStyle) {
+      BigWalkerTileStyle.normal => routeIndex.isEven ? BigWalkerTokens.boardPathBase : BigWalkerTokens.boardPathAlt,
+      BigWalkerTileStyle.bonus => BigWalkerTokens.boardSpecial,
+      BigWalkerTileStyle.risk => const Color(0xFF6A3140),
+    };
 
     return AnimatedContainer(
       duration: BigWalkerMotion.cellStep,
       margin: const EdgeInsets.all(BigWalkerTokens.cellGap),
       decoration: BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: gradientColors),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [base.withOpacity(0.95), base.withOpacity(0.64)],
+        ),
         borderRadius: BorderRadius.circular(BigWalkerTokens.cellRadius),
         border: Border.all(
           color: isActivePath
@@ -72,35 +69,10 @@ class _BigWalkerCell extends StatelessWidget {
               style: TextStyle(color: Colors.white.withOpacity(0.86), fontSize: 10, fontWeight: FontWeight.w800),
             ),
           ),
-          if (isSpecial && !isStart && !isFinish)
-            Center(
-              child: Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black.withOpacity(0.28),
-                  border: Border.all(color: BigWalkerTokens.accentAmber.withOpacity(0.8)),
-                ),
-                child: const Icon(Icons.auto_awesome_rounded, size: 12, color: BigWalkerTokens.accentAmber),
-              ),
-            ),
-          if (isStart)
-            const Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-                child: Text('START', style: TextStyle(fontSize: 8, color: Colors.black, fontWeight: FontWeight.w900)),
-              ),
-            ),
-          if (isFinish)
-            const Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-                child: Text('FINISH', style: TextStyle(fontSize: 8, color: Colors.black, fontWeight: FontWeight.w900)),
-              ),
-            ),
+          if (tileStyle == BigWalkerTileStyle.bonus)
+            const Center(child: Icon(Icons.auto_awesome_rounded, size: 14, color: BigWalkerTokens.accentAmber)),
+          if (tileStyle == BigWalkerTileStyle.risk)
+            const Center(child: Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFFFFB07A))),
         ],
       ),
     );

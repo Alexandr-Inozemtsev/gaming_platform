@@ -4,28 +4,28 @@ class _BigWalkerPawn extends StatelessWidget {
   const _BigWalkerPawn({
     super.key,
     required this.playerIndex,
-    required this.position,
+    required this.routeIndex,
     required this.cellSize,
+    required this.path,
     required this.active,
   });
 
   final int playerIndex;
-  final int position;
+  final int routeIndex;
   final double cellSize;
+  final BigWalkerBoardPath path;
   final bool active;
 
   @override
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: position.toDouble()),
+      tween: Tween<double>(begin: 0, end: routeIndex.toDouble()),
       duration: BigWalkerMotion.pawnMove,
       curve: BigWalkerMotion.pawnMoveCurve,
       builder: (context, value, _) {
-        final index = value.round().clamp(0, BigWalkerTokens.totalCells - 1);
-        final row = index ~/ BigWalkerTokens.cols;
-        final col = index % BigWalkerTokens.cols;
-        final centerX = (col * cellSize) + (cellSize / 2);
-        final centerY = (row * cellSize) + (cellSize / 2);
+        final interpolatedRouteIndex = value.round();
+        final node = path.nodeForRouteIndex(interpolatedRouteIndex);
+        final center = node.toBoardOffset(cellWidth: cellSize, cellHeight: cellSize);
 
         final ringRadius = BigWalkerTokens.pawnRadius * 1.5;
         final offsetX = ringRadius * 0.24 * ((playerIndex % 3) - 1);
@@ -33,8 +33,8 @@ class _BigWalkerPawn extends StatelessWidget {
         final color = BigWalkerTokens.pawnPalette[playerIndex % BigWalkerTokens.pawnPalette.length];
 
         return Positioned(
-          left: centerX - BigWalkerTokens.pawnRadius + offsetX,
-          top: centerY - BigWalkerTokens.pawnRadius + offsetY,
+          left: center.dx - BigWalkerTokens.pawnRadius + offsetX,
+          top: center.dy - BigWalkerTokens.pawnRadius + offsetY,
           child: AnimatedContainer(
             duration: BigWalkerMotion.turnGlow,
             width: BigWalkerTokens.pawnRadius * 2,
