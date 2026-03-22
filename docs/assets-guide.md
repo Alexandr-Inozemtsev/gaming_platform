@@ -50,6 +50,10 @@ SVG-заглушки: `apps/mobile/assets/design/placeholders/*.svg`.
 ## Runtime integration
 - Runtime загрузка manifest реализована в `apps/mobile/lib/shared/assets/runtime_asset_pack.dart`.
 - UI-контейнеры могут запрашивать категории ассетов (например `ambient_backgrounds`) без хардкода путей.
+- Для raster-вариантов в `asset-manifest.json` хранится объект `{ remote, fallback }`:
+  - `remote`: путь CDN (резолвится через `ASSET_BASE_URL`);
+  - `fallback`: локальный путь в bundle на случай недоступности remote base URL.
+- `ASSET_BASE_URL` должен быть фиксирован для `dev/stage/prod` окружений.
 
 
 ## Cinematic Gameplay Room pack
