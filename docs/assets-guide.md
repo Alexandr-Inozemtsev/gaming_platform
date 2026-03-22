@@ -30,3 +30,10 @@ SVG-заглушки: `apps/mobile/assets/design/placeholders/*.svg`.
 - Для визуала “как на референсе” используйте блок `Cinematic Gameplay Room (Reference-Match Pack)` в `apps/mobile/assets/design/image-prompts.md`.
 - Минимальный пакет: master background + board surface + light overlay + mic/camera/chat/settings icons + d20 burst VFX.
 - Рекомендованный экспорт: WebP 1920x1080 @2x для фонов/эффектов и SVG для HUD-иконок.
+
+### Обязательные файлы для reference-match pack
+- Reference PNG для локальной сверки UI (не для финального фона экрана): `apps/mobile/assets/design/big_walker_reference/*.png` (10 файлов из handoff-пакета).
+- Production background: `apps/mobile/assets/design/gameplay.bg.cinematic_room.1920x1080@2x.webp`.
+- Production board texture: `apps/mobile/assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp`.
+- Production light overlay: `apps/mobile/assets/design/gameplay.decor.light_rays.overlay.1920x1080@2x.webp`.
+- Runtime-ключи и пути для gameplay-слоёв фиксируются в `apps/mobile/assets/design/asset-manifest.json` в секции `assets`.

@@ -68,5 +68,16 @@
       "webp@2x",
       "webp@3x"
     ]
+  },
+  "assets": {
+    "gameplay.bg.cinematic_room": {
+      "webp@2x": "assets/design/gameplay.bg.cinematic_room.1920x1080@2x.webp"
+    },
+    "gameplay.board.surface.travel_grid": {
+      "webp@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
+    },
+    "gameplay.decor.light_rays.overlay": {
+      "webp@2x": "assets/design/gameplay.decor.light_rays.overlay.1920x1080@2x.webp"
+    }
   }
 }
