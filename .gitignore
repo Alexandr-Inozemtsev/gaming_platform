@@ -8,3 +8,10 @@ dist/
 .DS_Store
 *.log
 services/**/.data/
+
+__pycache__/
+*.exe
+*.dll
+*.bin
+*.zip
+/assets/
