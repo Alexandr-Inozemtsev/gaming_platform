@@ -29,10 +29,12 @@ class GameRoomScene extends StatelessWidget {
     defaultValue:
         'assets/design/big_walker_reference/02_match_screen_single_token_reference.png',
   );
-  static const double _debugReferenceOverlayOpacity = double.fromEnvironment(
+  static const String _debugReferenceOverlayOpacityRaw = String.fromEnvironment(
     'BIG_WALKER_REFERENCE_OPACITY',
-    defaultValue: 0.35,
+    defaultValue: '0.35',
   );
+  static final double _debugReferenceOverlayOpacity =
+      double.tryParse(_debugReferenceOverlayOpacityRaw) ?? 0.35;
 
   final BigWalkerViewModel viewModel;
 
@@ -293,7 +295,7 @@ class _ResolvedRuntimeAssetLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String>(
+    return FutureBuilder<String?>(
       future: RuntimeAssetPack.instance.resolveAsset(assetKey),
       builder: (context, snapshot) {
         final assetPath = snapshot.data;

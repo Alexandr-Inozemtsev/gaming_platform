@@ -184,10 +184,11 @@ class _DiceAreaState extends State<_DiceArea> with SingleTickerProviderStateMixi
             animation: _vfxController,
             builder: (_, __) {
               final t = Curves.easeInOut.transform(_vfxController.value);
-              final burst = widget.isRollingDice ? (0.3 + (1 - (2 * (t - 0.5).abs()))) : 0;
-              final shake = widget.isRollingDice ? math.sin(_vfxController.value * math.pi * 8) * _maxShakeAmplitude : 0;
-              final tilt = widget.isRollingDice ? math.sin(_vfxController.value * math.pi * 10) * 0.08 : 0;
-              final ringOpacity = widget.isRollingDice ? (0.28 + (math.sin(_vfxController.value * math.pi * 2).abs() * 0.34)) : 0;
+              final double burst = widget.isRollingDice ? (0.3 + (1 - (2 * (t - 0.5).abs()))) : 0.0;
+              final double shake = widget.isRollingDice ? math.sin(_vfxController.value * math.pi * 8) * _maxShakeAmplitude : 0.0;
+              final double tilt = widget.isRollingDice ? math.sin(_vfxController.value * math.pi * 10) * 0.08 : 0.0;
+              final double ringOpacity =
+                  widget.isRollingDice ? (0.28 + (math.sin(_vfxController.value * math.pi * 2).abs() * 0.34)) : 0.0;
 
               return Transform.translate(
                 offset: Offset(shake, 0),
