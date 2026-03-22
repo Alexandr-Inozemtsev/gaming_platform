@@ -218,7 +218,7 @@ class _ResolvedBoardAssetLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String>(
+    return FutureBuilder<String?>(
       future: RuntimeAssetPack.instance.resolveAsset(assetKey),
       builder: (context, snapshot) {
         final assetPath = snapshot.data;
