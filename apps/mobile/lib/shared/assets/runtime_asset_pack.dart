@@ -14,6 +14,8 @@ class RuntimeAssetPack {
   static const Map<String, String> _controlledFallbacks = {
     'onboarding.hero.tabletop': 'assets/design/placeholders/onboarding.hero.tabletop.svg',
     'gameplay.board.surface.grid': 'assets/design/placeholders/gameplay.board.surface.grid.svg',
+    'gameplay.bg': 'assets/design/placeholders/gameplay.board.surface.grid.svg',
+    'gameplay.decor': 'assets/design/placeholders/gameplay.board.surface.grid.svg',
   };
 
   static const String _defaultFallbackAsset = 'assets/design/placeholders/onboarding.hero.tabletop.svg';
@@ -36,7 +38,9 @@ class RuntimeAssetPack {
     await warmup();
     final assets = _manifest?['assets'] as Map<String, dynamic>?;
     final entry = assets?[key] as Map<String, dynamic>?;
-    final resolved = entry?[variant];
+    if (entry == null) return null;
+
+    final resolved = entry[variant] ?? entry['runtime@procedural'] ?? entry['svg'] ?? entry['webp@2x'];
     return resolved?.toString();
   }
 

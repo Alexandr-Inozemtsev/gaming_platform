@@ -83,11 +83,33 @@ void main() {
     expect(find.text('Новая партия'), findsWidgets);
   });
 
-  testWidgets('missing scene assets in debug show explicit diagnostics', (tester) async {
+  testWidgets('binary-free room background is rendered without asset diagnostics', (tester) async {
     await _pumpScene(tester, _buildViewModel());
 
-    expect(find.text('Missing Big Walker asset'), findsWidgets);
-    expect(find.byIcon(Icons.broken_image_rounded), findsWidgets);
+    expect(find.byType(CustomPaint), findsWidgets);
+    expect(find.text('Missing Big Walker asset'), findsNothing);
+    expect(find.byIcon(Icons.broken_image_rounded), findsNothing);
+  });
+
+  testWidgets('all target states render in binary-free mode', (tester) async {
+    final cases = <({String name, BigWalkerViewModel model, String expectedLabel})>[
+      (name: 'idle', model: _buildViewModel(isStarted: false), expectedLabel: 'Подготовка партии'),
+      (name: 'dice_roll', model: _buildViewModel(isRollingDice: true), expectedLabel: 'Кубик вращается...'),
+      (
+        name: 'next_turn',
+        model: _buildViewModel(turnTransitionVisible: true, transitionPlayerIndex: 2),
+        expectedLabel: 'Ход игрока 3',
+      ),
+      (name: 'pause', model: _buildViewModel(overlay: 'pause'), expectedLabel: 'Пауза'),
+      (name: 'rules', model: _buildViewModel(overlay: 'rules'), expectedLabel: 'Правила Big Walker'),
+      (name: 'settings', model: _buildViewModel(overlay: 'settings'), expectedLabel: 'Настройки стола'),
+      (name: 'victory', model: _buildViewModel(winnerIndex: 0), expectedLabel: 'Победа игрока 1'),
+    ];
+
+    for (final scenario in cases) {
+      await _pumpScene(tester, scenario.model);
+      expect(find.text(scenario.expectedLabel), findsOneWidget, reason: 'state=${scenario.name}');
+    }
   });
 }
 
