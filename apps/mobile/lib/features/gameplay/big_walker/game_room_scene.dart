@@ -93,6 +93,8 @@ class GameRoomScene extends StatelessWidget {
                             walkerPositions: state.walkerPositions,
                             activePathIndex: state.activePathIndex,
                             currentPlayerIndex: state.currentPlayerIndex,
+                            settlingPlayerIndex: state.settlingPlayerIndex,
+                            pawnSettleTick: state.pawnSettleTick,
                           ),
                         ),
                       ),

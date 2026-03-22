@@ -18,6 +18,8 @@ class BigWalkerBoard extends StatelessWidget {
     required this.walkerPositions,
     this.activePathIndex,
     this.currentPlayerIndex,
+    this.settlingPlayerIndex,
+    this.pawnSettleTick = 0,
   });
 
   static final BigWalkerBoardPath boardPath = BigWalkerBoardPath.standard();
@@ -26,6 +28,8 @@ class BigWalkerBoard extends StatelessWidget {
   final List<int> walkerPositions;
   final int? activePathIndex;
   final int? currentPlayerIndex;
+  final int? settlingPlayerIndex;
+  final int pawnSettleTick;
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +132,7 @@ class BigWalkerBoard extends StatelessWidget {
                               boardHeight: boardRectHeight,
                               path: boardPath,
                               active: currentPlayerIndex == playerIndex,
+                              settleTick: settlingPlayerIndex == playerIndex ? pawnSettleTick : 0,
                             );
                           }),
                           IgnorePointer(

@@ -16,6 +16,8 @@ class BigWalkerMatchViewState {
     required this.overlay,
     required this.turnTransitionVisible,
     required this.transitionPlayerIndex,
+    required this.settlingPlayerIndex,
+    required this.pawnSettleTick,
   });
 
   final String title;
@@ -31,6 +33,8 @@ class BigWalkerMatchViewState {
   final String overlay;
   final bool turnTransitionVisible;
   final int? transitionPlayerIndex;
+  final int? settlingPlayerIndex;
+  final int pawnSettleTick;
 }
 
 @immutable

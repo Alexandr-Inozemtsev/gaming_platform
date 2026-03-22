@@ -32,6 +32,8 @@ BigWalkerViewModel _buildViewModel({
       overlay: overlay,
       turnTransitionVisible: turnTransitionVisible,
       transitionPlayerIndex: transitionPlayerIndex,
+      settlingPlayerIndex: null,
+      pawnSettleTick: 0,
     ),
     actions: noop.actions,
   );

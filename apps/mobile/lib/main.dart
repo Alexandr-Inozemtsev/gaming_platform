@@ -120,6 +120,8 @@ class AppState extends ChangeNotifier {
   String bigWalkerOverlay = 'none';
   bool turnTransitionVisible = false;
   int? transitionPlayerIndex;
+  int? settlingPlayerIndex;
+  int pawnSettleTick = 0;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -150,6 +152,8 @@ class AppState extends ChangeNotifier {
     overlay: bigWalkerOverlay,
     turnTransitionVisible: turnTransitionVisible,
     transitionPlayerIndex: transitionPlayerIndex,
+    settlingPlayerIndex: settlingPlayerIndex,
+    pawnSettleTick: pawnSettleTick,
   );
 
   BigWalkerMatchActions get bigWalkerActions => BigWalkerMatchActions(
@@ -775,15 +779,22 @@ class AppState extends ChangeNotifier {
     final rolled = diceValue;
     final startPos = walkerPositions[currentPlayerIndex].clamp(0, BigWalkerTokens.totalCells - 1);
     final finalPos = (startPos + rolled).clamp(0, BigWalkerTokens.totalCells - 1);
-    final steps = (finalPos - startPos).abs().clamp(1, BigWalkerTokens.totalCells);
-    final perStepMs = BigWalkerMotion.cellStep.inMilliseconds;
-    final baseMoveMs = BigWalkerMotion.pawnMove.inMilliseconds;
-    final moveDuration = Duration(milliseconds: (perStepMs * steps).clamp(baseMoveMs, perStepMs * BigWalkerTokens.totalCells));
+    final stepDirection = finalPos >= startPos ? 1 : -1;
+    final steps = (finalPos - startPos).abs();
+    for (int step = 1; step <= steps; step += 1) {
+      final nextPos = startPos + (step * stepDirection);
+      walkerPositions[currentPlayerIndex] = nextPos;
+      activePathIndex = nextPos;
+      notifyListeners();
+      await Future<void>.delayed(BigWalkerMotion.cellStep);
+    }
 
-    walkerPositions[currentPlayerIndex] = finalPos;
-    activePathIndex = finalPos;
+    settlingPlayerIndex = currentPlayerIndex;
+    pawnSettleTick += 1;
     notifyListeners();
-    await Future<void>.delayed(moveDuration);
+    await Future<void>.delayed(BigWalkerMotion.pawnSettle);
+    settlingPlayerIndex = null;
+    notifyListeners();
 
     roomLog.add('Player ${currentPlayerIndex + 1} бросил $rolled и перешел на ${finalPos + 1}');
 
@@ -833,6 +844,8 @@ class AppState extends ChangeNotifier {
     bigWalkerOverlay = 'none';
     turnTransitionVisible = false;
     transitionPlayerIndex = null;
+    settlingPlayerIndex = null;
+    pawnSettleTick = 0;
     yourTurn = true;
     previewRow = null;
     previewCol = null;
