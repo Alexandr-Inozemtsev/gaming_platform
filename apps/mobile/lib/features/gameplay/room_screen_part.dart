@@ -40,100 +40,165 @@ class VideoOverlayWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final warning = state.rtcConfigWarning;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final compact = screenHeight < BigWalkerTokens.roomOverlayCompactHeight;
+    final maxPanelHeight = compact ? screenHeight * 0.48 : screenHeight * 0.58;
+
     return Positioned.fill(
-      child: Container(
-        color: AppTokens.videoOverlayBg,
-        padding: const EdgeInsets.all(12),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Card(
+      child: Stack(
+        children: [
+          const IgnorePointer(child: DecoratedBox(decoration: BoxDecoration(gradient: BigWalkerTokens.overlayBackdropGradient))),
+          SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(state.t('video.title')),
-                if (warning.isNotEmpty)
-                  Text(
-                    warning,
-                    style: const TextStyle(color: AppTokens.editorWarning)
-                  ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: state.videoParticipants.take(4).map((id) {
-                    return Container(
-                      width: 120,
-                      height: 80,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppTokens.card.withOpacity(0.9),
-                        border: Border.all(color: AppColors.videoBorder),
-                        borderRadius: BorderRadius.circular(AppTokens.videoTileRadius)
+              padding: EdgeInsets.fromLTRB(
+                BigWalkerTokens.space12,
+                compact ? BigWalkerTokens.space6 : BigWalkerTokens.space12,
+                BigWalkerTokens.space12,
+                BigWalkerTokens.space12,
+              ),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: compact ? 900 : 960, maxHeight: maxPanelHeight),
+                  child: BigWalkerRoomOverlayPanel(
+                    compact: compact,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            state.t('video.title'),
+                            style: TextStyle(
+                              color: BigWalkerTokens.textPrimary,
+                              fontSize: compact ? 14 : 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          if (warning.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              warning,
+                              style: TextStyle(
+                                color: AppTokens.editorWarning,
+                                fontSize: compact ? 11 : 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: compact ? 8 : 10),
+                          Wrap(
+                            spacing: compact ? 6 : 8,
+                            runSpacing: compact ? 6 : 8,
+                            children: state.videoParticipants.take(4).map((id) {
+                              return _VideoParticipantCard(id: id, state: state, compact: compact);
+                            }).toList(),
+                          ),
+                          SizedBox(height: compact ? 8 : 10),
+                          Wrap(
+                            spacing: compact ? 6 : 8,
+                            runSpacing: compact ? 6 : 8,
+                            children: [
+                              BigWalkerRoomOverlayButton(
+                                label: state.cameraEnabled ? state.t('video.cameraOn') : state.t('video.cameraOff'),
+                                icon: Icons.videocam_rounded,
+                                primary: state.cameraEnabled,
+                                compact: compact,
+                                onTap: state.mediaPermissionGranted
+                                    ? state.toggleCamera
+                                    : () {
+                                        state.grantMediaPermission();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(state.t('video.permissionGranted'))),
+                                        );
+                                      },
+                              ),
+                              BigWalkerRoomOverlayButton(
+                                label: state.micEnabled ? state.t('video.micOn') : state.t('video.micOff'),
+                                icon: Icons.mic_rounded,
+                                primary: state.micEnabled,
+                                compact: compact,
+                                onTap: state.mediaPermissionGranted
+                                    ? state.toggleMic
+                                    : () {
+                                        state.grantMediaPermission();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(state.t('video.permissionGranted'))),
+                                        );
+                                      },
+                              ),
+                              BigWalkerRoomOverlayButton(
+                                label: 'Отключить всем',
+                                icon: Icons.volume_off_rounded,
+                                compact: compact,
+                                onTap: state.muteAllVideo,
+                              ),
+                              BigWalkerRoomOverlayButton(
+                                label: state.t('video.hangup'),
+                                icon: Icons.call_end_rounded,
+                                compact: compact,
+                                danger: true,
+                                onTap: state.hangupVideo,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: compact ? 6 : 8),
+                          Text(
+                            '${state.t('room.videoStatus')}: ${state.videoStatus}',
+                            style: const TextStyle(
+                              color: BigWalkerTokens.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      child: Text(id == state.userId ? 'Local Video' : 'Remote: $id')
-                    );
-                  }).toList()
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _OverlayActionChip(
-                    label: state.cameraEnabled ? state.t('video.cameraOn') : state.t('video.cameraOff'),
-                    onTap: state.mediaPermissionGranted
-                        ? state.toggleCamera
-                        : () {
-                            state.grantMediaPermission();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(state.t('video.permissionGranted')))
-                            );
-                          },
-                  ),
-                  const SizedBox(width: 8),
-                  _OverlayActionChip(
-                    label: state.micEnabled ? state.t('video.micOn') : state.t('video.micOff'),
-                    onTap: state.mediaPermissionGranted
-                        ? state.toggleMic
-                        : () {
-                            state.grantMediaPermission();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(state.t('video.permissionGranted')))
-                            );
-                          },
-                  ),
-                  const SizedBox(width: 8),
-                  _OverlayActionChip(label: 'Отключить всем', onTap: state.muteAllVideo),
-                  const SizedBox(width: 8),
-                  _OverlayActionChip(label: state.t('video.hangup'), onTap: state.hangupVideo, danger: true),
-                ]),
-                Text('${state.t('room.videoStatus')}: ${state.videoStatus}')
-              ])
-            )
-          )
-        )
+              ),
+            ),
+          ),
+        ],
       )
     );
   }
 }
 
-
-
-class _OverlayActionChip extends StatelessWidget {
-  const _OverlayActionChip({required this.label, required this.onTap, this.danger = false});
-
-  final String label;
-  final VoidCallback onTap;
-  final bool danger;
+class _VideoParticipantCard extends StatelessWidget {
+  const _VideoParticipantCard({required this.id, required this.state, required this.compact});
+  final String id;
+  final AppState state;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: danger ? AppColors.error.withOpacity(0.2) : AppColors.bgElevated2,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: danger ? AppColors.error : AppColors.strokeDefault),
+    return Container(
+      width: compact ? 106 : 122,
+      height: compact ? 68 : 80,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        gradient: BigWalkerTokens.panelGradient,
+        border: Border.all(color: BigWalkerTokens.panelBorder.withOpacity(0.95)),
+        borderRadius: BorderRadius.circular(BigWalkerTokens.cardRadius),
+        boxShadow: const [
+          BoxShadow(color: Color(0x5A091223), blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(color: Color(0x3E4BD3FF), blurRadius: 10),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Text(
+          id == state.userId ? 'Local Video' : 'Remote: $id',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: BigWalkerTokens.textPrimary,
+            fontSize: compact ? 11 : 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        child: Text(label, style: const TextStyle(fontSize: 12)),
       ),
     );
   }
