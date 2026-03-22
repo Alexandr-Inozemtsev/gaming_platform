@@ -105,6 +105,13 @@ class BigWalkerBoard extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(BigWalkerTokens.boardRadius),
                             border: Border.all(color: BigWalkerTokens.boardBorder, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: BigWalkerTokens.accentCyan.withOpacity(0.24),
+                                blurRadius: 16,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
                         ),
                       ),
