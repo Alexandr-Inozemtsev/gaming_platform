@@ -74,7 +74,10 @@
   },
   "assets": {
     "gameplay.board.surface.travel_grid": {
-      "raster@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
+      "raster@2x": {
+        "remote": "/assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp",
+        "fallback": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
+      },
       "webp@2x": "assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp"
     },
     "gameplay.bg.procedural_room": {

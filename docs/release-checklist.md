@@ -54,6 +54,11 @@ cd apps/mobile && flutter run -d "iPhone 15"
 - `release.ok=#4EE59A`
 - `release.fail=#FF5C7A`
 
+## Публикация бинарников
+- Публикуйте бинарные asset-паки (`.webp`, `.png`, `.ttf` и др.) отдельным шагом **после merge** в основную ветку.
+- PR в этом репозитории должен оставаться binary-free, если это не согласовано отдельно.
+- Перед публикацией бинарников проверьте, что `ASSET_BASE_URL` зафиксирован для dev/stage/prod и runtime успешно резолвит remote URL.
+
 ## Остановка
 ```bash
 scripts/dev-down.sh
