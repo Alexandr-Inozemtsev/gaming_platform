@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class BigWalkerTokens {
-  static const int cols = 8;
+  static const int cols = 15;
   static const int rows = 5;
   static const int totalCells = cols * rows;
 
