@@ -38,23 +38,25 @@ class _RuleLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: BigWalkerTokens.accentCyan.withOpacity(0.18),
-            border: Border.all(color: BigWalkerTokens.accentCyan.withOpacity(0.6)),
+    return BigWalkerModalCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: BigWalkerTokens.accentCyan.withOpacity(0.18),
+              border: Border.all(color: BigWalkerTokens.accentCyan.withOpacity(0.6)),
+            ),
+            child: Text('$index', style: const TextStyle(color: BigWalkerTokens.textPrimary, fontWeight: FontWeight.w700, fontSize: 12)),
           ),
-          child: Text('$index', style: const TextStyle(color: BigWalkerTokens.textPrimary, fontWeight: FontWeight.w700, fontSize: 12)),
-        ),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: const TextStyle(color: BigWalkerTokens.textSecondary, height: 1.25))),
-      ],
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: const TextStyle(color: BigWalkerTokens.textSecondary, height: 1.25))),
+        ],
+      ),
     );
   }
 }

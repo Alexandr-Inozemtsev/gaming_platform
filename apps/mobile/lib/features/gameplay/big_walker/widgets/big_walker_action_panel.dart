@@ -14,6 +14,8 @@ class BigWalkerActionPanel extends StatelessWidget {
     required this.isStarted,
     required this.onStartMatch,
     required this.hasWinner,
+    required this.currentPlayerIndex,
+    required this.turnNumber,
   });
 
   final bool isRollingDice;
@@ -22,6 +24,8 @@ class BigWalkerActionPanel extends StatelessWidget {
   final bool isStarted;
   final VoidCallback onStartMatch;
   final bool hasWinner;
+  final int currentPlayerIndex;
+  final int turnNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +43,25 @@ class BigWalkerActionPanel extends StatelessWidget {
           _DiceArea(isRollingDice: isRollingDice, diceValue: diceValue),
           const SizedBox(width: 12),
           Expanded(
-            child: _RollButton(
-              label: _label(canRoll),
-              active: canRoll || !isStarted || hasWinner,
-              onTap: canRoll ? onRollDice : onStartMatch,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  isStarted ? 'Ход игрока ${currentPlayerIndex + 1} · Раунд $turnNumber' : 'Ожидание старта матча',
+                  style: const TextStyle(
+                    color: BigWalkerTokens.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _RollButton(
+                  label: _label(canRoll),
+                  active: canRoll || !isStarted || hasWinner,
+                  onTap: canRoll ? onRollDice : onStartMatch,
+                ),
+              ],
             ),
           ),
         ],
