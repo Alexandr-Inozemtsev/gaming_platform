@@ -43,9 +43,9 @@ class _BigWalkerPawn extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [Colors.white, color, color.withOpacity(0.75)],
-                stops: const [0.1, 0.55, 1],
+                stops: const [0.08, 0.52, 1],
               ),
-              border: Border.all(color: Colors.black.withOpacity(0.45), width: BigWalkerTokens.pawnStrokeWidth),
+              border: Border.all(color: Colors.black.withOpacity(0.48), width: BigWalkerTokens.pawnStrokeWidth),
               boxShadow: [
                 BoxShadow(
                   color: active ? BigWalkerTokens.accentCyan.withOpacity(0.7) : Colors.black.withOpacity(0.45),
@@ -53,10 +53,11 @@ class _BigWalkerPawn extends StatelessWidget {
                   spreadRadius: active ? 1.5 : 0,
                   offset: const Offset(0, 2),
                 ),
+                if (active) BoxShadow(color: color.withOpacity(0.52), blurRadius: 18, spreadRadius: 0.8),
               ],
             ),
             alignment: Alignment.center,
-            child: Text('${playerIndex + 1}', style: const TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.w800)),
+            child: Text('${playerIndex + 1}', style: const TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.w900)),
           ),
         );
       },
