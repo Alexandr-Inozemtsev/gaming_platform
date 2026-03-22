@@ -18,29 +18,33 @@ class _BigWalkerCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSpecial = routeIndex % 7 == 0;
-    var baseColor = isSpecial
+    final base = isSpecial
         ? BigWalkerTokens.boardSpecial
         : (routeIndex.isEven ? BigWalkerTokens.boardPathBase : BigWalkerTokens.boardPathAlt);
-    if (isStart) baseColor = BigWalkerTokens.boardStart.withOpacity(0.82);
-    if (isFinish) baseColor = BigWalkerTokens.boardFinish.withOpacity(0.86);
+
+    final gradientColors = isStart
+        ? [BigWalkerTokens.boardStart.withOpacity(0.95), BigWalkerTokens.boardStart.withOpacity(0.6)]
+        : isFinish
+            ? [BigWalkerTokens.boardFinish.withOpacity(0.96), BigWalkerTokens.boardFinish.withOpacity(0.65)]
+            : [base.withOpacity(0.94), base.withOpacity(0.66)];
 
     return AnimatedContainer(
       duration: BigWalkerMotion.cellStep,
       margin: const EdgeInsets.all(BigWalkerTokens.cellGap),
       decoration: BoxDecoration(
-        color: baseColor,
+        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: gradientColors),
         borderRadius: BorderRadius.circular(BigWalkerTokens.cellRadius),
         border: Border.all(
           color: isActivePath
               ? BigWalkerTokens.accentCyan
               : playersHere.isNotEmpty
                   ? BigWalkerTokens.accentAmber
-                  : Colors.white.withOpacity(0.12),
-          width: isActivePath ? 1.8 : 1,
+                  : Colors.white.withOpacity(0.14),
+          width: isActivePath ? 2 : 1,
         ),
         boxShadow: [
           if (isActivePath) BoxShadow(color: BigWalkerTokens.accentCyan.withOpacity(0.34), blurRadius: 14),
-          BoxShadow(color: Colors.black.withOpacity(0.24), blurRadius: 8, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.black.withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 3)),
         ],
       ),
       child: Stack(
@@ -50,11 +54,7 @@ class _BigWalkerCell extends StatelessWidget {
             top: 4,
             child: Text(
               '${routeIndex + 1}',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.72),
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(color: Colors.white.withOpacity(0.72), fontSize: 10, fontWeight: FontWeight.w700),
             ),
           ),
           if (isSpecial && !isStart && !isFinish)
