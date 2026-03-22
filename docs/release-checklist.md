@@ -54,6 +54,21 @@ cd apps/mobile && flutter run -d "iPhone 15"
 - `release.ok=#4EE59A`
 - `release.fail=#FF5C7A`
 
+## Публикация бинарников
+- Публикуйте бинарные asset-паки (`.webp`, `.png`, `.ttf` и др.) отдельным шагом **после merge** в основную ветку.
+- Для обычного GitHub workflow бинарные ассеты допускаются в PR по согласованной процедуре ревью.
+- Перед публикацией бинарников проверьте, что `ASSET_BASE_URL` зафиксирован для dev/stage/prod и runtime успешно резолвит remote URL.
+
+## Блокирующие UI-gates для Big Walker
+- Нельзя закрывать UI-задачу без приложенного сравнения `mockup vs build` на одинаковых viewport и состояниях.
+- Для golden-проверок обязательны состояния:
+  - `idle`
+  - `roll`
+  - `next_turn`
+  - `pause`
+  - `victory`
+- В Codex PR-потоке baseline PNG могут поставляться вне PR из-за технических ограничений среды; в обычном GitHub workflow их можно хранить в репозитории.
+
 ## Остановка
 ```bash
 scripts/dev-down.sh

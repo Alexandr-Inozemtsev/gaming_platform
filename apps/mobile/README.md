@@ -6,6 +6,7 @@
 ## Параметры окружения
 - `API_BASE_URL=http://localhost:3000`
 - `WS_URL=ws://localhost:3001`
+- `ASSET_BASE_URL=http://localhost:8080`
 - `REGION_MODE=global|ru_by`
 - `LANG=ru` (по умолчанию)
 

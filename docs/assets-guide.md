@@ -34,6 +34,7 @@ SVG-заглушки: `apps/mobile/assets/design/placeholders/*.svg`.
 - Для Big Walker основной runtime-визуал должен работать без бинарных фонов: используется процедурный слой (градиенты + painter-атмосфера).
 - `reference_screens` и любые PNG/WebP допускаются только как локальная сверка дизайна и не должны быть runtime dependency.
 - Image-слои с бинарными файлами разрешены только как необязательный enhancement, который безопасно деградирует до `SizedBox.shrink()`.
+- Это ограничение относится только к Codex PR-потоку. Обычный GitHub workflow может включать бинарные ассеты по согласованной release-процедуре.
 
 ### Контракт консистентности (обязателен для CI)
 - `apps/mobile/lib/theme/game/big_walker_tokens.dart` фиксирует ключи и default variant для Big Walker (`raster@2x`).
@@ -41,9 +42,19 @@ SVG-заглушки: `apps/mobile/assets/design/placeholders/*.svg`.
 - `apps/mobile/lib/shared/assets/runtime_asset_pack.dart` резолвит ассеты в порядке policy (`requested -> raster@2x -> runtime@procedural -> svg -> webp@2x`).
 - Скрипт `npm run validate:asset-policy` проверяет непротиворечивость tokens ↔ manifest ↔ resolver.
 
+## Canonical manifest for mobile runtime
+- Каноничный файл runtime-манифеста: `apps/mobile/assets/design/asset-manifest.json`.
+- Зеркало для корневых tooling-процессов: `assets/design/asset-manifest.json` (не редактируется вручную).
+- Для синхронизации зеркала используйте `npm run sync:mobile-runtime-manifest`.
+- CI guard `npm run check:mobile-runtime-manifest-sync` падает при рассинхроне.
+
 ## Runtime integration
 - Runtime загрузка manifest реализована в `apps/mobile/lib/shared/assets/runtime_asset_pack.dart`.
 - UI-контейнеры могут запрашивать категории ассетов (например `ambient_backgrounds`) без хардкода путей.
+- Для raster-вариантов в `asset-manifest.json` хранится объект `{ remote, fallback }`:
+  - `remote`: путь CDN (резолвится через `ASSET_BASE_URL`);
+  - `fallback`: локальный путь в bundle на случай недоступности remote base URL.
+- `ASSET_BASE_URL` должен быть фиксирован для `dev/stage/prod` окружений.
 
 
 ## Cinematic Gameplay Room pack

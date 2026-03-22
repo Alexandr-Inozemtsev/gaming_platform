@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../games/big_walker/big_walker_board.dart';
+import '../../../shared/assets/runtime_asset_pack.dart';
 import '../../../theme/game/big_walker_tokens.dart';
 import 'big_walker_match_state.dart';
 import 'widgets/big_walker_action_panel.dart';
@@ -28,8 +29,9 @@ class GameRoomScene extends StatelessWidget {
       decoration: const BoxDecoration(gradient: BigWalkerTokens.roomGradient),
       child: Stack(
         children: [
-          const Positioned.fill(child: _ProceduralRoomLayer()),
+          const Positioned.fill(child: _BackgroundRoomLayer()),
           const Positioned.fill(child: BigWalkerAtmosphere()),
+          const Positioned.fill(child: _DecorativeOverlayLayer()),
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -65,16 +67,7 @@ class GameRoomScene extends StatelessWidget {
                     child: FractionallySizedBox(
                       widthFactor: 0.97,
                       heightFactor: BigWalkerTokens.tableHeightFactor,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: BigWalkerTokens.tableGradient,
-                          borderRadius: BorderRadius.circular(BigWalkerTokens.tableRadius),
-                          border: Border.all(color: BigWalkerTokens.panelBorder),
-                          boxShadow: const [
-                            BoxShadow(color: Color(0x66393525), blurRadius: 24, offset: Offset(0, 10)),
-                            BoxShadow(color: Color(0x335AE8FF), blurRadius: 30),
-                          ],
-                        ),
+                      child: _TableFrameLayer(
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: BigWalkerBoard(
@@ -146,8 +139,57 @@ class GameRoomScene extends StatelessWidget {
   }
 }
 
-class _ProceduralRoomLayer extends StatelessWidget {
-  const _ProceduralRoomLayer();
+class _BackgroundRoomLayer extends StatelessWidget {
+  const _BackgroundRoomLayer();
+
+  @override
+  Widget build(BuildContext context) {
+    return _ResolvedRuntimeAssetLayer(
+      assetKey: BigWalkerTokens.gameplayBackgroundProceduralRoomKey,
+      fallback: const _ProceduralRoomFallbackLayer(),
+      fit: BoxFit.cover,
+    );
+  }
+}
+
+class _DecorativeOverlayLayer extends StatelessWidget {
+  const _DecorativeOverlayLayer();
+
+  @override
+  Widget build(BuildContext context) {
+    return _ResolvedRuntimeAssetLayer(
+      assetKey: BigWalkerTokens.gameplayBoardSurfaceTravelGridKey,
+      fallback: const _SceneParticles(),
+      fit: BoxFit.cover,
+      opacity: 0.18,
+    );
+  }
+}
+
+class _TableFrameLayer extends StatelessWidget {
+  const _TableFrameLayer({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: BigWalkerTokens.tableGradient,
+        borderRadius: BorderRadius.circular(BigWalkerTokens.tableRadius),
+        border: Border.all(color: BigWalkerTokens.panelBorder),
+        boxShadow: const [
+          BoxShadow(color: Color(0x66393525), blurRadius: 24, offset: Offset(0, 10)),
+          BoxShadow(color: Color(0x335AE8FF), blurRadius: 30),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ProceduralRoomFallbackLayer extends StatelessWidget {
+  const _ProceduralRoomFallbackLayer();
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +222,45 @@ class _ProceduralRoomLayer extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _ResolvedRuntimeAssetLayer extends StatelessWidget {
+  const _ResolvedRuntimeAssetLayer({
+    required this.assetKey,
+    required this.fallback,
+    this.fit = BoxFit.cover,
+    this.opacity = 1,
+  });
+
+  final String assetKey;
+  final Widget fallback;
+  final BoxFit fit;
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: RuntimeAssetPack.instance.resolveAssetOrFallback(assetKey),
+      builder: (context, snapshot) {
+        final assetPath = snapshot.data;
+        if (assetPath == null || assetPath.isEmpty) return fallback;
+
+        final resolved = _buildImage(assetPath);
+        if (resolved == null) return fallback;
+        if (opacity >= 1) return resolved;
+        return Opacity(opacity: opacity, child: resolved);
+      },
+    );
+  }
+
+  Widget? _buildImage(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return Image.network(path, fit: fit, errorBuilder: (_, _, _) => fallback);
+    }
+
+    if (path.endsWith('.svg')) return fallback;
+    return Image.asset(path, fit: fit, errorBuilder: (_, _, _) => fallback);
   }
 }
 

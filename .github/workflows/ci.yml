@@ -31,6 +31,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Guard mobile runtime manifest sync
+        run: npm run check:mobile-runtime-manifest-sync
+
+
       - name: Unit tests
         run: npm test
 
