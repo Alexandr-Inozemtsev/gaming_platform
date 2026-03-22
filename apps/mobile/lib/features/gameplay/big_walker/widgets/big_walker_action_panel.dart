@@ -135,12 +135,12 @@ class _DiceArea extends StatelessWidget {
             'D20 CORE',
             style: TextStyle(
               color: BigWalkerTokens.textMuted,
-              fontSize: 10,
+              fontSize: 9,
               letterSpacing: 0.6,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0, end: isRollingDice ? 1 : 0),
             duration: BigWalkerMotion.diceShake,
@@ -152,15 +152,15 @@ class _DiceArea extends StatelessWidget {
                   curve: Curves.easeOutBack,
                   scale: isRollingDice ? 1.12 : 1,
                   child: Container(
-                    width: 42,
-                    height: 42,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(colors: [Color(0xFFFDFEFF), Color(0xFFD6EBFF)]),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: const [BoxShadow(color: Color(0x7747DEFF), blurRadius: 12)],
                     ),
                     alignment: Alignment.center,
-                    child: Text('$diceValue', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black)),
+                    child: Text('$diceValue', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black)),
                   ),
                 ),
               );

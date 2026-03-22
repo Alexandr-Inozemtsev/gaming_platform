@@ -1,10 +1,13 @@
-# Big Walker golden baselines (binary-free PR mode)
+# Big Walker golden baselines
 
-This folder stores only text metadata in Codex PR mode.
+This folder stores Big Walker golden baselines in text-safe form for PR systems that reject binary diffs.
 
 - Canonical required list is in `big_walker_baselines.manifest.json`.
-- Binary PNG baselines are delivered outside Codex PR and must be placed into this same folder for local Flutter golden runs.
-- Expected files:
+- Source files are committed as `big_walker_<state>.png.base64`.
+- Generate PNG files before running golden tests:
+  - `python test/golden/goldens/materialize_big_walker_goldens.py`
+- CI runs materialization before golden tests, then treats missing/mismatched PNG files as blocking failures.
+- Expected generated PNG files:
   - `big_walker_idle.png`
   - `big_walker_roll.png`
   - `big_walker_next_turn.png`

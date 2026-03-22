@@ -1,0 +1,6 @@
+# Generated from committed *.png.base64 via materialize_big_walker_goldens.py
+big_walker_idle.png
+big_walker_roll.png
+big_walker_next_turn.png
+big_walker_pause.png
+big_walker_victory.png

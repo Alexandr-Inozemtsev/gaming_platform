@@ -20,7 +20,7 @@ class BigWalkerModalShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned.fill(
+    return SizedBox.expand(
       child: ColoredBox(
         color: Colors.black.withOpacity(0.66),
         child: Center(
