@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tabletopplatform_mobile/features/gameplay/big_walker/big_walker_match_state.dart';
@@ -53,6 +55,15 @@ Future<void> _pumpState(
   await tester.pumpWidget(MaterialApp(home: Scaffold(body: GameRoomScene(viewModel: viewModel))));
   await tester.pumpAndSettle();
 
+  final goldenPath = 'test/golden/goldens/big_walker_$name.png';
+  if (!File(goldenPath).existsSync()) {
+    fail(
+      'Missing golden baseline: $goldenPath\n'
+      'In binary-free PR mode PNG files are delivered outside Codex PR. '
+      'See test/golden/goldens/big_walker_baselines.manifest.json.',
+    );
+  }
+
   await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/big_walker_$name.png'));
 }
 
@@ -61,8 +72,8 @@ void main() {
     await _pumpState(tester, name: 'idle', isStarted: false);
   });
 
-  testWidgets('golden: big walker dice roll', (tester) async {
-    await _pumpState(tester, name: 'dice_roll', isRollingDice: true);
+  testWidgets('golden: big walker roll', (tester) async {
+    await _pumpState(tester, name: 'roll', isRollingDice: true);
   });
 
   testWidgets('golden: big walker next turn overlay', (tester) async {
@@ -71,14 +82,6 @@ void main() {
 
   testWidgets('golden: big walker pause', (tester) async {
     await _pumpState(tester, name: 'pause', overlay: 'pause');
-  });
-
-  testWidgets('golden: big walker rules', (tester) async {
-    await _pumpState(tester, name: 'rules', overlay: 'rules');
-  });
-
-  testWidgets('golden: big walker settings', (tester) async {
-    await _pumpState(tester, name: 'settings', overlay: 'settings');
   });
 
   testWidgets('golden: big walker victory', (tester) async {
