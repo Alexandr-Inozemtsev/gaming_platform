@@ -31,6 +31,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Validate asset policy
+        run: npm run validate:asset-policy
+
       - name: Unit tests
         run: npm test
 
