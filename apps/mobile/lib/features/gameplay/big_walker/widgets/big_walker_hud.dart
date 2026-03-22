@@ -42,8 +42,10 @@ class BigWalkerHud extends StatelessWidget {
               children: [
                 const Text('Big Walker', style: TextStyle(color: BigWalkerTokens.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
                 Text(
-                  'Ход $turnNumber · Игрок ${currentPlayerIndex + 1} · Участников: $participantsCount',
+                  'Раунд $turnNumber · Активный: Игрок ${currentPlayerIndex + 1} · Участников: $participantsCount',
                   style: const TextStyle(color: BigWalkerTokens.textSecondary, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -76,7 +78,7 @@ class _IconOrb extends StatelessWidget {
           height: BigWalkerTokens.iconButtonSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: BigWalkerTokens.bgSoft,
+            gradient: const LinearGradient(colors: [Color(0xFF1B304E), Color(0xFF0F1E33)]),
             border: Border.all(color: BigWalkerTokens.panelBorder),
           ),
           child: Icon(icon, color: BigWalkerTokens.textPrimary, size: 18),
