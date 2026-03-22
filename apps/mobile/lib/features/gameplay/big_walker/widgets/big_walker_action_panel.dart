@@ -25,28 +25,26 @@ class BigWalkerActionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool canRoll = isStarted && !isRollingDice && !hasWinner;
+    final canRoll = isStarted && !isRollingDice && !hasWinner;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: BigWalkerTokens.card,
+        gradient: BigWalkerTokens.panelGradient,
         borderRadius: BorderRadius.circular(BigWalkerTokens.panelRadius),
-        border: Border.all(color: BigWalkerTokens.cardBorder),
-        boxShadow: [
-          BoxShadow(color: BigWalkerTokens.accentAmber.withOpacity(0.22), blurRadius: BigWalkerTokens.panelBlurGlow),
-        ],
+        border: Border.all(color: BigWalkerTokens.panelBorder),
+        boxShadow: BigWalkerTokens.panelShadow,
       ),
       child: Row(
         children: [
+          _DiceArea(isRollingDice: isRollingDice, diceValue: diceValue),
+          const SizedBox(width: 12),
           Expanded(
-            child: _ActionButton(
+            child: _RollButton(
               label: _label(canRoll),
-              active: canRoll,
+              active: canRoll || !isStarted || hasWinner,
               onTap: canRoll ? onRollDice : onStartMatch,
             ),
           ),
-          const SizedBox(width: 12),
-          _DiceBadge(isRollingDice: isRollingDice, diceValue: diceValue),
         ],
       ),
     );
@@ -55,59 +53,35 @@ class BigWalkerActionPanel extends StatelessWidget {
   String _label(bool canRoll) {
     if (hasWinner) return 'Новая партия';
     if (!isStarted) return 'Начать матч';
-    if (isRollingDice) return 'Кубик крутится…';
-    return canRoll ? 'Бросить кубик' : 'Подождите...';
+    if (isRollingDice) return 'Кубик вращается...';
+    return canRoll ? 'Бросить кубик' : 'Ожидание...';
   }
 }
 
-class _ActionButton extends StatefulWidget {
-  const _ActionButton({required this.label, required this.active, required this.onTap});
+class _RollButton extends StatelessWidget {
+  const _RollButton({required this.label, required this.active, required this.onTap});
 
   final String label;
   final bool active;
   final VoidCallback onTap;
 
   @override
-  State<_ActionButton> createState() => _ActionButtonState();
-}
-
-class _ActionButtonState extends State<_ActionButton> {
-  bool _pressed = false;
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: BigWalkerMotion.stateFade,
-        curve: BigWalkerMotion.stateFadeCurve,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Ink(
         height: BigWalkerTokens.actionButtonHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          gradient: LinearGradient(
-            colors: widget.active
-                ? [
-                    BigWalkerTokens.accentAmber.withOpacity(_pressed ? 0.72 : 0.94),
-                    const Color(0xFFE39E3C),
-                  ]
-                : [BigWalkerTokens.bgSoft, BigWalkerTokens.bgMid],
-          ),
-          boxShadow: widget.active
-              ? [
-                  BoxShadow(color: BigWalkerTokens.accentAmber.withOpacity(_pressed ? 0.2 : 0.42), blurRadius: 16),
-                ]
-              : const [],
+          gradient: active ? BigWalkerTokens.rollButtonGradient : BigWalkerTokens.panelGradient,
+          border: Border.all(color: active ? BigWalkerTokens.accentAmber : BigWalkerTokens.panelBorder),
+          boxShadow: active ? const [BoxShadow(color: Color(0x99DA9B45), blurRadius: 18)] : null,
         ),
-        alignment: Alignment.center,
-        child: Text(
-          widget.label,
-          style: TextStyle(
-            color: widget.active ? Colors.black : BigWalkerTokens.textSecondary,
-            fontWeight: FontWeight.w800,
-            fontSize: 15,
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(color: active ? Colors.black : BigWalkerTokens.textMuted, fontWeight: FontWeight.w800, fontSize: 16),
           ),
         ),
       ),
@@ -115,44 +89,48 @@ class _ActionButtonState extends State<_ActionButton> {
   }
 }
 
-class _DiceBadge extends StatelessWidget {
-  const _DiceBadge({required this.isRollingDice, required this.diceValue});
+class _DiceArea extends StatelessWidget {
+  const _DiceArea({required this.isRollingDice, required this.diceValue});
 
   final bool isRollingDice;
   final int diceValue;
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: isRollingDice ? 1 : 0),
-      duration: BigWalkerMotion.diceShake,
-      builder: (_, t, __) {
-        final angle = math.sin(t * math.pi * 2) * 0.08;
-        return Transform.rotate(
-          angle: angle,
-          child: AnimatedScale(
-            scale: isRollingDice ? 1.15 : 1,
-            duration: BigWalkerMotion.dicePulse,
-            curve: BigWalkerMotion.dicePulseCurve,
-            child: Container(
-              width: 58,
-              height: 58,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(color: BigWalkerTokens.accentCyan.withOpacity(0.25), blurRadius: 14),
-                ],
+    return Container(
+      width: 108,
+      height: BigWalkerTokens.actionButtonHeight,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: BigWalkerTokens.bgSoft,
+        border: Border.all(color: BigWalkerTokens.panelBorder),
+      ),
+      child: Center(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: isRollingDice ? 1 : 0),
+          duration: BigWalkerMotion.diceShake,
+          builder: (_, t, __) {
+            return Transform.rotate(
+              angle: math.sin(t * math.pi * 8) * 0.09,
+              child: AnimatedScale(
+                duration: BigWalkerMotion.dicePulse,
+                scale: isRollingDice ? 1.1 : 1,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [BoxShadow(color: Color(0x7747DEFF), blurRadius: 12)],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text('$diceValue', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black)),
+                ),
               ),
-              child: Text(
-                '$diceValue',
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 24),
-              ),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 }

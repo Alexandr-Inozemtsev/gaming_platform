@@ -18,12 +18,11 @@ class _BigWalkerCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSpecial = routeIndex % 7 == 0;
-    Color baseColor = isSpecial
-        ? BigWalkerTokens.specialCellColor
-        : (routeIndex.isEven ? BigWalkerTokens.evenCellColor : BigWalkerTokens.oddCellColor);
-
-    if (isStart) baseColor = BigWalkerTokens.startCellColor.withOpacity(0.55);
-    if (isFinish) baseColor = BigWalkerTokens.finishCellColor.withOpacity(0.55);
+    var baseColor = isSpecial
+        ? BigWalkerTokens.boardSpecial
+        : (routeIndex.isEven ? BigWalkerTokens.boardPathBase : BigWalkerTokens.boardPathAlt);
+    if (isStart) baseColor = BigWalkerTokens.boardStart.withOpacity(0.82);
+    if (isFinish) baseColor = BigWalkerTokens.boardFinish.withOpacity(0.86);
 
     return AnimatedContainer(
       duration: BigWalkerMotion.cellStep,
@@ -32,39 +31,48 @@ class _BigWalkerCell extends StatelessWidget {
         color: baseColor,
         borderRadius: BorderRadius.circular(BigWalkerTokens.cellRadius),
         border: Border.all(
-          color: isActivePath ? BigWalkerTokens.activePathGlow : (playersHere.isNotEmpty ? AppColors.primaryFig : AppColors.strokeSoft),
-          width: isActivePath ? 2 : 1,
+          color: isActivePath
+              ? BigWalkerTokens.accentCyan
+              : playersHere.isNotEmpty
+                  ? BigWalkerTokens.accentAmber
+                  : Colors.white.withOpacity(0.12),
+          width: isActivePath ? 1.8 : 1,
         ),
         boxShadow: [
-          if (isActivePath) BoxShadow(color: BigWalkerTokens.activePathGlow.withOpacity(0.4), blurRadius: 12),
-          BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 4, offset: const Offset(0, 1)),
+          if (isActivePath) BoxShadow(color: BigWalkerTokens.accentCyan.withOpacity(0.34), blurRadius: 14),
+          BoxShadow(color: Colors.black.withOpacity(0.24), blurRadius: 8, offset: const Offset(0, 3)),
         ],
       ),
       child: Stack(
         children: [
           Positioned(
-            left: 5,
-            top: 3,
-            child: Text('${routeIndex + 1}', style: AppTypography.caption.copyWith(color: Colors.white70)),
-          ),
-          if (isSpecial)
-            const Center(
-              child: Icon(Icons.auto_awesome_rounded, size: 14, color: BigWalkerTokens.specialCellIcon),
+            left: 6,
+            top: 4,
+            child: Text(
+              '${routeIndex + 1}',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.72),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
             ),
+          ),
+          if (isSpecial && !isStart && !isFinish)
+            const Center(child: Icon(Icons.auto_awesome_rounded, size: 14, color: BigWalkerTokens.accentAmber)),
           if (isStart)
             const Align(
               alignment: Alignment.bottomLeft,
               child: Padding(
-                padding: EdgeInsets.all(4),
-                child: Text('START', style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w700)),
+                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                child: Text('START', style: TextStyle(fontSize: 8, color: Colors.black, fontWeight: FontWeight.w900)),
               ),
             ),
           if (isFinish)
             const Align(
               alignment: Alignment.bottomRight,
               child: Padding(
-                padding: EdgeInsets.all(4),
-                child: Text('FINISH', style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w700)),
+                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                child: Text('FINISH', style: TextStyle(fontSize: 8, color: Colors.black, fontWeight: FontWeight.w900)),
               ),
             ),
         ],

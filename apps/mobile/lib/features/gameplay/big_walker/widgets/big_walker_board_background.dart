@@ -5,29 +5,20 @@ class _BigWalkerBoardBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Container(
-          decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0, -0.2),
-              radius: 1.1,
-              colors: [Color(0x552EC5B6), Colors.transparent],
-            ),
-          ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: const RadialGradient(
+          center: Alignment(0, -0.4),
+          radius: 1.1,
+          colors: [Color(0x553AE8FF), Color(0x222A5A80), Colors.transparent],
         ),
-        ...BigWalkerTokens.backgroundLayers.map(
-          (assetPath) => Opacity(
-            opacity: 0.16,
-            child: Image.asset(
-              assetPath,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-            ),
-          ),
+        image: DecorationImage(
+          image: const AssetImage('assets/design/gameplay.bg.cinematic_room.1920x1080@2x.webp'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.65), BlendMode.darken),
+          onError: (_, __) {},
         ),
-      ],
+      ),
     );
   }
 }
