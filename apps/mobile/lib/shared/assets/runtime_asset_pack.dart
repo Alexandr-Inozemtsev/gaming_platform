@@ -20,11 +20,14 @@ class RuntimeAssetPack {
 
   static const String _defaultFallbackAsset = 'assets/design/placeholders/onboarding.hero.tabletop.svg';
   static const String _assetBaseUrl = String.fromEnvironment('ASSET_BASE_URL', defaultValue: '');
+  static const String _assetManifestSchemaSummary =
+      'assets: { <key>: { raster@2x: String|{remote,fallback}, webp@2x?: String, svg?: String, runtime@procedural?: String } }';
 
   Map<String, dynamic>? _manifest;
 
   Future<void> warmup() async {
     _manifest ??= jsonDecode(await rootBundle.loadString('assets/design/asset-manifest.json')) as Map<String, dynamic>;
+    _assertManifestContract();
   }
 
   Future<String?> firstInCategory(String category) async {
@@ -78,6 +81,42 @@ class RuntimeAssetPack {
     return fallback;
   }
 
+  /// Expected manifest contract for runtime asset resolution:
+  /// - root object has `assets` map;
+  /// - each asset entry is a map of variant -> value;
+  /// - supported values:
+  ///   * `String` for local asset or runtime marker;
+  ///   * `{ remote: String, fallback: String }` map for CDN-enabled variants.
+  /// - Big Walker requires:
+  ///   * gameplay.board.surface.travel_grid.raster@2x
+  ///   * gameplay.bg.procedural_room.runtime@procedural
+  void _assertManifestContract() {
+    final dynamic assets = _manifest?['assets'];
+    if (assets is! Map<String, dynamic>) {
+      assert(() {
+        debugPrint('[RuntimeAssetPack] Invalid manifest schema: missing assets map. Expected $_assetManifestSchemaSummary');
+        return true;
+      }());
+      return;
+    }
+
+    _assertEntryHasVariant(assets, 'gameplay.board.surface.travel_grid', 'raster@2x');
+    _assertEntryHasVariant(assets, 'gameplay.bg.procedural_room', 'runtime@procedural');
+  }
+
+  void _assertEntryHasVariant(Map<String, dynamic> assets, String key, String variant) {
+    final entry = assets[key];
+    final hasVariant = entry is Map<String, dynamic> && entry[variant] != null;
+    if (hasVariant) return;
+    assert(() {
+      debugPrint(
+        '[RuntimeAssetPack] Invalid manifest schema: missing "$variant" for "$key". '
+        'Expected $_assetManifestSchemaSummary',
+      );
+      return true;
+    }());
+  }
+
   String? _resolveVariantEntry({
     required String key,
     required String requestedVariant,
@@ -88,6 +127,16 @@ class RuntimeAssetPack {
 
     final remote = selectedVariantEntry['remote']?.toString();
     final localFallback = selectedVariantEntry['fallback']?.toString();
+    if ((remote == null || remote.isEmpty) && (localFallback == null || localFallback.isEmpty)) {
+      assert(() {
+        debugPrint(
+          '[RuntimeAssetPack] Invalid variant entry for "$key" variant="$requestedVariant": '
+          'map must contain non-empty remote or fallback.',
+        );
+        return true;
+      }());
+      return null;
+    }
     final resolvedRemote = _withAssetBaseUrl(remote);
     final resolved = (resolvedRemote?.isNotEmpty ?? false) ? resolvedRemote : localFallback;
     final strategy = (resolvedRemote?.isNotEmpty ?? false) ? 'remote' : 'local_manifest_fallback';

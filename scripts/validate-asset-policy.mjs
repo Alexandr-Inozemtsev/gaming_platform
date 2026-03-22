@@ -52,6 +52,7 @@ assertCondition(
 );
 
 const assets = manifest.assets ?? {};
+assertCondition(errors, manifest.assets && typeof manifest.assets === 'object', 'asset-manifest.assets секция отсутствует.');
 const travelGridEntry = assets[travelGridKey];
 assertCondition(errors, Boolean(travelGridEntry), `asset-manifest.assets[${travelGridKey}] отсутствует.`);
 if (travelGridEntry) {
@@ -76,6 +77,11 @@ if (travelGridEntry) {
     typeof travelGridEntry[tokenLegacyVariant] === 'string',
     `asset-manifest.assets[${travelGridKey}].${tokenLegacyVariant} должен быть задан для legacy-совместимости.`,
   );
+  assertCondition(
+    errors,
+    typeof travelGridEntry.svg === 'string' && travelGridEntry.svg.length > 0,
+    `asset-manifest.assets[${travelGridKey}].svg должен быть задан для fallback preview/дизайн-пайплайна.`,
+  );
 }
 
 const proceduralRoomEntry = assets[proceduralRoomKey];
@@ -85,6 +91,11 @@ if (proceduralRoomEntry) {
     errors,
     typeof proceduralRoomEntry['runtime@procedural'] === 'string',
     `asset-manifest.assets[${proceduralRoomKey}].runtime@procedural должен быть строкой.`,
+  );
+  assertCondition(
+    errors,
+    typeof proceduralRoomEntry.svg === 'string' && proceduralRoomEntry.svg.length > 0,
+    `asset-manifest.assets[${proceduralRoomKey}].svg должен быть задан для дизайн-документации и CI snapshot-проверок.`,
   );
 }
 
