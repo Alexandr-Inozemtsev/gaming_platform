@@ -15,6 +15,8 @@
     "validate:asset-policy": "node scripts/validate-asset-policy.mjs",
     "format": "echo \"Форматирование через Prettier будет доступно после установки зависимостей\"",
     "format:check": "echo \"Проверка форматирования через Prettier будет доступна после установки зависимостей\"",
-    "test:load:k6": "k6 run tests/load.js || node tests/load.js"
+    "test:load:k6": "k6 run tests/load.js || node tests/load.js",
+    "sync:mobile-runtime-manifest": "node scripts/sync-mobile-runtime-manifest.mjs",
+    "check:mobile-runtime-manifest-sync": "node scripts/check-mobile-runtime-manifest-sync.mjs"
   }
 }
