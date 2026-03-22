@@ -31,11 +31,8 @@ class BigWalkerBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cellW = constraints.maxWidth / BigWalkerTokens.cols;
-        final cellH = constraints.maxHeight / BigWalkerTokens.rows;
-        final cell = cellW < cellH ? cellW : cellH;
-        final boardW = cell * BigWalkerTokens.cols;
-        final boardH = cell * BigWalkerTokens.rows;
+        final boardWidth = constraints.maxWidth;
+        final boardHeight = constraints.maxHeight;
 
         final cells = List<Widget>.generate(BigWalkerTokens.totalCells, (gridIndex) {
           final row = gridIndex ~/ BigWalkerTokens.cols;
@@ -62,8 +59,8 @@ class BigWalkerBoard extends StatelessWidget {
 
         return Center(
           child: SizedBox(
-            width: boardW,
-            height: boardH,
+            width: boardWidth,
+            height: boardHeight,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(BigWalkerTokens.boardRadius + 14),
@@ -78,45 +75,69 @@ class BigWalkerBoard extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(BigWalkerTokens.boardRadius),
-                  child: Stack(
-                    children: [
-                      const Positioned.fill(child: _BoardSurfaceLayer()),
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: BigWalkerRoutePainter(path: boardPath, activePathIndex: activePathIndex),
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(BigWalkerTokens.boardRadius),
-                          gradient: BigWalkerTokens.boardInnerGradient,
-                        ),
-                        child: GridView.count(
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: BigWalkerTokens.cols,
-                          children: cells,
-                        ),
-                      ),
-                      _BigWalkerPathMarker(node: startNode, label: 'START', glowColor: BigWalkerTokens.boardStart, cellSize: cell),
-                      _BigWalkerPathMarker(node: finishNode, label: 'FINISH', glowColor: BigWalkerTokens.boardFinish, cellSize: cell),
-                      ...List<Widget>.generate(participantsCount, (playerIndex) {
-                        final routePosition = boardPath.nodeForRouteIndex(walkerPositions[playerIndex]).routeIndex;
-                        return _BigWalkerPawn(
-                          key: ValueKey('pawn-$playerIndex'),
-                          playerIndex: playerIndex,
-                          routeIndex: routePosition,
-                          boardWidth: boardW,
-                          boardHeight: boardH,
-                          path: boardPath,
-                          active: currentPlayerIndex == playerIndex,
-                        );
-                      }),
-                      IgnorePointer(
-                        child: _BoardDecorativeOverlays(
-                          borderRadius: BigWalkerTokens.boardRadius,
-                        ),
-                      ),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, boardRectConstraints) {
+                      final boardRectWidth = boardRectConstraints.maxWidth;
+                      final boardRectHeight = boardRectConstraints.maxHeight;
+                      final markerCellSize = (boardRectWidth / BigWalkerTokens.cols) < (boardRectHeight / BigWalkerTokens.rows)
+                          ? (boardRectWidth / BigWalkerTokens.cols)
+                          : (boardRectHeight / BigWalkerTokens.rows);
+
+                      return Stack(
+                        children: [
+                          const Positioned.fill(child: _BoardSurfaceLayer()),
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: BigWalkerRoutePainter(path: boardPath, activePathIndex: activePathIndex),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(BigWalkerTokens.boardRadius),
+                              gradient: BigWalkerTokens.boardInnerGradient,
+                            ),
+                            child: GridView.count(
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: BigWalkerTokens.cols,
+                              children: cells,
+                            ),
+                          ),
+                          _BigWalkerPathMarker(
+                            node: startNode,
+                            label: 'START',
+                            glowColor: BigWalkerTokens.boardStart,
+                            boardWidth: boardRectWidth,
+                            boardHeight: boardRectHeight,
+                            markerCellSize: markerCellSize,
+                          ),
+                          _BigWalkerPathMarker(
+                            node: finishNode,
+                            label: 'FINISH',
+                            glowColor: BigWalkerTokens.boardFinish,
+                            boardWidth: boardRectWidth,
+                            boardHeight: boardRectHeight,
+                            markerCellSize: markerCellSize,
+                          ),
+                          ...List<Widget>.generate(participantsCount, (playerIndex) {
+                            final routePosition = boardPath.nodeForRouteIndex(walkerPositions[playerIndex]).routeIndex;
+                            return _BigWalkerPawn(
+                              key: ValueKey('pawn-$playerIndex'),
+                              playerIndex: playerIndex,
+                              routeIndex: routePosition,
+                              boardWidth: boardRectWidth,
+                              boardHeight: boardRectHeight,
+                              path: boardPath,
+                              active: currentPlayerIndex == playerIndex,
+                            );
+                          }),
+                          IgnorePointer(
+                            child: _BoardDecorativeOverlays(
+                              borderRadius: BigWalkerTokens.boardRadius,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -133,23 +154,25 @@ class _BigWalkerPathMarker extends StatelessWidget {
     required this.node,
     required this.label,
     required this.glowColor,
-    required this.cellSize,
+    required this.boardWidth,
+    required this.boardHeight,
+    required this.markerCellSize,
   });
 
   final BigWalkerPathNode node;
   final String label;
   final Color glowColor;
-  final double cellSize;
+  final double boardWidth;
+  final double boardHeight;
+  final double markerCellSize;
 
   @override
   Widget build(BuildContext context) {
-    final boardWidth = cellSize * BigWalkerTokens.cols;
-    final boardHeight = cellSize * BigWalkerTokens.rows;
     final center = node.toBoardOffset(boardWidth: boardWidth, boardHeight: boardHeight);
 
     return Positioned(
-      left: center.dx - (cellSize * 0.32),
-      top: center.dy - (cellSize * 0.16),
+      left: center.dx - (markerCellSize * 0.32),
+      top: center.dy - (markerCellSize * 0.16),
       child: IgnorePointer(
         child: DecoratedBox(
           decoration: BoxDecoration(

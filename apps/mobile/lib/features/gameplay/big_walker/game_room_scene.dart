@@ -75,19 +75,19 @@ class GameRoomScene extends StatelessWidget {
                     turnNumber: state.turnNumber,
                     onOpenPause: actions.onOpenPause,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: BigWalkerTokens.space8),
                   BigWalkerPlayerChips(
                     participantsCount: state.participantsCount,
                     currentPlayerIndex: state.currentPlayerIndex,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: BigWalkerTokens.space8),
                   Expanded(
                     child: FractionallySizedBox(
                       widthFactor: 0.97,
                       heightFactor: BigWalkerTokens.tableHeightFactor,
                       child: _TableFrameLayer(
                         child: Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(BigWalkerTokens.space10),
                           child: BigWalkerBoard(
                             participantsCount: state.participantsCount,
                             walkerPositions: state.walkerPositions,
@@ -98,7 +98,7 @@ class GameRoomScene extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: BigWalkerTokens.space8),
                   BigWalkerActionPanel(
                     isRollingDice: state.isRollingDice,
                     diceValue: state.diceValue,
