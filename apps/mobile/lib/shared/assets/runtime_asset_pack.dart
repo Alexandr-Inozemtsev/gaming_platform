@@ -14,8 +14,8 @@ class RuntimeAssetPack {
   static const Map<String, String> _controlledFallbacks = {
     'onboarding.hero.tabletop': 'assets/design/placeholders/onboarding.hero.tabletop.svg',
     'gameplay.board.surface.grid': 'assets/design/placeholders/gameplay.board.surface.grid.svg',
-    'gameplay.bg': 'assets/design/placeholders/gameplay.board.surface.grid.svg',
-    'gameplay.decor': 'assets/design/placeholders/gameplay.board.surface.grid.svg',
+    'gameplay.bg.procedural_room': 'assets/design/placeholders/gameplay.board.surface.grid.svg',
+    'gameplay.board.surface.travel_grid': 'assets/design/placeholders/gameplay.board.surface.grid.svg',
   };
 
   static const String _defaultFallbackAsset = 'assets/design/placeholders/onboarding.hero.tabletop.svg';
@@ -69,9 +69,7 @@ class RuntimeAssetPack {
       return resolvedAsset;
     }
 
-    final fallback = _controlledFallbacks.entries
-            .firstWhere((entry) => key.contains(entry.key), orElse: () => const MapEntry('', _defaultFallbackAsset))
-            .value;
+    final fallback = _controlledFallbacks[key] ?? _defaultFallbackAsset;
 
     assert(() {
       debugPrint('[RuntimeAssetPack] key="$key" variant="$variant" strategy="fallback" asset="$fallback".');
