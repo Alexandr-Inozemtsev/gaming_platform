@@ -24,8 +24,18 @@ class RuntimeAssetPack {
     return list.first.toString();
   }
 
+  Future<String?> resolveAsset(String key, {String variant = 'webp@2x'}) async {
+    await warmup();
+    final assets = _manifest?['assets'] as Map<String, dynamic>?;
+    final entry = assets?[key] as Map<String, dynamic>?;
+    final resolved = entry?[variant];
+    return resolved?.toString();
+  }
+
   // Упрощённый резолвер ключа в файл-заглушку для MVP до подключения CDN/генератора.
-  String resolvePlaceholder(String key) {
+  Future<String> resolvePlaceholder(String key) async {
+    final resolvedAsset = await resolveAsset(key);
+    if (resolvedAsset != null) return resolvedAsset;
     if (key.contains('onboarding.hero.tabletop')) return 'assets/design/placeholders/onboarding.hero.tabletop.svg';
     if (key.contains('gameplay.board.surface.grid')) return 'assets/design/placeholders/gameplay.board.surface.grid.svg';
     return 'assets/design/placeholders/onboarding.hero.tabletop.svg';
