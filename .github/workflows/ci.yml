@@ -88,3 +88,15 @@ jobs:
       - name: Flutter e2e smoke (widget)
         working-directory: apps/mobile
         run: flutter test test/smoke_test.dart
+
+      - name: Materialize Big Walker golden PNG baselines
+        working-directory: apps/mobile
+        run: python test/golden/goldens/materialize_big_walker_goldens.py
+
+      - name: Big Walker golden baseline manifest and files
+        working-directory: apps/mobile
+        run: flutter test test/golden/big_walker_baseline_files_test.dart
+
+      - name: Big Walker golden states
+        working-directory: apps/mobile
+        run: flutter test test/golden/big_walker_states_golden_test.dart
