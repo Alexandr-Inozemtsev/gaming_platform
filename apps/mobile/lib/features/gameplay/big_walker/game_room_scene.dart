@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../games/big_walker/big_walker_board.dart';
@@ -155,10 +156,81 @@ class _SceneImageLayer extends StatelessWidget {
         ...BigWalkerTokens.backgroundLayers.map(
           (asset) => Opacity(
             opacity: asset == BigWalkerTokens.roomBgAsset ? 0.24 : 0.18,
-            child: Image.asset(asset, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+            child: Image.asset(
+              asset,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _MissingSceneAssetFallback(assetPath: asset),
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MissingSceneAssetFallback extends StatelessWidget {
+  const _MissingSceneAssetFallback({required this.assetPath});
+
+  final String assetPath;
+
+  @override
+  Widget build(BuildContext context) {
+    assert(() {
+      debugPrint('[BigWalker] Missing scene asset: $assetPath');
+      return true;
+    }());
+
+    if (kDebugMode) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              BigWalkerTokens.bgDeep.withOpacity(0.84),
+              const Color(0xFF41251E).withOpacity(0.84),
+            ],
+          ),
+          border: Border.all(color: BigWalkerTokens.accentAmber.withOpacity(0.65), width: 1.4),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.broken_image_rounded, color: BigWalkerTokens.accentAmber, size: 34),
+                const SizedBox(height: 8),
+                const Text(
+                  'Missing Big Walker asset',
+                  style: TextStyle(
+                    color: BigWalkerTokens.textPrimary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  assetPath,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: BigWalkerTokens.textSecondary, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0B1528), Color(0xFF060C18)],
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.image_not_supported_rounded, color: Color(0x889AB5D6), size: 20),
+      ),
     );
   }
 }
