@@ -35,6 +35,8 @@ Future<void> _pumpState(
       overlay: overlay,
       turnTransitionVisible: turnTransitionVisible,
       transitionPlayerIndex: transitionPlayerIndex,
+      settlingPlayerIndex: null,
+      pawnSettleTick: 0,
     ),
     actions: BigWalkerMatchActions(
       onParticipantsCountChanged: (_) {},

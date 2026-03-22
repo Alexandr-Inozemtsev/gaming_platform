@@ -9,6 +9,7 @@ class _BigWalkerPawn extends StatefulWidget {
     required this.boardHeight,
     required this.path,
     required this.active,
+    required this.settleTick,
   });
 
   final int playerIndex;
@@ -17,44 +18,58 @@ class _BigWalkerPawn extends StatefulWidget {
   final double boardHeight;
   final BigWalkerBoardPath path;
   final bool active;
+  final int settleTick;
 
   @override
   State<_BigWalkerPawn> createState() => _BigWalkerPawnState();
 }
 
-class _BigWalkerPawnState extends State<_BigWalkerPawn> with SingleTickerProviderStateMixin {
+class _BigWalkerPawnState extends State<_BigWalkerPawn> with TickerProviderStateMixin {
   late final AnimationController _controller;
+  late final AnimationController _settleController;
   late Animation<double> _routeAnimation;
+  late final Animation<double> _settleScale;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: BigWalkerMotion.pawnMove);
+    _settleController = AnimationController(vsync: this, duration: BigWalkerMotion.pawnSettle);
     _routeAnimation = AlwaysStoppedAnimation(widget.routeIndex.toDouble());
+    _settleScale = TweenSequence<double>([
+      TweenSequenceItem<double>(tween: Tween<double>(begin: 1, end: 1.1), weight: 45),
+      TweenSequenceItem<double>(tween: Tween<double>(begin: 1.1, end: 0.96), weight: 35),
+      TweenSequenceItem<double>(tween: Tween<double>(begin: 0.96, end: 1), weight: 20),
+    ]).animate(CurvedAnimation(parent: _settleController, curve: Curves.easeOutCubic));
   }
 
   @override
   void didUpdateWidget(covariant _BigWalkerPawn oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.routeIndex == widget.routeIndex) return;
+    if (oldWidget.routeIndex != widget.routeIndex) {
+      final begin = _routeAnimation.value;
+      final end = widget.routeIndex.toDouble();
+      final steps = (end - begin).abs().ceil().clamp(1, BigWalkerTokens.totalCells);
+      final perStepMs = BigWalkerMotion.cellStep.inMilliseconds;
+      final baseMoveMs = BigWalkerMotion.pawnMove.inMilliseconds;
+      final moveDuration = Duration(milliseconds: (perStepMs * steps).clamp(baseMoveMs, perStepMs * BigWalkerTokens.totalCells));
 
-    final begin = _routeAnimation.value;
-    final end = widget.routeIndex.toDouble();
-    final steps = (end - begin).abs().ceil().clamp(1, BigWalkerTokens.totalCells);
-    final perStepMs = BigWalkerMotion.cellStep.inMilliseconds;
-    final baseMoveMs = BigWalkerMotion.pawnMove.inMilliseconds;
-    final moveDuration = Duration(milliseconds: (perStepMs * steps).clamp(baseMoveMs, perStepMs * BigWalkerTokens.totalCells));
+      _controller.duration = moveDuration;
+      _routeAnimation = Tween<double>(begin: begin, end: end).animate(
+        CurvedAnimation(parent: _controller, curve: BigWalkerMotion.pawnMoveCurve),
+      );
+      _controller.forward(from: 0);
+    }
 
-    _controller.duration = moveDuration;
-    _routeAnimation = Tween<double>(begin: begin, end: end).animate(
-      CurvedAnimation(parent: _controller, curve: BigWalkerMotion.pawnMoveCurve),
-    );
-    _controller.forward(from: 0);
+    if (oldWidget.settleTick != widget.settleTick && widget.settleTick > 0) {
+      _settleController.forward(from: 0);
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _settleController.dispose();
     super.dispose();
   }
 
@@ -64,7 +79,7 @@ class _BigWalkerPawnState extends State<_BigWalkerPawn> with SingleTickerProvide
     final color = BigWalkerTokens.pawnPalette[widget.playerIndex % BigWalkerTokens.pawnPalette.length];
 
     return AnimatedBuilder(
-      animation: _controller,
+      animation: Listenable.merge([_controller, _settleController]),
       builder: (context, _) {
         final routeValue = _routeAnimation.value;
         final lowerRouteIndex = routeValue.floor();
@@ -95,45 +110,48 @@ class _BigWalkerPawnState extends State<_BigWalkerPawn> with SingleTickerProvide
           key: ValueKey('pawn-position-${widget.playerIndex}'),
           left: center.dx - BigWalkerTokens.pawnRadius + smoothOffset.dx,
           top: center.dy - BigWalkerTokens.pawnRadius + smoothOffset.dy,
-          child: AnimatedContainer(
-            duration: BigWalkerMotion.turnGlow,
-            width: BigWalkerTokens.pawnRadius * 2,
-            height: BigWalkerTokens.pawnRadius * 2,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [Colors.white, color, color.withOpacity(0.75)],
-                stops: const [0.08, 0.52, 1],
-              ),
-              border: Border.all(color: Colors.black.withOpacity(0.48), width: BigWalkerTokens.pawnStrokeWidth),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.active ? BigWalkerTokens.accentCyan.withOpacity(0.7) : Colors.black.withOpacity(0.45),
-                  blurRadius: widget.active ? 18 : 8,
-                  spreadRadius: widget.active ? 1.5 : 0,
-                  offset: const Offset(0, 2),
+          child: Transform.scale(
+            scale: _settleScale.value,
+            child: AnimatedContainer(
+              duration: BigWalkerMotion.turnGlow,
+              width: BigWalkerTokens.pawnRadius * 2,
+              height: BigWalkerTokens.pawnRadius * 2,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Colors.white, color, color.withOpacity(0.75)],
+                  stops: const [0.08, 0.52, 1],
                 ),
-                if (widget.active) BoxShadow(color: color.withOpacity(0.52), blurRadius: 18, spreadRadius: 0.8),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                if (widget.active)
-                  Container(
-                    width: BigWalkerTokens.pawnRadius * 2.2,
-                    height: BigWalkerTokens.pawnRadius * 2.2,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.2),
-                    ),
+                border: Border.all(color: Colors.black.withOpacity(0.48), width: BigWalkerTokens.pawnStrokeWidth),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.active ? BigWalkerTokens.accentCyan.withOpacity(0.7) : Colors.black.withOpacity(0.45),
+                    blurRadius: widget.active ? 18 : 8,
+                    spreadRadius: widget.active ? 1.5 : 0,
+                    offset: const Offset(0, 2),
                   ),
-                Text(
-                  '${widget.playerIndex + 1}',
-                  style: const TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.w900),
-                ),
-              ],
+                  if (widget.active) BoxShadow(color: color.withOpacity(0.52), blurRadius: 18, spreadRadius: 0.8),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (widget.active)
+                    Container(
+                      width: BigWalkerTokens.pawnRadius * 2.2,
+                      height: BigWalkerTokens.pawnRadius * 2.2,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.2),
+                      ),
+                    ),
+                  Text(
+                    '${widget.playerIndex + 1}',
+                    style: const TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.w900),
+                  ),
+                ],
+              ),
             ),
           ),
         );

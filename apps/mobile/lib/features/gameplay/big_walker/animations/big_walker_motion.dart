@@ -4,6 +4,7 @@ class BigWalkerMotion {
   static const Duration dicePulse = Duration(milliseconds: 120);
   static const Duration diceShake = Duration(milliseconds: 90);
   static const Duration pawnMove = Duration(milliseconds: 280);
+  static const Duration pawnSettle = Duration(milliseconds: 180);
   static const Duration turnGlow = Duration(milliseconds: 240);
   static const Duration cellStep = Duration(milliseconds: 280);
   static const Duration winnerModal = Duration(milliseconds: 320);
