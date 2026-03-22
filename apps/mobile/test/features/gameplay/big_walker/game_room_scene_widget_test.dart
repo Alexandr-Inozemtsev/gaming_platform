@@ -11,18 +11,22 @@ BigWalkerViewModel _buildViewModel({
   String overlay = '',
   bool turnTransitionVisible = false,
   int? transitionPlayerIndex,
+  int? activePathIndex,
+  List<int> walkerPositions = const [0, 3, 5, 7],
+  int currentPlayerIndex = 1,
+  int diceValue = 4,
 }) {
   const noop = _NoopActions();
   return BigWalkerViewModel(
     state: BigWalkerMatchViewState(
       title: 'Big Walker',
       participantsCount: 4,
-      walkerPositions: const [0, 3, 5, 7],
-      currentPlayerIndex: 1,
-      diceValue: 4,
+      walkerPositions: walkerPositions,
+      currentPlayerIndex: currentPlayerIndex,
+      diceValue: diceValue,
       isRollingDice: isRollingDice,
       turnNumber: 3,
-      activePathIndex: isRollingDice ? 4 : null,
+      activePathIndex: activePathIndex ?? (isRollingDice ? 4 : null),
       winnerIndex: winnerIndex,
       isStarted: isStarted,
       overlay: overlay,
@@ -45,6 +49,12 @@ Future<void> _pumpScene(WidgetTester tester, BigWalkerViewModel viewModel) async
   await tester.pumpAndSettle();
 }
 
+
+Offset _pawnOffset(WidgetTester tester, int playerIndex) {
+  final pawnPosition = tester.widget<Positioned>(find.byKey(ValueKey('pawn-position-$playerIndex')));
+  return Offset(pawnPosition.left!, pawnPosition.top!);
+}
+
 void main() {
   testWidgets('idle state shows player select and start CTA', (tester) async {
     await _pumpScene(tester, _buildViewModel(isStarted: false));
@@ -58,6 +68,36 @@ void main() {
 
     expect(find.text('Кубик вращается...'), findsOneWidget);
     expect(find.text('D20 CORE'), findsOneWidget);
+  });
+
+
+  testWidgets('dice roll + token movement animates from previous route position', (tester) async {
+    await _pumpScene(tester, _buildViewModel(isRollingDice: true, walkerPositions: const [0, 3, 5, 7]));
+    final start = _pawnOffset(tester, 0);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GameRoomScene(
+            viewModel: _buildViewModel(
+              isRollingDice: true,
+              walkerPositions: const [4, 3, 5, 7],
+              activePathIndex: 4,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump(const Duration(milliseconds: 140));
+    final mid = _pawnOffset(tester, 0);
+
+    await tester.pumpAndSettle();
+    final end = _pawnOffset(tester, 0);
+
+    expect((mid - start).distance, greaterThan(0.5));
+    expect((end - mid).distance, greaterThan(0.5));
+    expect((mid - start).distance, lessThan((end - start).distance));
   });
 
   testWidgets('next turn overlay is visible', (tester) async {
