@@ -34,6 +34,7 @@ SVG-заглушки: `apps/mobile/assets/design/placeholders/*.svg`.
 - Для Big Walker основной runtime-визуал должен работать без бинарных фонов: используется процедурный слой (градиенты + painter-атмосфера).
 - `reference_screens` и любые PNG/WebP допускаются только как локальная сверка дизайна и не должны быть runtime dependency.
 - Image-слои с бинарными файлами разрешены только как необязательный enhancement, который безопасно деградирует до `SizedBox.shrink()`.
+- Перед коммитом запускайте `npm run check:no-binary-pr`, чтобы поймать staged бинарные файлы до создания PR.
 
 ### Контракт консистентности (обязателен для CI)
 - `apps/mobile/lib/theme/game/big_walker_tokens.dart` фиксирует ключи и default variant для Big Walker (`raster@2x`).

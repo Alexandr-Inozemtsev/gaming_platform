@@ -6,7 +6,7 @@
     "services/*"
   ],
   "scripts": {
-    "lint": "node scripts/check-merge-markers.mjs && node scripts/lint-services.mjs",
+    "lint": "npm run check:no-binary-pr && node scripts/check-merge-markers.mjs && node scripts/lint-services.mjs",
     "test": "npm run test --workspaces --if-present",
     "test:load:ws": "node scripts/ws-load.mjs",
     "gen:game": "node services/rules-engine/tools/generator/cli.mjs",
@@ -17,6 +17,7 @@
     "format:check": "echo \"Проверка форматирования через Prettier будет доступна после установки зависимостей\"",
     "test:load:k6": "k6 run tests/load.js || node tests/load.js",
     "sync:mobile-runtime-manifest": "node scripts/sync-mobile-runtime-manifest.mjs",
-    "check:mobile-runtime-manifest-sync": "node scripts/check-mobile-runtime-manifest-sync.mjs"
+    "check:mobile-runtime-manifest-sync": "node scripts/check-mobile-runtime-manifest-sync.mjs",
+    "check:no-binary-pr": "node scripts/check-no-binary-pr-changes.mjs"
   }
 }
