@@ -120,6 +120,14 @@ class BigWalkerTokens {
 
   static const List<String> backgroundEnhancementLayers = <String>[];
 
+  // Asset policy contract (tokens <-> manifest <-> runtime resolver).
+  static const String defaultRasterVariant = 'raster@2x';
+  static const String legacyWebpVariant = 'webp@2x';
+  static const String gameplayBoardSurfaceTravelGridKey = 'gameplay.board.surface.travel_grid';
+  static const String gameplayBackgroundProceduralRoomKey = 'gameplay.bg.procedural_room';
+  static const String gameplayBoardSurfaceTravelGridAssetPath =
+      'assets/design/gameplay.board.surface.travel_grid.1920x1080@2x.webp';
+
   static const LinearGradient roomAtmosphereGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
