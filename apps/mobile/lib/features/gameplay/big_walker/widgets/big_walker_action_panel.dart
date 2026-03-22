@@ -109,32 +109,45 @@ class _DiceArea extends StatelessWidget {
         ),
         border: Border.all(color: BigWalkerTokens.panelBorder),
       ),
-      child: Center(
-        child: TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: isRollingDice ? 1 : 0),
-          duration: BigWalkerMotion.diceShake,
-          builder: (_, t, __) {
-            return Transform.rotate(
-              angle: math.sin(t * math.pi * 10) * 0.09,
-              child: AnimatedScale(
-                duration: BigWalkerMotion.dicePulse,
-                curve: Curves.easeOutBack,
-                scale: isRollingDice ? 1.12 : 1,
-                child: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFFDFEFF), Color(0xFFD6EBFF)]),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [BoxShadow(color: Color(0x7747DEFF), blurRadius: 12)],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'D20 CORE',
+            style: TextStyle(
+              color: BigWalkerTokens.textMuted,
+              fontSize: 10,
+              letterSpacing: 0.6,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: isRollingDice ? 1 : 0),
+            duration: BigWalkerMotion.diceShake,
+            builder: (_, t, __) {
+              return Transform.rotate(
+                angle: math.sin(t * math.pi * 10) * 0.09,
+                child: AnimatedScale(
+                  duration: BigWalkerMotion.dicePulse,
+                  curve: Curves.easeOutBack,
+                  scale: isRollingDice ? 1.12 : 1,
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFFFDFEFF), Color(0xFFD6EBFF)]),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [BoxShadow(color: Color(0x7747DEFF), blurRadius: 12)],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text('$diceValue', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black)),
                   ),
-                  alignment: Alignment.center,
-                  child: Text('$diceValue', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black)),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

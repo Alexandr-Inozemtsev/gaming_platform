@@ -26,6 +26,14 @@ class BigWalkerHud extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BigWalkerTokens.panelRadius),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x28FFFFFF), Colors.transparent],
+        ),
+      ),
       decoration: BoxDecoration(
         gradient: BigWalkerTokens.panelGradient,
         borderRadius: BorderRadius.circular(BigWalkerTokens.panelRadius),
@@ -40,7 +48,13 @@ class BigWalkerHud extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Big Walker', style: TextStyle(color: BigWalkerTokens.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
+                const Row(
+                  children: [
+                    Text('Big Walker', style: TextStyle(color: BigWalkerTokens.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
+                    SizedBox(width: 8),
+                    _ActiveTurnPill(),
+                  ],
+                ),
                 Text(
                   'Раунд $turnNumber · Активный: Игрок ${currentPlayerIndex + 1} · Участников: $participantsCount',
                   style: const TextStyle(color: BigWalkerTokens.textSecondary, fontSize: 12),
@@ -82,6 +96,31 @@ class _IconOrb extends StatelessWidget {
             border: Border.all(color: BigWalkerTokens.panelBorder),
           ),
           child: Icon(icon, color: BigWalkerTokens.textPrimary, size: 18),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveTurnPill extends StatelessWidget {
+  const _ActiveTurnPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        gradient: const LinearGradient(colors: [Color(0x5536D5FF), Color(0x334FD0FF)]),
+        border: Border.all(color: BigWalkerTokens.panelBorderActive.withOpacity(0.7)),
+      ),
+      child: const Text(
+        'LIVE',
+        style: TextStyle(
+          color: BigWalkerTokens.textPrimary,
+          fontWeight: FontWeight.w700,
+          fontSize: 10,
+          letterSpacing: 0.4,
         ),
       ),
     );
