@@ -57,7 +57,21 @@ class _BigWalkerPawn extends StatelessWidget {
               ],
             ),
             alignment: Alignment.center,
-            child: Text('${playerIndex + 1}', style: const TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.w900)),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (active)
+                  Container(
+                    width: BigWalkerTokens.pawnRadius * 2.2,
+                    height: BigWalkerTokens.pawnRadius * 2.2,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.2),
+                    ),
+                  ),
+                Text('${playerIndex + 1}', style: const TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.w900)),
+              ],
+            ),
           ),
         );
       },

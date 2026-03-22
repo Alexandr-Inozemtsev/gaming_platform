@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tabletopplatform_mobile/features/gameplay/big_walker/big_walker_match_state.dart';
 import 'package:tabletopplatform_mobile/features/gameplay/big_walker/game_room_scene.dart';
+import 'package:tabletopplatform_mobile/theme/game/big_walker_tokens.dart';
 
 BigWalkerViewModel _buildViewModel({
   bool isStarted = true,
@@ -110,6 +111,27 @@ void main() {
       await _pumpScene(tester, scenario.model);
       expect(find.text(scenario.expectedLabel), findsOneWidget, reason: 'state=${scenario.name}');
     }
+  });
+
+  testWidgets('active player emphasis is visible in chips and action context', (tester) async {
+    await _pumpScene(tester, _buildViewModel());
+
+    expect(find.text('Игрок 2 · ХОД'), findsOneWidget);
+    expect(find.text('Ход игрока 2 · Раунд 3'), findsOneWidget);
+  });
+
+  testWidgets('overlay surfaces use shared modal system tokens', (tester) async {
+    await _pumpScene(tester, _buildViewModel(overlay: 'pause'));
+
+    final shellFinder = find.byWidgetPredicate((widget) {
+      if (widget is! Container || widget.decoration is! BoxDecoration) return false;
+      final decoration = widget.decoration! as BoxDecoration;
+      return decoration.borderRadius == BorderRadius.circular(BigWalkerTokens.modalRadius);
+    });
+    expect(shellFinder, findsOneWidget);
+    final shell = tester.widget<Container>(shellFinder.first);
+    final decoration = shell.decoration as BoxDecoration;
+    expect(decoration.border?.top.color, BigWalkerTokens.panelBorderStrong);
   });
 }
 

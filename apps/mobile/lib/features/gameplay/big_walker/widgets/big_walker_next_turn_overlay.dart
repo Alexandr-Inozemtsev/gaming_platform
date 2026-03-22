@@ -18,7 +18,10 @@ class BigWalkerNextTurnOverlay extends StatelessWidget {
           tween: Tween(begin: 0, end: 1),
           duration: BigWalkerTokens.normal,
           curve: Curves.easeOutCubic,
-          builder: (_, t, child) => Opacity(opacity: t, child: child),
+          builder: (_, t, child) => Opacity(
+            opacity: t,
+            child: Transform.translate(offset: Offset(0, (1 - t) * 18), child: child),
+          ),
           child: Center(
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.98, end: 1.02),

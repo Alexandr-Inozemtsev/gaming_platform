@@ -54,14 +54,8 @@ class _MenuCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: BigWalkerTokens.panelGradient,
-          border: Border.all(color: BigWalkerTokens.panelBorder),
-        ),
+      borderRadius: BorderRadius.circular(BigWalkerTokens.cardRadius),
+      child: BigWalkerModalCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
