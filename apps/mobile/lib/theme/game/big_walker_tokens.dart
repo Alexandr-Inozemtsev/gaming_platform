@@ -101,6 +101,25 @@ class BigWalkerTokens {
     colors: [accentAmber, accentAmberDeep],
   );
 
+  static const LinearGradient overlayPanelGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xEE1A2E4B), Color(0xE60D1A2F)],
+  );
+
+  static const LinearGradient overlayDangerGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFF97070), Color(0xFFD53A3A)],
+  );
+
+  static const LinearGradient overlayBackdropGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0x00000000), Color(0x44020610), Color(0x9601040D)],
+    stops: [0.0, 0.56, 1.0],
+  );
+
   static const RadialGradient boardAuraGradient = RadialGradient(
     center: Alignment(0, -0.35),
     radius: 1.1,
@@ -131,6 +150,17 @@ class BigWalkerTokens {
     BoxShadow(color: Color(0x7D59E6FF), blurRadius: 18, spreadRadius: 1),
     BoxShadow(color: Color(0x665CFFC8), blurRadius: 24, spreadRadius: 1),
   ];
+
+  static const List<BoxShadow> overlayPanelShadow = [
+    BoxShadow(color: Color(0x8A030913), blurRadius: 24, offset: Offset(0, 12)),
+    BoxShadow(color: Color(0x6650D6FF), blurRadius: 20, spreadRadius: 1),
+  ];
+
+  static const List<BoxShadow> overlayButtonShadow = [
+    BoxShadow(color: Color(0x4D5BDBFF), blurRadius: 14, offset: Offset(0, 4)),
+  ];
+
+  static const double roomOverlayCompactHeight = 420;
 
   static const List<String> backgroundEnhancementLayers = <String>[];
 
