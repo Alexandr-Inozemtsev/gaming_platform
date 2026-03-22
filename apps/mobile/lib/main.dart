@@ -757,6 +757,7 @@ class AppState extends ChangeNotifier {
   // Big Walker mechanics (без изменения правил).
   Future<void> rollDiceAndMoveWalker() async {
     if (!bigWalkerStarted || isRollingDice || winnerIndex != null) return;
+    final rollPhaseWatch = Stopwatch()..start();
     isRollingDice = true;
     notifyListeners();
 
@@ -764,6 +765,10 @@ class AppState extends ChangeNotifier {
       diceValue = BigWalkerTokens.diceMin + _random.nextInt(BigWalkerTokens.diceMax);
       notifyListeners();
       await Future<void>.delayed(BigWalkerMotion.dicePulse);
+    }
+    final remainingRollPhase = BigWalkerMotion.diceRollMinVisible - rollPhaseWatch.elapsed;
+    if (!remainingRollPhase.isNegative) {
+      await Future<void>.delayed(remainingRollPhase);
     }
 
     final rolled = diceValue;
@@ -793,7 +798,7 @@ class AppState extends ChangeNotifier {
     turnNumber += 1;
     isRollingDice = false;
     notifyListeners();
-    await Future<void>.delayed(BigWalkerMotion.turnGlow);
+    await Future<void>.delayed(BigWalkerMotion.overlayVisible);
     turnTransitionVisible = false;
     notifyListeners();
   }

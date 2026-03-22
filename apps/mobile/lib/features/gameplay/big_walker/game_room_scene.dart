@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../games/big_walker/big_walker_board.dart';
 import '../../../shared/assets/runtime_asset_pack.dart';
 import '../../../theme/game/big_walker_tokens.dart';
+import 'animations/big_walker_motion.dart';
 import 'big_walker_match_state.dart';
 import 'widgets/big_walker_action_panel.dart';
 import 'widgets/big_walker_atmosphere.dart';
@@ -110,8 +111,19 @@ class GameRoomScene extends StatelessWidget {
               ),
             ),
           ),
-          if (state.turnTransitionVisible && state.transitionPlayerIndex != null)
-            BigWalkerNextTurnOverlay(playerIndex: state.transitionPlayerIndex!),
+          Positioned.fill(
+            child: AnimatedSwitcher(
+              duration: BigWalkerMotion.overlayExit,
+              switchInCurve: BigWalkerMotion.overlayEnterCurve,
+              switchOutCurve: BigWalkerMotion.overlayExitCurve,
+              child: (state.turnTransitionVisible && state.transitionPlayerIndex != null)
+                  ? BigWalkerNextTurnOverlay(
+                      key: ValueKey<int>(state.transitionPlayerIndex!),
+                      playerIndex: state.transitionPlayerIndex!,
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
           const _DebugReferenceOverlayLayer(),
           _buildOverlay(state, actions),
         ],
