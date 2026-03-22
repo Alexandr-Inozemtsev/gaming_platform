@@ -180,85 +180,90 @@ class _DiceAreaState extends State<_DiceArea> with SingleTickerProviderStateMixi
             ),
           ),
           const SizedBox(height: 2),
-          AnimatedBuilder(
-            animation: _vfxController,
-            builder: (_, __) {
-              final t = Curves.easeInOut.transform(_vfxController.value);
-              final double burst = widget.isRollingDice ? (0.3 + (1 - (2 * (t - 0.5).abs()))) : 0.0;
-              final double shake = widget.isRollingDice ? math.sin(_vfxController.value * math.pi * 8) * _maxShakeAmplitude : 0.0;
-              final double tilt = widget.isRollingDice ? math.sin(_vfxController.value * math.pi * 10) * 0.08 : 0.0;
-              final double ringOpacity =
-                  widget.isRollingDice ? (0.28 + (math.sin(_vfxController.value * math.pi * 2).abs() * 0.34)) : 0.0;
+          SizedBox(
+            width: double.infinity,
+            height: 36,
+            child: AnimatedBuilder(
+              animation: _vfxController,
+              builder: (_, __) {
+                final t = Curves.easeInOut.transform(_vfxController.value);
+                final double burst = widget.isRollingDice ? (0.3 + (1 - (2 * (t - 0.5).abs()))) : 0.0;
+                final double shake = widget.isRollingDice ? math.sin(_vfxController.value * math.pi * 8) * _maxShakeAmplitude : 0.0;
+                final double tilt = widget.isRollingDice ? math.sin(_vfxController.value * math.pi * 10) * 0.08 : 0.0;
+                final double ringOpacity =
+                    widget.isRollingDice ? (0.28 + (math.sin(_vfxController.value * math.pi * 2).abs() * 0.34)) : 0.0;
 
-              return Transform.translate(
-                offset: Offset(shake, 0),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (widget.isRollingDice)
-                      Container(
-                        width: 56 + (burst * 14),
-                        height: 56 + (burst * 14),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              const Color(0x99FFE188).withOpacity(0.25 + (burst * 0.35)),
-                              const Color(0x00FFE188),
-                            ],
-                          ),
-                        ),
-                      ),
-                    if (widget.isRollingDice)
-                      Container(
-                        width: 42 + (burst * 10),
-                        height: 42 + (burst * 10),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFF70E7FF).withOpacity(ringOpacity),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xAA47DEFF).withOpacity(ringOpacity),
-                              blurRadius: 14,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                    Transform.rotate(
-                      angle: tilt,
-                      child: AnimatedScale(
-                        duration: BigWalkerMotion.dicePulse,
-                        curve: BigWalkerMotion.dicePulseCurve,
-                        scale: widget.isRollingDice ? 1.12 : 1,
-                        child: Container(
-                          width: 36,
-                          height: 36,
+                return Transform.translate(
+                  offset: Offset(shake, 0),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none,
+                    children: [
+                      if (widget.isRollingDice)
+                        Container(
+                          width: 42 + (burst * 8),
+                          height: 42 + (burst * 8),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [Color(0xFFFDFEFF), Color(0xFFD6EBFF)]),
-                            borderRadius: BorderRadius.circular(10),
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                const Color(0x99FFE188).withOpacity(0.25 + (burst * 0.35)),
+                                const Color(0x00FFE188),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (widget.isRollingDice)
+                        Container(
+                          width: 34 + (burst * 7),
+                          height: 34 + (burst * 7),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF70E7FF).withOpacity(ringOpacity),
+                              width: 2,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0x7747DEFF).withOpacity(widget.isRollingDice ? 0.85 : 0.5),
-                                blurRadius: widget.isRollingDice ? 16 : 10,
+                                color: const Color(0xAA47DEFF).withOpacity(ringOpacity),
+                                blurRadius: 12,
+                                spreadRadius: 0.5,
                               ),
                             ],
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${widget.diceValue}',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black),
+                        ),
+                      Transform.rotate(
+                        angle: tilt,
+                        child: AnimatedScale(
+                          duration: BigWalkerMotion.dicePulse,
+                          curve: BigWalkerMotion.dicePulseCurve,
+                          scale: widget.isRollingDice ? 1.1 : 1,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [Color(0xFFFDFEFF), Color(0xFFD6EBFF)]),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0x7747DEFF).withOpacity(widget.isRollingDice ? 0.85 : 0.5),
+                                  blurRadius: widget.isRollingDice ? 14 : 10,
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${widget.diceValue}',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),

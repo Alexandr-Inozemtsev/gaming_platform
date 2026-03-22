@@ -774,16 +774,17 @@ class AppState extends ChangeNotifier {
 
     final rolled = diceValue;
     final startPos = walkerPositions[currentPlayerIndex].clamp(0, BigWalkerTokens.totalCells - 1);
-    for (int step = 1; step <= rolled; step += 1) {
-      final nextPos = (startPos + step).clamp(0, BigWalkerTokens.totalCells - 1);
-      walkerPositions[currentPlayerIndex] = nextPos;
-      activePathIndex = nextPos;
-      notifyListeners();
-      await Future<void>.delayed(BigWalkerMotion.cellStep);
-      if (nextPos >= BigWalkerTokens.totalCells - 1) break;
-    }
+    final finalPos = (startPos + rolled).clamp(0, BigWalkerTokens.totalCells - 1);
+    final steps = (finalPos - startPos).abs().clamp(1, BigWalkerTokens.totalCells);
+    final perStepMs = BigWalkerMotion.cellStep.inMilliseconds;
+    final baseMoveMs = BigWalkerMotion.pawnMove.inMilliseconds;
+    final moveDuration = Duration(milliseconds: (perStepMs * steps).clamp(baseMoveMs, perStepMs * BigWalkerTokens.totalCells));
 
-    final finalPos = walkerPositions[currentPlayerIndex];
+    walkerPositions[currentPlayerIndex] = finalPos;
+    activePathIndex = finalPos;
+    notifyListeners();
+    await Future<void>.delayed(moveDuration);
+
     roomLog.add('Player ${currentPlayerIndex + 1} бросил $rolled и перешел на ${finalPos + 1}');
 
     if (finalPos >= BigWalkerTokens.totalCells - 1) {
