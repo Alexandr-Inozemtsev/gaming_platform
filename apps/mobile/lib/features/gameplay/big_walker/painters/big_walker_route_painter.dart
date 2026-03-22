@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/game/big_walker_tokens.dart';
+import '../model/board_path.dart';
 
 class BigWalkerRoutePainter extends CustomPainter {
-  const BigWalkerRoutePainter({required this.activePathIndex});
+  const BigWalkerRoutePainter({required this.path, required this.activePathIndex});
 
+  final BigWalkerBoardPath path;
   final int? activePathIndex;
 
   @override
@@ -12,16 +14,13 @@ class BigWalkerRoutePainter extends CustomPainter {
     final cellW = size.width / BigWalkerTokens.cols;
     final cellH = size.height / BigWalkerTokens.rows;
 
-    final path = Path();
-    for (int i = 0; i < BigWalkerTokens.totalCells; i += 1) {
-      final row = i ~/ BigWalkerTokens.cols;
-      final colInRow = i % BigWalkerTokens.cols;
-      final col = row.isEven ? colInRow : (BigWalkerTokens.cols - 1 - colInRow);
-      final point = Offset((col + 0.5) * cellW, (row + 0.5) * cellH);
+    final route = Path();
+    for (int i = 0; i < path.nodes.length; i += 1) {
+      final point = path.nodes[i].toBoardOffset(cellWidth: cellW, cellHeight: cellH);
       if (i == 0) {
-        path.moveTo(point.dx, point.dy);
+        route.moveTo(point.dx, point.dy);
       } else {
-        path.lineTo(point.dx, point.dy);
+        route.lineTo(point.dx, point.dy);
       }
     }
 
@@ -48,16 +47,13 @@ class BigWalkerRoutePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..color = Colors.white.withOpacity(0.18);
 
-    canvas.drawPath(path, routeGlow);
-    canvas.drawPath(path, routeCore);
-    canvas.drawPath(path, routeSpark);
+    canvas.drawPath(route, routeGlow);
+    canvas.drawPath(route, routeCore);
+    canvas.drawPath(route, routeSpark);
 
     if (activePathIndex != null) {
-      final i = activePathIndex!.clamp(0, BigWalkerTokens.totalCells - 1);
-      final row = i ~/ BigWalkerTokens.cols;
-      final colInRow = i % BigWalkerTokens.cols;
-      final col = row.isEven ? colInRow : (BigWalkerTokens.cols - 1 - colInRow);
-      final activeCenter = Offset((col + 0.5) * cellW, (row + 0.5) * cellH);
+      final activeNode = path.nodeForRouteIndex(activePathIndex!);
+      final activeCenter = activeNode.toBoardOffset(cellWidth: cellW, cellHeight: cellH);
 
       final activeAura = Paint()
         ..color = BigWalkerTokens.accentCyan.withOpacity(0.28)
@@ -71,6 +67,6 @@ class BigWalkerRoutePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BigWalkerRoutePainter oldDelegate) {
-    return oldDelegate.activePathIndex != activePathIndex;
+    return oldDelegate.activePathIndex != activePathIndex || oldDelegate.path != path;
   }
 }
