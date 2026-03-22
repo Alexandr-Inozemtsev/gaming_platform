@@ -6,3 +6,4 @@ metadata:
 data:
   NODE_ENV: "production"
   REGION_MODE: "global"
+  ASSET_BASE_URL: "https://cdn.tabletopplatform.example"

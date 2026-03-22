@@ -19,6 +19,7 @@ class RuntimeAssetPack {
   };
 
   static const String _defaultFallbackAsset = 'assets/design/placeholders/onboarding.hero.tabletop.svg';
+  static const String _assetBaseUrl = String.fromEnvironment('ASSET_BASE_URL', defaultValue: '');
 
   Map<String, dynamic>? _manifest;
 
@@ -40,30 +41,74 @@ class RuntimeAssetPack {
     final entry = assets?[key] as Map<String, dynamic>?;
     if (entry == null) return null;
 
-    final resolved =
+    final dynamic selectedVariantEntry =
         entry[variant] ??
         entry['raster@2x'] ??
         entry['runtime@procedural'] ??
         entry['svg'] ??
         entry['webp@2x'];
-    return resolved?.toString();
+
+    return _resolveVariantEntry(
+      key: key,
+      requestedVariant: variant,
+      selectedVariantEntry: selectedVariantEntry,
+    );
   }
 
   // Controlled fallback: placeholders разрешены только как запасной вариант, а не базовая стратегия.
   Future<String> resolveAssetOrFallback(String key, {String variant = 'raster@2x'}) async {
     final resolvedAsset = await resolveAsset(key, variant: variant);
-    if (resolvedAsset != null) return resolvedAsset;
+    if (resolvedAsset != null) {
+      assert(() {
+        debugPrint('[RuntimeAssetPack] key="$key" variant="$variant" strategy="remote_or_manifest".');
+        return true;
+      }());
+      return resolvedAsset;
+    }
 
     final fallback = _controlledFallbacks.entries
             .firstWhere((entry) => key.contains(entry.key), orElse: () => const MapEntry('', _defaultFallbackAsset))
             .value;
 
     assert(() {
-      debugPrint('[RuntimeAssetPack] Fallback asset used for key="$key": $fallback');
+      debugPrint('[RuntimeAssetPack] key="$key" variant="$variant" strategy="fallback" asset="$fallback".');
       return true;
     }());
 
     return fallback;
+  }
+
+  String? _resolveVariantEntry({
+    required String key,
+    required String requestedVariant,
+    required dynamic selectedVariantEntry,
+  }) {
+    if (selectedVariantEntry is String) return selectedVariantEntry;
+    if (selectedVariantEntry is! Map<String, dynamic>) return null;
+
+    final remote = selectedVariantEntry['remote']?.toString();
+    final localFallback = selectedVariantEntry['fallback']?.toString();
+    final resolvedRemote = _withAssetBaseUrl(remote);
+    final resolved = (resolvedRemote?.isNotEmpty ?? false) ? resolvedRemote : localFallback;
+    final strategy = (resolvedRemote?.isNotEmpty ?? false) ? 'remote' : 'local_manifest_fallback';
+
+    assert(() {
+      debugPrint(
+        '[RuntimeAssetPack] key="$key" variant="$requestedVariant" strategy="$strategy" resolved="${resolved ?? 'null'}".',
+      );
+      return true;
+    }());
+
+    return resolved;
+  }
+
+  String? _withAssetBaseUrl(String? remotePathOrUrl) {
+    if (remotePathOrUrl == null || remotePathOrUrl.isEmpty) return null;
+    if (remotePathOrUrl.startsWith('http://') || remotePathOrUrl.startsWith('https://')) return remotePathOrUrl;
+    if (_assetBaseUrl.isEmpty) return null;
+    final base = _assetBaseUrl.endsWith('/') ? _assetBaseUrl.substring(0, _assetBaseUrl.length - 1) : _assetBaseUrl;
+    final path = remotePathOrUrl.startsWith('/') ? remotePathOrUrl : '/$remotePathOrUrl';
+    return '$base$path';
   }
 
   @Deprecated('Use resolveAssetOrFallback to keep placeholders as controlled fallback only.')
