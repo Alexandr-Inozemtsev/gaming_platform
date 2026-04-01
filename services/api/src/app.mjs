@@ -18,6 +18,7 @@ import {
   chooseBotMove,
   legalMoves
 } from '../../rules-engine/src/index.mjs';
+import { ANALYTICS_ALLOWED_EVENTS, validateRuntimeEventPayload } from './runtime-sdk/contracts.mjs';
 
 class HttpError extends Error {
   constructor(status, code, details = undefined) {
@@ -938,25 +939,12 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   const analytics = {
     track: ({ eventName, userId = null, sessionId = null, payload = {}, source = 'backend' }) => {
       assertString(eventName, 'eventName');
-      const allowed = new Set([
-        'onboarding_complete',
-        'login_success',
-        'match_create',
-        'match_move',
-        'match_finish',
-        'store_view',
-        'purchase_attempt',
-        'purchase_success',
-        'variant_publish',
-        'report_sent',
-        'latency_move',
-        'level_complete',
-        'campaign_finished',
-        'reconnect_count',
-        'ws_disconnects',
-        'video_connect_failures'
-      ]);
-      if (!allowed.has(eventName)) throw new HttpError(400, 'ANALYTICS_EVENT_UNSUPPORTED', { eventName });
+      if (!ANALYTICS_ALLOWED_EVENTS.has(eventName)) throw new HttpError(400, 'ANALYTICS_EVENT_UNSUPPORTED', { eventName });
+      try {
+        validateRuntimeEventPayload(eventName, payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_PAYLOAD_INVALID');
+      }
       const row = { id: newId('event'), eventName, userId, sessionId, payload, source, ts: nowIso() };
       state.analytics.push(row);
       state.eventQueue.push({

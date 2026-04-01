@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tabletopplatform.dev/contracts/runtime-sdk/v1/runtime-session-init.schema.json",
+  "title": "Runtime Session Init v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "sessionId",
+    "matchId",
+    "gameId",
+    "userId",
+    "runtime",
+    "auth"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "runtime-sdk/v1"
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128
+    },
+    "matchId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128
+    },
+    "gameId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64
+    },
+    "userId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["engine", "engineVersion", "platform"],
+      "additionalProperties": false,
+      "properties": {
+        "engine": {
+          "type": "string",
+          "enum": ["unity", "flutter", "webgl", "unknown"]
+        },
+        "engineVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["ios", "android", "web", "desktop", "unknown"]
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "required": ["sessionToken"],
+      "additionalProperties": false,
+      "properties": {
+        "sessionToken": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 1024
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
