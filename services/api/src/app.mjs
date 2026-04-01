@@ -18,7 +18,13 @@ import {
   chooseBotMove,
   legalMoves
 } from '../../rules-engine/src/index.mjs';
-import { ANALYTICS_ALLOWED_EVENTS, validateRuntimeEventPayload } from './runtime-sdk/contracts.mjs';
+import {
+  ANALYTICS_ALLOWED_EVENTS,
+  RUNTIME_EVENT_TAXONOMY,
+  RUNTIME_SDK_SCHEMA_VERSION,
+  validateRuntimeEventPayload,
+  validateRuntimeSessionInitPayload
+} from './runtime-sdk/contracts.mjs';
 
 class HttpError extends Error {
   constructor(status, code, details = undefined) {
@@ -1032,6 +1038,32 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     })
   };
 
+  const runtimeSdk = {
+    schemaVersion: RUNTIME_SDK_SCHEMA_VERSION,
+    events: () => ({
+      schemaVersion: RUNTIME_SDK_SCHEMA_VERSION,
+      taxonomy: RUNTIME_EVENT_TAXONOMY,
+      all: [...ANALYTICS_ALLOWED_EVENTS].filter((eventName) => eventName.startsWith('runtime.')).sort((a, b) => a.localeCompare(b))
+    }),
+    validateSessionInit: (payload) => {
+      try {
+        validateRuntimeSessionInitPayload(payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_SESSION_INIT_INVALID');
+      }
+      return { ok: true, schemaVersion: RUNTIME_SDK_SCHEMA_VERSION };
+    },
+    validateEventEnvelope: ({ eventName, payload }) => {
+      assertString(eventName, 'eventName');
+      try {
+        validateRuntimeEventPayload(eventName, payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_EVENT_INVALID');
+      }
+      return { ok: true, schemaVersion: RUNTIME_SDK_SCHEMA_VERSION, eventName };
+    }
+  };
+
   store.iapSuccess = ({ userId, sku, platform = 'unknown', purchaseToken = null }) => {
     assertString(userId, 'userId');
     assertString(sku, 'sku');
@@ -1067,6 +1099,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     variants,
     moderation,
     analytics,
+    runtimeSdk,
     securityConfig,
     HttpError
   };

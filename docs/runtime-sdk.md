@@ -26,6 +26,12 @@
 - `runtime.move.rejected`
 - `runtime.error`
 
+## Event taxonomy (v1)
+- `session`: lifecycle рантайма (`started/paused/resumed/ended`)
+- `input`: пользовательский ввод (`runtime.player.input`)
+- `move`: ход в доменной модели (`requested/applied/rejected`)
+- `system`: ошибки рантайма (`runtime.error`)
+
 ## Минимальный envelope
 ```json
 {
@@ -56,6 +62,11 @@
    - валидный `ts`
 
 Текущая реализация validation hooks находится в `services/api/src/runtime-sdk/contracts.mjs`.
+
+## API contract endpoints (v1)
+- `GET /runtime-sdk/v1/events` — получить список runtime-событий и taxonomy.
+- `POST /runtime-sdk/v1/validate-session-init` — провалидировать payload инициализации сессии.
+- `POST /runtime-sdk/v1/validate-event-envelope` — провалидировать envelope runtime-события.
 
 ## Примечание по Unity WebGL build path
 Локальный путь вида `C:\unity_builds\big_walker_webgl` не должен коммититься в репозиторий как бинарный build-артефакт.
