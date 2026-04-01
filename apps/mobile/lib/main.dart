@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:animations/animations.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'i18n/strings.dart';
 import 'services/api_client.dart';
@@ -37,6 +38,10 @@ part 'features/settings/settings_container_part.dart';
 
 const String _apiBaseUrlFromEnv = String.fromEnvironment('API_BASE_URL', defaultValue: '');
 const String _wsUrlFromEnv = String.fromEnvironment('WS_URL', defaultValue: '');
+const String _unityBigWalkerUrlFromEnv = String.fromEnvironment(
+  'UNITY_BIG_WALKER_URL',
+  defaultValue: 'http://localhost:8080',
+);
 const String regionMode = String.fromEnvironment('REGION_MODE', defaultValue: 'global');
 const String stunUrlsRaw = String.fromEnvironment('STUN_URLS', defaultValue: '');
 const String turnUrlsRaw = String.fromEnvironment('TURN_URLS', defaultValue: '');
@@ -122,6 +127,8 @@ class AppState extends ChangeNotifier {
   int? transitionPlayerIndex;
   int? settlingPlayerIndex;
   int pawnSettleTick = 0;
+  bool unityBigWalkerRunning = false;
+  String? unityBigWalkerError;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -274,6 +281,8 @@ class AppState extends ChangeNotifier {
 
   void setCurrentGame(String gameId) {
     currentGameId = gameId;
+    unityBigWalkerRunning = false;
+    unityBigWalkerError = null;
     _resetBoards();
     notifyListeners();
   }
@@ -354,6 +363,8 @@ class AppState extends ChangeNotifier {
     if (gameId == 'big_walker_demo') {
       roomId = 'room_big_walker_demo';
       nextLevelAvailable = false;
+      unityBigWalkerRunning = false;
+      unityBigWalkerError = null;
       setParticipantsCount(participantsCount);
       bigWalkerStarted = false;
       winnerIndex = null;
@@ -378,6 +389,37 @@ class AppState extends ChangeNotifier {
     videoStatus = 'ready';
     analytics.enqueue(eventName: 'match_create', userId: userId, payload: {'gameId': gameId, 'roomId': roomId});
     tab = 4;
+    notifyListeners();
+  }
+
+  Future<void> launchUnityBigWalker() async {
+    if (currentGameId != 'big_walker_demo') return;
+    unityBigWalkerError = null;
+    final uri = Uri.tryParse(_unityBigWalkerUrlFromEnv);
+    if (uri == null) {
+      unityBigWalkerRunning = false;
+      unityBigWalkerError = 'Некорректный UNITY_BIG_WALKER_URL: $_unityBigWalkerUrlFromEnv';
+      notifyListeners();
+      return;
+    }
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    unityBigWalkerRunning = launched;
+    if (launched) {
+      roomLog.add('Unity Big Walker runtime launched: $uri');
+    } else {
+      unityBigWalkerError = 'Не удалось открыть Unity runtime по адресу $uri';
+    }
+    notifyListeners();
+  }
+
+  void returnToHomeFromUnityBigWalker() {
+    unityBigWalkerRunning = false;
+    unityBigWalkerError = null;
+    roomId = null;
+    bigWalkerStarted = false;
+    winnerIndex = null;
+    tab = 0;
     notifyListeners();
   }
 
