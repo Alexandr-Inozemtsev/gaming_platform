@@ -17,6 +17,10 @@ class _RoomScreenState extends State<RoomScreen> {
   @override
   Widget build(BuildContext context) {
     final s = widget.state;
+    if (s.currentGameId == 'big_walker_demo') {
+      return _UnityBigWalkerRoom(state: s);
+    }
+
     final vm = s.bigWalkerViewModel;
 
     return Stack(
@@ -29,6 +33,119 @@ class _RoomScreenState extends State<RoomScreen> {
           child: s.videoOverlayVisible ? VideoOverlayWidget(key: const ValueKey('video-overlay'), state: s) : const SizedBox.shrink(),
         ),
       ],
+    );
+  }
+}
+
+class _UnityBigWalkerRoom extends StatelessWidget {
+  const _UnityBigWalkerRoom({required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(gradient: BigWalkerTokens.roomGradient),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Большая Бродилка · Unity',
+                      style: TextStyle(
+                        color: BigWalkerTokens.textPrimary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  FilledButton.icon(
+                    onPressed: state.returnToHomeFromUnityBigWalker,
+                    icon: const Icon(Icons.home_rounded),
+                    label: const Text('На главную'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: BigWalkerTokens.panelBorder),
+                    gradient: BigWalkerTokens.panelGradient,
+                    boxShadow: BigWalkerTokens.panelShadow,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: state.unityBigWalkerRunning
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Unity runtime активен',
+                                style: TextStyle(
+                                  color: BigWalkerTokens.textPrimary,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Старая Flutter-реализация отключена. Комната использует Unity-модуль Big Walker.',
+                                style: TextStyle(
+                                  color: BigWalkerTokens.textSecondary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              Container(
+                                height: 220,
+                                width: double.infinity,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: BigWalkerTokens.panelBorder.withOpacity(0.9)),
+                                  color: const Color(0xFF0A1625),
+                                ),
+                                child: const Text(
+                                  'Unity Big Walker Scene',
+                                  style: TextStyle(
+                                    color: BigWalkerTokens.accentCyan,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: FilledButton.icon(
+                                  onPressed: state.returnToHomeFromUnityBigWalker,
+                                  icon: const Icon(Icons.arrow_back_rounded),
+                                  label: const Text('Вернуться на главную страницу'),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Center(
+                            child: FilledButton.icon(
+                              onPressed: state.launchUnityBigWalker,
+                              icon: const Icon(Icons.play_circle_fill_rounded),
+                              label: const Text('Запустить игру на платформе'),
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

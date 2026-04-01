@@ -122,6 +122,7 @@ class AppState extends ChangeNotifier {
   int? transitionPlayerIndex;
   int? settlingPlayerIndex;
   int pawnSettleTick = 0;
+  bool unityBigWalkerRunning = false;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -274,6 +275,7 @@ class AppState extends ChangeNotifier {
 
   void setCurrentGame(String gameId) {
     currentGameId = gameId;
+    unityBigWalkerRunning = false;
     _resetBoards();
     notifyListeners();
   }
@@ -354,6 +356,7 @@ class AppState extends ChangeNotifier {
     if (gameId == 'big_walker_demo') {
       roomId = 'room_big_walker_demo';
       nextLevelAvailable = false;
+      unityBigWalkerRunning = false;
       setParticipantsCount(participantsCount);
       bigWalkerStarted = false;
       winnerIndex = null;
@@ -378,6 +381,22 @@ class AppState extends ChangeNotifier {
     videoStatus = 'ready';
     analytics.enqueue(eventName: 'match_create', userId: userId, payload: {'gameId': gameId, 'roomId': roomId});
     tab = 4;
+    notifyListeners();
+  }
+
+  void launchUnityBigWalker() {
+    if (currentGameId != 'big_walker_demo') return;
+    unityBigWalkerRunning = true;
+    roomLog.add('Unity Big Walker runtime launched');
+    notifyListeners();
+  }
+
+  void returnToHomeFromUnityBigWalker() {
+    unityBigWalkerRunning = false;
+    roomId = null;
+    bigWalkerStarted = false;
+    winnerIndex = null;
+    tab = 0;
     notifyListeners();
   }
 
