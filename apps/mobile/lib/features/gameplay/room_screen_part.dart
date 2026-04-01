@@ -81,64 +81,68 @@ class _UnityBigWalkerRoom extends StatelessWidget {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(18),
-                    child: state.unityBigWalkerRunning
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Unity runtime активен',
-                                style: TextStyle(
-                                  color: BigWalkerTokens.textPrimary,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Старая Flutter-реализация отключена. Комната использует Unity-модуль Big Walker.',
-                                style: TextStyle(
-                                  color: BigWalkerTokens.textSecondary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 18),
-                              Container(
-                                height: 220,
-                                width: double.infinity,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: BigWalkerTokens.panelBorder.withOpacity(0.9)),
-                                  color: const Color(0xFF0A1625),
-                                ),
-                                child: const Text(
-                                  'Unity Big Walker Scene',
-                                  style: TextStyle(
-                                    color: BigWalkerTokens.accentCyan,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  state.unityBigWalkerRunning ? 'Unity runtime запущен' : 'Готово к запуску Unity',
+                                  style: const TextStyle(
+                                    color: BigWalkerTokens.textPrimary,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              ),
-                              const Spacer(),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: FilledButton.icon(
-                                  onPressed: state.returnToHomeFromUnityBigWalker,
-                                  icon: const Icon(Icons.arrow_back_rounded),
-                                  label: const Text('Вернуться на главную страницу'),
+                                const SizedBox(height: 8),
+                                Text(
+                                  state.unityBigWalkerRunning
+                                      ? 'Игра открыта по UNITY_BIG_WALKER_URL. Вернитесь в приложение после завершения.'
+                                      : 'Нажмите кнопку ниже, чтобы запустить Unity-игру на платформе.',
+                                  style: const TextStyle(
+                                    color: BigWalkerTokens.textSecondary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          )
-                        : Center(
-                            child: FilledButton.icon(
-                              onPressed: state.launchUnityBigWalker,
-                              icon: const Icon(Icons.play_circle_fill_rounded),
-                              label: const Text('Запустить игру на платформе'),
+                                if (state.unityBigWalkerError != null) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    state.unityBigWalkerError!,
+                                    style: const TextStyle(
+                                      color: Colors.redAccent,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 18),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton.icon(
+                                    onPressed: state.launchUnityBigWalker,
+                                    icon: const Icon(Icons.play_circle_fill_rounded),
+                                    label: const Text('Запустить игру на платформе'),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: FilledButton.icon(
+                                    onPressed: state.returnToHomeFromUnityBigWalker,
+                                    icon: const Icon(Icons.arrow_back_rounded),
+                                    label: const Text('Вернуться на главную страницу'),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
