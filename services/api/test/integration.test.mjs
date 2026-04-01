@@ -1,5 +1,5 @@
 /**
- * Назначение файла: проверить интеграционный сценарий API для двух игр и завершения матча.
+ * Назначение файла: проверить интеграционный сценарий API для MVP-игр и завершения матча.
  * Роль в проекте: подтвердить совместимость API и rules-engine по маршруту create -> moves -> finish.
  * Основные функции: регистрация игроков, создание матча, три хода с payload, проверка finished.
  * Связи с другими файлами: использует services/api/src/app.mjs и services/realtime/src/gateway.mjs.
@@ -41,4 +41,20 @@ test('интеграция: create match -> moves -> finish (forced maxMoves)', 
 
   assert.equal(state.status, 'finished');
   assert.equal(typeof state.winner === 'string' || state.winner === null, true);
+});
+
+test('интеграция: big walker присутствует в каталоге и принимает roll-ход', () => {
+  const gateway = createRealtimeGateway();
+  const app = createApiApp({ gateway, config: { DEFAULT_LANG: 'ru' } });
+  const u1 = app.auth.register({ email: 'bw1@test.dev', password: 'secret01' });
+  const u2 = app.auth.register({ email: 'bw2@test.dev', password: 'secret02' });
+
+  const catalog = app.catalog.listGames();
+  assert.equal(catalog.some((item) => item.id === 'big_walker_demo'), true);
+
+  const match = app.matches.create({ gameId: 'big_walker_demo', players: [u1.id, u2.id] });
+  const state = app.matches.move({ matchId: match.id, playerId: u1.id, action: 'roll', moveId: 'bw-roll-1', payload: {} });
+
+  assert.equal(state.gameState.gameId, 'big_walker_demo');
+  assert.equal(state.gameState.positions[u1.id] > 0, true);
 });

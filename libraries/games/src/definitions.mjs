@@ -4,7 +4,7 @@ export const GAME_DEFINITIONS = [
   { id: 'roll_and_write_demo', title: 'Roll & Write Demo', genre: 'dice' }
 ];
 
-export const SUPPORTED_GAMES = GAME_DEFINITIONS.map((item) => item.id).filter((id) => id !== 'big_walker_demo');
+export const SUPPORTED_GAMES = GAME_DEFINITIONS.map((item) => item.id);
 
 export const createInitialGameState = (gameId, players, seed = 1, { rng } = {}) => {
   if (gameId === 'tile_placement_demo') {
@@ -26,6 +26,17 @@ export const createInitialGameState = (gameId, players, seed = 1, { rng } = {}) 
       sheet: Object.fromEntries(players.map((p) => [p, Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => 0))])),
       dice: [1 + Math.floor(random() * 6), 1 + Math.floor(random() * 6)],
       seed,
+      turn: 0
+    };
+  }
+
+  if (gameId === 'big_walker_demo') {
+    const random = rng ? rng(seed) : () => 0.5;
+    return {
+      gameId,
+      boardLength: 30,
+      positions: Object.fromEntries(players.map((p) => [p, 0])),
+      dice: 1 + Math.floor(random() * 6),
       turn: 0
     };
   }
