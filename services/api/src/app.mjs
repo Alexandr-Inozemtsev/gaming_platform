@@ -18,6 +18,7 @@ import {
   chooseBotMove,
   legalMoves
 } from '../../rules-engine/src/index.mjs';
+import { GAME_DEFINITIONS } from '../../../libraries/games/src/definitions.mjs';
 import {
   ANALYTICS_ALLOWED_EVENTS,
   RUNTIME_EVENT_TAXONOMY,
@@ -185,10 +186,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   const loginLimiter = createRateLimiter({ limit: securityConfig.RATE_LIMIT_LOGIN, windowMs: 60_000 });
   const moveLimiter = createRateLimiter({ limit: securityConfig.RATE_LIMIT_MOVE, windowMs: 60_000 });
 
-  const games = [
-    { id: 'tile_placement_demo', title: 'Tile Placement Demo', langs: ['ru', 'en'] },
-    { id: 'roll_and_write_demo', title: 'Roll & Write Demo', langs: ['ru', 'en'] }
-  ];
+  const games = GAME_DEFINITIONS.map((game) => ({ id: game.id, title: game.title, langs: ['ru', 'en'] }));
 
   const applyVariantToInitialState = ({ gameId, players, seed, variant }) => {
     const initialState = createInitialGameState(gameId, players, seed);
@@ -203,6 +201,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         nextState.sheet = Object.fromEntries(
           players.map((p) => [p, Array.from({ length: variant.boardSize }, () => Array.from({ length: variant.boardSize }, () => 0))])
         );
+      } else if (gameId === 'big_walker_demo') {
+        nextState.boardLength = Math.max(variant.boardSize * 4, 12);
       }
     }
     return nextState;
