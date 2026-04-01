@@ -12,7 +12,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:animations/animations.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'i18n/strings.dart';
 import 'services/api_client.dart';
@@ -29,6 +28,7 @@ import 'features/gameplay/big_walker/big_walker_match_state.dart';
 import 'features/gameplay/big_walker/game_room_scene.dart';
 import 'features/gameplay/big_walker/animations/big_walker_motion.dart';
 import 'features/gameplay/big_walker/widgets/big_walker_room_overlay_widgets.dart';
+import 'features/gameplay/runtime/unity_runtime_adapter.dart';
 part 'features/catalog/catalog_container_part.dart';
 part 'features/gameplay/room_screen_part.dart';
 part 'features/home/home_container_part.dart';
@@ -77,6 +77,7 @@ class AppState extends ChangeNotifier {
   final ApiClient api;
   final WsClient ws;
   late final AnalyticsClient analytics;
+  late final UnityRuntimeAdapter unityRuntimeAdapter = createUnityRuntimeAdapter();
 
   String lang = 'ru';
   int tab = 0;
@@ -129,6 +130,7 @@ class AppState extends ChangeNotifier {
   int pawnSettleTick = 0;
   bool unityBigWalkerRunning = false;
   String? unityBigWalkerError;
+  UnityRuntimeLaunchMode unityLaunchMode = UnityRuntimeLaunchMode.inApp;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -403,10 +405,11 @@ class AppState extends ChangeNotifier {
       return;
     }
 
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    unityBigWalkerRunning = launched;
-    if (launched) {
-      roomLog.add('Unity Big Walker runtime launched: $uri');
+    final result = await unityRuntimeAdapter.launch(uri);
+    unityBigWalkerRunning = result.ok;
+    unityLaunchMode = result.mode;
+    if (result.ok) {
+      roomLog.add('Unity Big Walker runtime launched (${result.mode.name}): $uri');
     } else {
       unityBigWalkerError = 'Не удалось открыть Unity runtime по адресу $uri';
     }
