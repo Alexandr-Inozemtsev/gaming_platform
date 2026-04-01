@@ -18,6 +18,14 @@ import {
   chooseBotMove,
   legalMoves
 } from '../../rules-engine/src/index.mjs';
+import { GAME_DEFINITIONS } from '../../../libraries/games/src/definitions.mjs';
+import {
+  ANALYTICS_ALLOWED_EVENTS,
+  RUNTIME_EVENT_TAXONOMY,
+  RUNTIME_SDK_SCHEMA_VERSION,
+  validateRuntimeEventPayload,
+  validateRuntimeSessionInitPayload
+} from './runtime-sdk/contracts.mjs';
 
 class HttpError extends Error {
   constructor(status, code, details = undefined) {
@@ -178,10 +186,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   const loginLimiter = createRateLimiter({ limit: securityConfig.RATE_LIMIT_LOGIN, windowMs: 60_000 });
   const moveLimiter = createRateLimiter({ limit: securityConfig.RATE_LIMIT_MOVE, windowMs: 60_000 });
 
-  const games = [
-    { id: 'tile_placement_demo', title: 'Tile Placement Demo', langs: ['ru', 'en'] },
-    { id: 'roll_and_write_demo', title: 'Roll & Write Demo', langs: ['ru', 'en'] }
-  ];
+  const games = GAME_DEFINITIONS.map((game) => ({ id: game.id, title: game.title, langs: ['ru', 'en'] }));
 
   const applyVariantToInitialState = ({ gameId, players, seed, variant }) => {
     const initialState = createInitialGameState(gameId, players, seed);
@@ -196,6 +201,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         nextState.sheet = Object.fromEntries(
           players.map((p) => [p, Array.from({ length: variant.boardSize }, () => Array.from({ length: variant.boardSize }, () => 0))])
         );
+      } else if (gameId === 'big_walker_demo') {
+        nextState.boardLength = Math.max(variant.boardSize * 4, 12);
       }
     }
     return nextState;
@@ -938,25 +945,12 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   const analytics = {
     track: ({ eventName, userId = null, sessionId = null, payload = {}, source = 'backend' }) => {
       assertString(eventName, 'eventName');
-      const allowed = new Set([
-        'onboarding_complete',
-        'login_success',
-        'match_create',
-        'match_move',
-        'match_finish',
-        'store_view',
-        'purchase_attempt',
-        'purchase_success',
-        'variant_publish',
-        'report_sent',
-        'latency_move',
-        'level_complete',
-        'campaign_finished',
-        'reconnect_count',
-        'ws_disconnects',
-        'video_connect_failures'
-      ]);
-      if (!allowed.has(eventName)) throw new HttpError(400, 'ANALYTICS_EVENT_UNSUPPORTED', { eventName });
+      if (!ANALYTICS_ALLOWED_EVENTS.has(eventName)) throw new HttpError(400, 'ANALYTICS_EVENT_UNSUPPORTED', { eventName });
+      try {
+        validateRuntimeEventPayload(eventName, payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_PAYLOAD_INVALID');
+      }
       const row = { id: newId('event'), eventName, userId, sessionId, payload, source, ts: nowIso() };
       state.analytics.push(row);
       state.eventQueue.push({
@@ -1044,6 +1038,32 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     })
   };
 
+  const runtimeSdk = {
+    schemaVersion: RUNTIME_SDK_SCHEMA_VERSION,
+    events: () => ({
+      schemaVersion: RUNTIME_SDK_SCHEMA_VERSION,
+      taxonomy: RUNTIME_EVENT_TAXONOMY,
+      all: [...ANALYTICS_ALLOWED_EVENTS].filter((eventName) => eventName.startsWith('runtime.')).sort((a, b) => a.localeCompare(b))
+    }),
+    validateSessionInit: (payload) => {
+      try {
+        validateRuntimeSessionInitPayload(payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_SESSION_INIT_INVALID');
+      }
+      return { ok: true, schemaVersion: RUNTIME_SDK_SCHEMA_VERSION };
+    },
+    validateEventEnvelope: ({ eventName, payload }) => {
+      assertString(eventName, 'eventName');
+      try {
+        validateRuntimeEventPayload(eventName, payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_EVENT_INVALID');
+      }
+      return { ok: true, schemaVersion: RUNTIME_SDK_SCHEMA_VERSION, eventName };
+    }
+  };
+
   store.iapSuccess = ({ userId, sku, platform = 'unknown', purchaseToken = null }) => {
     assertString(userId, 'userId');
     assertString(sku, 'sku');
@@ -1079,6 +1099,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     variants,
     moderation,
     analytics,
+    runtimeSdk,
     securityConfig,
     HttpError
   };
