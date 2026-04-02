@@ -52,6 +52,10 @@ const nextPlayer = (players, current) => players[(players.indexOf(current) + 1) 
 export const legalMoves = (state, playerId) => {
   if (state.status !== 'active' || state.currentPlayer !== playerId) return [];
 
+  if (state.gameState.gameId === 'big_walker_demo') {
+    return [{ action: 'roll', payload: {} }];
+  }
+
   if (state.gameState.gameId === 'tile_placement_demo') {
     const moves = [];
     for (let r = 0; r < state.gameState.size; r += 1) {
@@ -86,6 +90,11 @@ export const validateMove = (state, move) => {
   }
   if (state.currentPlayer !== move.playerId) return { ok: false, reason: 'NOT_YOUR_TURN' };
 
+  if (state.gameState.gameId === 'big_walker_demo') {
+    if (move.action !== 'roll') return { ok: false, reason: 'UNKNOWN_ACTION' };
+    return { ok: true };
+  }
+
   if (state.gameState.gameId === 'tile_placement_demo') {
     if (move.action !== 'place') return { ok: false, reason: 'UNKNOWN_ACTION' };
     const row = move.payload?.row;
@@ -117,6 +126,14 @@ export const validateMove = (state, move) => {
  * Подсчёт очков делается по gameState, чтобы результат не зависел от клиентских данных.
  */
 export const computeScore = (state) => {
+  if (state.gameState.gameId === 'big_walker_demo') {
+    const leaderboard = state.players
+      .map((playerId) => ({ playerId, score: state.gameState.positions[playerId] ?? 0 }))
+      .sort((a, b) => b.score - a.score);
+    const winner = leaderboard.find((item) => item.score >= state.gameState.boardLength)?.playerId ?? leaderboard[0]?.playerId ?? null;
+    return { winner, leaderboard };
+  }
+
   if (state.gameState.gameId === 'tile_placement_demo') {
     const scores = Object.fromEntries(state.players.map((p) => [p, 0]));
     for (let r = 0; r < state.gameState.size; r += 1) {
@@ -180,7 +197,14 @@ export const applyMove = (state, move) => {
   nextState.moveNumber = nextMoveNumber;
   nextState.log.push({ ...move, moveNumber: nextMoveNumber });
 
-  if (state.gameState.gameId === 'tile_placement_demo') {
+  if (state.gameState.gameId === 'big_walker_demo') {
+    const current = nextState.gameState.positions[move.playerId] ?? 0;
+    const random = rng(nextState.gameState.seed + nextMoveNumber);
+    const dice = 1 + Math.floor(random() * 6);
+    const nextPosition = Math.min(nextState.gameState.boardLength, current + dice);
+    nextState.gameState.dice = dice;
+    nextState.gameState.positions[move.playerId] = nextPosition;
+  } else if (state.gameState.gameId === 'tile_placement_demo') {
     const { row, col } = move.payload;
     nextState.gameState.grid[row][col] = { owner: move.playerId, symbol: nextState.gameState.hands[move.playerId] };
   } else {
@@ -194,9 +218,11 @@ export const applyMove = (state, move) => {
   nextState.gameState.turn += 1;
 
   const legalLeft = legalMoves(nextState, nextState.currentPlayer).length;
-  const boardFull = nextState.gameState.gameId === 'tile_placement_demo'
-    ? nextState.gameState.grid.flat().every((c) => c !== null)
-    : nextState.players.every((p) => nextState.gameState.sheet[p].flat().every((c) => c !== 0));
+  const boardFull = nextState.gameState.gameId === 'big_walker_demo'
+    ? nextState.players.some((playerId) => (nextState.gameState.positions[playerId] ?? 0) >= nextState.gameState.boardLength)
+    : nextState.gameState.gameId === 'tile_placement_demo'
+      ? nextState.gameState.grid.flat().every((c) => c !== null)
+      : nextState.players.every((p) => nextState.gameState.sheet[p].flat().every((c) => c !== 0));
 
   if (boardFull || legalLeft === 0 || nextMoveNumber >= state.maxMoves) {
     const score = computeScore(nextState);
