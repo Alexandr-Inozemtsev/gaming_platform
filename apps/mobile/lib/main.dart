@@ -131,6 +131,7 @@ class AppState extends ChangeNotifier {
   bool unityBigWalkerRunning = false;
   String? unityBigWalkerError;
   UnityRuntimeLaunchMode unityLaunchMode = UnityRuntimeLaunchMode.inApp;
+  String? unityRuntimeSessionId;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -405,11 +406,32 @@ class AppState extends ChangeNotifier {
       return;
     }
 
+    final runtimeSessionId = 'unity_${DateTime.now().millisecondsSinceEpoch}';
+    final runtimeInitPayload = {
+      'schemaVersion': 'runtime-sdk/v1',
+      'sessionId': runtimeSessionId,
+      'matchId': roomId ?? 'room_big_walker_demo',
+      'gameId': 'big_walker_demo',
+      'userId': userId ?? 'anonymous',
+      'runtime': _runtimeDescriptor(),
+      'auth': {'sessionToken': 'dev_session_${userId ?? 'anonymous'}'}
+    };
+    try {
+      await api.runtimeSdkValidateSessionInit(runtimeInitPayload);
+    } catch (error) {
+      unityBigWalkerRunning = false;
+      unityBigWalkerError = 'Runtime contract validation failed: $error';
+      notifyListeners();
+      return;
+    }
+
     final result = await unityRuntimeAdapter.launch(uri);
     unityBigWalkerRunning = result.ok;
     unityLaunchMode = result.mode;
+    unityRuntimeSessionId = result.ok ? runtimeSessionId : null;
     if (result.ok) {
       roomLog.add('Unity Big Walker runtime launched (${result.mode.name}): $uri');
+      await _emitUnityRuntimeEvent('runtime.session.started', payload: {'launchMode': result.mode.name, 'url': uri.toString()});
     } else {
       unityBigWalkerError = 'Не удалось открыть Unity runtime по адресу $uri';
     }
@@ -417,13 +439,43 @@ class AppState extends ChangeNotifier {
   }
 
   void returnToHomeFromUnityBigWalker() {
+    unawaited(_emitUnityRuntimeEvent('runtime.session.ended', payload: {'reason': 'return_home'}));
     unityBigWalkerRunning = false;
     unityBigWalkerError = null;
+    unityRuntimeSessionId = null;
     roomId = null;
     bigWalkerStarted = false;
     winnerIndex = null;
     tab = 0;
     notifyListeners();
+  }
+
+  Map<String, dynamic> _runtimeDescriptor() => {
+    'engine': 'unity',
+    'engineVersion': 'webgl-poc',
+    'platform': kIsWeb
+        ? 'web'
+        : switch (defaultTargetPlatform) {
+            TargetPlatform.android => 'android',
+            TargetPlatform.iOS => 'ios',
+            _ => 'desktop',
+          }
+  };
+
+  Future<void> _emitUnityRuntimeEvent(String eventName, {Map<String, dynamic> payload = const {}}) async {
+    if (userId == null || unityRuntimeSessionId == null) return;
+    try {
+      await api.trackRuntimeEvent(
+        eventName: eventName,
+        userId: userId,
+        sessionId: unityRuntimeSessionId!,
+        matchId: roomId ?? 'room_big_walker_demo',
+        runtime: _runtimeDescriptor(),
+        payload: payload,
+      );
+    } catch (error) {
+      roomLog.add('Runtime event failed ($eventName): $error');
+    }
   }
 
   Future<void> loadAdminAnalytics() async {
