@@ -18,6 +18,15 @@ import {
   chooseBotMove,
   legalMoves
 } from '../../rules-engine/src/index.mjs';
+import { GAME_DEFINITIONS } from '../../../libraries/games/src/definitions.mjs';
+import {
+  ANALYTICS_ALLOWED_EVENTS,
+  RUNTIME_EVENT_TAXONOMY,
+  RUNTIME_SDK_SCHEMA_VERSION,
+  validateRuntimeEventPayload,
+  validateRuntimeSessionInitPayload
+} from './runtime-sdk/contracts.mjs';
+import { createInMemoryRepositories } from './repositories/in-memory.mjs';
 
 class HttpError extends Error {
   constructor(status, code, details = undefined) {
@@ -145,11 +154,12 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       videoConnectFailures: 0
     }
   };
+  const repositories = createInMemoryRepositories(state);
 
   const persistMatches = () => {
     const target = securityConfig.MATCH_STORE_FILE;
     fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, JSON.stringify(state.matches.map(toSerializableMatch), null, 2));
+    fs.writeFileSync(target, JSON.stringify(repositories.matches.all().map(toSerializableMatch), null, 2));
   };
 
   const recalculateLeaderboards = () => {
@@ -170,7 +180,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     const target = securityConfig.MATCH_STORE_FILE;
     if (!fs.existsSync(target)) return;
     const raw = JSON.parse(fs.readFileSync(target, 'utf8'));
-    state.matches = raw.map(restoreMatch);
+    repositories.matches.setAll(raw.map(restoreMatch));
   };
 
   loadMatches();
@@ -178,10 +188,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   const loginLimiter = createRateLimiter({ limit: securityConfig.RATE_LIMIT_LOGIN, windowMs: 60_000 });
   const moveLimiter = createRateLimiter({ limit: securityConfig.RATE_LIMIT_MOVE, windowMs: 60_000 });
 
-  const games = [
-    { id: 'tile_placement_demo', title: 'Tile Placement Demo', langs: ['ru', 'en'] },
-    { id: 'roll_and_write_demo', title: 'Roll & Write Demo', langs: ['ru', 'en'] }
-  ];
+  const games = GAME_DEFINITIONS.map((game) => ({ id: game.id, title: game.title, langs: ['ru', 'en'] }));
 
   const applyVariantToInitialState = ({ gameId, players, seed, variant }) => {
     const initialState = createInitialGameState(gameId, players, seed);
@@ -196,6 +203,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
         nextState.sheet = Object.fromEntries(
           players.map((p) => [p, Array.from({ length: variant.boardSize }, () => Array.from({ length: variant.boardSize }, () => 0))])
         );
+      } else if (gameId === 'big_walker_demo') {
+        nextState.boardLength = Math.max(variant.boardSize * 4, 12);
       }
     }
     return nextState;
@@ -248,7 +257,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
 
   // Проверяем существование пользователя, чтобы бизнес-операции не выполнялись для несуществующих id.
   const assertKnownUser = (userId, field = 'userId') => {
-    if (!state.users.some((user) => user.id === userId)) throw new HttpError(404, 'USER_NOT_FOUND', { field, userId });
+    if (!repositories.users.exists(userId)) throw new HttpError(404, 'USER_NOT_FOUND', { field, userId });
   };
 
   // Служебный bot-id в MVP генерируется как "<userId>_bot", поэтому исключаем его из проверки зарегистрированных пользователей.
@@ -258,9 +267,9 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     register: ({ email, password, lang = securityConfig.DEFAULT_LANG }) => {
       assertString(email, 'email', { min: 5 });
       assertString(password, 'password', { min: 6 });
-      if (state.users.some((u) => u.email === email)) throw new HttpError(409, 'USER_EXISTS');
+      if (repositories.users.findByEmail(email)) throw new HttpError(409, 'USER_EXISTS');
       const user = { id: newId('user'), email, passwordHash: hashPassword(password), lang, createdAt: nowIso() };
-      state.users.push(user);
+      repositories.users.create(user);
       state.inventory.set(user.id, []);
       state.analytics.push({
         id: newId('event'),
@@ -277,7 +286,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       assertString(email, 'email', { min: 5 });
       assertString(password, 'password');
       loginLimiter.hit(`login:${ip}`);
-      const user = state.users.find((u) => u.email === email);
+      const user = repositories.users.findByEmail(email);
       if (!user || !verifyPassword(password, user.passwordHash)) {
         addSecurityLog('SUSPICIOUS_LOGIN', { email, ip });
         throw new HttpError(401, 'INVALID_CREDENTIALS');
@@ -380,7 +389,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
               : { enabled: false },
         legacyState: mode === 'legacy' ? { currentLevel: level, nextLevelAvailable: false, history: [] } : null
       };
-      state.matches.push(match);
+      repositories.matches.create(match);
       gateway?.configurePrivateRoom?.(match.id, players);
       state.analytics.push({
         id: newId('event'),
@@ -395,9 +404,9 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       gateway?.emitMatchState(match.id, toSerializableMatch(match));
       return toSerializableMatch(match);
     },
-    list: () => state.matches.map(toSerializableMatch),
+    list: () => repositories.matches.all().map(toSerializableMatch),
     getById: (id) => {
-      const match = state.matches.find((m) => m.id === id);
+      const match = repositories.matches.findById(id);
       return match ? toSerializableMatch(match) : null;
     },
     move: ({ matchId, playerId, action, moveId, payload = {}, ip = 'local' }) => {
@@ -408,7 +417,7 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
       if (!isBotUserId(playerId)) assertKnownUser(playerId, 'playerId');
       assertUserIsNotBanned(playerId);
       moveLimiter.hit(`move:${playerId}`);
-      const match = state.matches.find((m) => m.id === matchId);
+      const match = repositories.matches.findById(matchId);
       if (!match) throw new HttpError(404, 'MATCH_NOT_FOUND');
       if (!match.players.includes(playerId)) throw new HttpError(403, 'PLAYER_NOT_IN_MATCH');
       if (match.acceptedMoveIds.has(moveId)) throw new HttpError(409, 'MOVE_ID_ALREADY_PROCESSED');
@@ -521,16 +530,16 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     },
     restore: () => {
       loadMatches();
-      return state.matches.map(toSerializableMatch);
+      return repositories.matches.all().map(toSerializableMatch);
     },
     legalMoves: ({ matchId, playerId }) => {
-      const match = state.matches.find((m) => m.id === matchId);
+      const match = repositories.matches.findById(matchId);
       if (!match) throw new HttpError(404, 'MATCH_NOT_FOUND');
       return legalMoves(match, playerId);
     },
     nextLevel: ({ matchId }) => {
       assertString(matchId, 'matchId');
-      const match = state.matches.find((m) => m.id === matchId);
+      const match = repositories.matches.findById(matchId);
       if (!match) throw new HttpError(404, 'MATCH_NOT_FOUND');
       if (match.mode !== 'legacy') throw new HttpError(409, 'LEGACY_MODE_REQUIRED');
       if (!match.legacyState?.nextLevelAvailable) throw new HttpError(409, 'NEXT_LEVEL_NOT_AVAILABLE');
@@ -938,25 +947,12 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
   const analytics = {
     track: ({ eventName, userId = null, sessionId = null, payload = {}, source = 'backend' }) => {
       assertString(eventName, 'eventName');
-      const allowed = new Set([
-        'onboarding_complete',
-        'login_success',
-        'match_create',
-        'match_move',
-        'match_finish',
-        'store_view',
-        'purchase_attempt',
-        'purchase_success',
-        'variant_publish',
-        'report_sent',
-        'latency_move',
-        'level_complete',
-        'campaign_finished',
-        'reconnect_count',
-        'ws_disconnects',
-        'video_connect_failures'
-      ]);
-      if (!allowed.has(eventName)) throw new HttpError(400, 'ANALYTICS_EVENT_UNSUPPORTED', { eventName });
+      if (!ANALYTICS_ALLOWED_EVENTS.has(eventName)) throw new HttpError(400, 'ANALYTICS_EVENT_UNSUPPORTED', { eventName });
+      try {
+        validateRuntimeEventPayload(eventName, payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_PAYLOAD_INVALID');
+      }
       const row = { id: newId('event'), eventName, userId, sessionId, payload, source, ts: nowIso() };
       state.analytics.push(row);
       state.eventQueue.push({
@@ -1044,6 +1040,32 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     })
   };
 
+  const runtimeSdk = {
+    schemaVersion: RUNTIME_SDK_SCHEMA_VERSION,
+    events: () => ({
+      schemaVersion: RUNTIME_SDK_SCHEMA_VERSION,
+      taxonomy: RUNTIME_EVENT_TAXONOMY,
+      all: [...ANALYTICS_ALLOWED_EVENTS].filter((eventName) => eventName.startsWith('runtime.')).sort((a, b) => a.localeCompare(b))
+    }),
+    validateSessionInit: (payload) => {
+      try {
+        validateRuntimeSessionInitPayload(payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_SESSION_INIT_INVALID');
+      }
+      return { ok: true, schemaVersion: RUNTIME_SDK_SCHEMA_VERSION };
+    },
+    validateEventEnvelope: ({ eventName, payload }) => {
+      assertString(eventName, 'eventName');
+      try {
+        validateRuntimeEventPayload(eventName, payload);
+      } catch (error) {
+        throw new HttpError(400, error.message ?? 'RUNTIME_EVENT_INVALID');
+      }
+      return { ok: true, schemaVersion: RUNTIME_SDK_SCHEMA_VERSION, eventName };
+    }
+  };
+
   store.iapSuccess = ({ userId, sku, platform = 'unknown', purchaseToken = null }) => {
     assertString(userId, 'userId');
     assertString(sku, 'sku');
@@ -1079,6 +1101,8 @@ export const createApiApp = ({ gateway, config = {} } = {}) => {
     variants,
     moderation,
     analytics,
+    runtimeSdk,
+    repositories,
     securityConfig,
     HttpError
   };

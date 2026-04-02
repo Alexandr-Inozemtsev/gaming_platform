@@ -116,6 +116,41 @@ class ApiClient {
         'source': source
       });
   Future<Map<String, dynamic>> incrementTechnicalMetric(String name) async => _post('/analytics/metrics', {'name': name});
+  Future<Map<String, dynamic>> runtimeSdkEvents() async => (await _get('/runtime-sdk/v1/events')) as Map<String, dynamic>;
+  Future<Map<String, dynamic>> runtimeSdkValidateSessionInit(Map<String, dynamic> payload) async =>
+      _post('/runtime-sdk/v1/validate-session-init', payload);
+  Future<Map<String, dynamic>> runtimeSdkValidateEventEnvelope({
+    required String eventName,
+    required Map<String, dynamic> payload
+  }) async =>
+      _post('/runtime-sdk/v1/validate-event-envelope', {'eventName': eventName, 'payload': payload});
+  Future<Map<String, dynamic>> trackRuntimeEvent({
+    required String eventName,
+    required String sessionId,
+    required String matchId,
+    required Map<String, dynamic> runtime,
+    Map<String, dynamic> payload = const {},
+    String? userId,
+  }) async {
+    final envelope = {
+      'schemaVersion': 'runtime-sdk/v1',
+      'eventName': eventName,
+      'sessionId': sessionId,
+      'matchId': matchId,
+      'runtime': runtime,
+      'payload': payload,
+      'ts': DateTime.now().toUtc().toIso8601String(),
+      'userId': userId
+    };
+
+    await runtimeSdkValidateEventEnvelope(eventName: eventName, payload: envelope);
+    return trackAnalyticsEvent(
+      eventName: eventName,
+      userId: userId,
+      source: 'runtime',
+      payload: envelope,
+    );
+  }
   Future<List<dynamic>> analyticsEvents({int limit = 200}) async => (await _get('/analytics/events?limit=$limit')) as List<dynamic>;
   Future<Map<String, dynamic>> analyticsDashboard() async => (await _get('/admin/analytics/dashboard')) as Map<String, dynamic>;
   Future<List<dynamic>> moderationReports() async => (await _get('/admin/reports')) as List<dynamic>;
