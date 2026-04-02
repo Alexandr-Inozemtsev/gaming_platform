@@ -29,6 +29,7 @@ import 'features/gameplay/big_walker/game_room_scene.dart';
 import 'features/gameplay/big_walker/animations/big_walker_motion.dart';
 import 'features/gameplay/big_walker/widgets/big_walker_room_overlay_widgets.dart';
 import 'features/gameplay/runtime/unity_runtime_adapter.dart';
+import 'features/gameplay/runtime/unity_runtime_session_manager.dart';
 part 'features/catalog/catalog_container_part.dart';
 part 'features/gameplay/room_screen_part.dart';
 part 'features/home/home_container_part.dart';
@@ -78,6 +79,7 @@ class AppState extends ChangeNotifier {
   final WsClient ws;
   late final AnalyticsClient analytics;
   late final UnityRuntimeAdapter unityRuntimeAdapter = createUnityRuntimeAdapter();
+  late final UnityRuntimeSessionManager unityRuntimeSessionManager = UnityRuntimeSessionManager(api);
 
   String lang = 'ru';
   int tab = 0;
@@ -406,18 +408,16 @@ class AppState extends ChangeNotifier {
       return;
     }
 
-    final runtimeSessionId = 'unity_${DateTime.now().millisecondsSinceEpoch}';
-    final runtimeInitPayload = {
-      'schemaVersion': 'runtime-sdk/v1',
-      'sessionId': runtimeSessionId,
-      'matchId': roomId ?? 'room_big_walker_demo',
-      'gameId': 'big_walker_demo',
-      'userId': userId ?? 'anonymous',
-      'runtime': _runtimeDescriptor(),
-      'auth': {'sessionToken': 'dev_session_${userId ?? 'anonymous'}'}
-    };
+    final runtimeUserId = userId ?? 'anonymous';
+    final runtimeMatchId = roomId ?? 'room_big_walker_demo';
+    final runtimeDescriptor = _runtimeDescriptor();
+    String runtimeSessionId;
     try {
-      await api.runtimeSdkValidateSessionInit(runtimeInitPayload);
+      runtimeSessionId = await unityRuntimeSessionManager.validateSessionInit(
+        matchId: runtimeMatchId,
+        userId: runtimeUserId,
+        runtime: runtimeDescriptor,
+      );
     } catch (error) {
       unityBigWalkerRunning = false;
       unityBigWalkerError = 'Runtime contract validation failed: $error';
@@ -431,7 +431,10 @@ class AppState extends ChangeNotifier {
     unityRuntimeSessionId = result.ok ? runtimeSessionId : null;
     if (result.ok) {
       roomLog.add('Unity Big Walker runtime launched (${result.mode.name}): $uri');
-      await _emitUnityRuntimeEvent('runtime.session.started', payload: {'launchMode': result.mode.name, 'url': uri.toString()});
+      await _emitUnityRuntimeEvent(
+        'runtime.session.started',
+        payload: {'launchMode': result.mode.name, 'url': uri.toString()},
+      );
     } else {
       unityBigWalkerError = 'Не удалось открыть Unity runtime по адресу $uri';
     }
@@ -465,9 +468,9 @@ class AppState extends ChangeNotifier {
   Future<void> _emitUnityRuntimeEvent(String eventName, {Map<String, dynamic> payload = const {}}) async {
     if (userId == null || unityRuntimeSessionId == null) return;
     try {
-      await api.trackRuntimeEvent(
+      await unityRuntimeSessionManager.emitLifecycleEvent(
         eventName: eventName,
-        userId: userId,
+        userId: userId!,
         sessionId: unityRuntimeSessionId!,
         matchId: roomId ?? 'room_big_walker_demo',
         runtime: _runtimeDescriptor(),

@@ -116,7 +116,6 @@ class ApiClient {
         'source': source
       });
   Future<Map<String, dynamic>> incrementTechnicalMetric(String name) async => _post('/analytics/metrics', {'name': name});
-  Future<Map<String, dynamic>> runtimeSdkEvents() async => (await _get('/runtime-sdk/v1/events')) as Map<String, dynamic>;
   Future<Map<String, dynamic>> runtimeSdkValidateSessionInit(Map<String, dynamic> payload) async =>
       _post('/runtime-sdk/v1/validate-session-init', payload);
   Future<Map<String, dynamic>> runtimeSdkValidateEventEnvelope({

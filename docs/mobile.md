@@ -14,6 +14,7 @@
   - pulse-подсветка «твой ход».
 - Unity Big Walker launch PoC:
   - введён runtime adapter с режимами запуска `in_app`/`external`;
+  - выделен `UnityRuntimeSessionManager` для session-init и lifecycle telemetry (очистка AppState);
   - по умолчанию используется `in_app` (`LaunchMode.inAppBrowserView`) для более бесшовного UX.
   - перед запуском выполняется `runtime-sdk/v1` валидация session-init payload;
   - lifecycle события `runtime.session.started` / `runtime.session.ended` отправляются в analytics через runtime envelope.
