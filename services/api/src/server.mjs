@@ -116,6 +116,13 @@ export const createHttpHandler = (deps = {}) => {
         const token = url.pathname.split('/')[2];
         return send(res, 200, app.variants.resolvePrivateLink({ token }));
       }
+      if (method === 'GET' && url.pathname === '/runtime-sdk/v1/events') return send(res, 200, app.runtimeSdk.events());
+      if (method === 'POST' && url.pathname === '/runtime-sdk/v1/validate-session-init') {
+        return send(res, 200, app.runtimeSdk.validateSessionInit(await parseBody(req)));
+      }
+      if (method === 'POST' && url.pathname === '/runtime-sdk/v1/validate-event-envelope') {
+        return send(res, 200, app.runtimeSdk.validateEventEnvelope(await parseBody(req)));
+      }
 
       if (method === 'POST' && url.pathname === '/reports') return send(res, 201, app.moderation.report(await parseBody(req)));
       if (method === 'GET' && url.pathname === '/admin/reports') return send(res, 200, app.moderation.listReports());

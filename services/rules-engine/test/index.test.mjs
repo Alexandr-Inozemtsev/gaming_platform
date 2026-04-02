@@ -1,9 +1,9 @@
 /**
- * Назначение файла: валидировать правила двух MVP-игр и поведение ботов.
+ * Назначение файла: валидировать правила MVP-игр и поведение ботов.
  * Роль в проекте: защищать rules-engine от регрессий при изменении схем состояния/валидации/скоринга.
  * Основные функции: тесты createInitialGameState, validateMove, applyMove, computeScore, legalMoves, chooseBotMove.
  * Связи с другими файлами: проверяет services/rules-engine/src/index.mjs.
- * Важно при изменении: сохранять покрытие для tile и roll-write, а также детерминизм RNG.
+ * Важно при изменении: сохранять покрытие для tile/roll-write/big-walker и детерминизм RNG.
  */
 
 import test from 'node:test';
@@ -41,6 +41,13 @@ test('roll-write state schema создаётся корректно', () => {
   const s = createInitialGameState('roll_and_write_demo', ['u1', 'u2'], 1);
   assert.equal(s.sheet.u1.length, 5);
   assert.equal(Array.isArray(s.dice), true);
+});
+
+test('big walker state schema создаётся корректно', () => {
+  const s = createInitialGameState('big_walker_demo', ['u1', 'u2'], 1);
+  assert.equal(s.boardLength, 30);
+  assert.equal(typeof s.positions.u1, 'number');
+  assert.equal(typeof s.dice, 'number');
 });
 
 test('validateMove tile принимает легальный place', () => {
@@ -104,6 +111,15 @@ test('computeScore считает победителя roll-write', () => {
   m.gameState.sheet.u2[0][0] = 1;
   const s = computeScore(m);
   assert.equal(s.winner, 'u1');
+});
+
+test('validateMove/applyMove big walker: roll и продвижение позиции', () => {
+  const m = baseMatch('big_walker_demo');
+  assert.equal(validateMove(m, { playerId: 'u1', action: 'roll', payload: {} }).ok, true);
+  const result = applyMove(m, { playerId: 'u1', action: 'roll', payload: {}, moveId: 'bw-1' });
+  assert.equal(result.accepted, true);
+  assert.equal(result.state.gameState.positions.u1 > 0, true);
+  assert.equal(result.state.currentPlayer, 'u2');
 });
 
 test('bot easy выбирает первый легальный ход', () => {

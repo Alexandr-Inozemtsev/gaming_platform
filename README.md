@@ -6,7 +6,7 @@
 - **Название приложения:** `TabletopPlatform`
 - **Режим региона:** `global` (допустимы `global` и `ru_by`)
 - **Языки интерфейса:** `ru`, `en`
-- **Игры MVP:** `tile_placement_demo`, `roll_and_write_demo`
+- **Игры MVP:** `big_walker_demo`, `tile_placement_demo`, `roll_and_write_demo`
 
 ## Структура репозитория
 - `apps/mobile` — Flutter-клиент (каркас приложения)
