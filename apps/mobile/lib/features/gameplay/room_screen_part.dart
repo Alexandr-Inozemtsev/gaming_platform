@@ -119,6 +119,17 @@ class _UnityBigWalkerRoom extends StatelessWidget {
                                     ),
                                   ),
                                 ],
+                                if (state.unityRuntimeWarning != null) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    state.unityRuntimeWarning!,
+                                    style: const TextStyle(
+                                      color: AppTokens.editorWarning,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 18),
                                 SizedBox(
                                   width: double.infinity,

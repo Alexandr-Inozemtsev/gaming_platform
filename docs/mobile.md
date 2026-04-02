@@ -18,6 +18,7 @@
   - по умолчанию используется `in_app` (`LaunchMode.inAppBrowserView`) для более бесшовного UX.
   - перед запуском выполняется `runtime-sdk/v1` валидация session-init payload;
   - lifecycle события `runtime.session.started` / `runtime.session.ended` отправляются в analytics через runtime envelope.
+  - добавлен preflight check `/runtime-sdk/v1/events`: при недоступности contract endpoint запуск Unity не блокируется, но runtime telemetry отключается с явным warning в UI.
 
 ## Ограничения MVP
 - Для недоступного API список игр возвращается из fallback-мока.

@@ -134,6 +134,9 @@ class AppState extends ChangeNotifier {
   String? unityBigWalkerError;
   UnityRuntimeLaunchMode unityLaunchMode = UnityRuntimeLaunchMode.inApp;
   String? unityRuntimeSessionId;
+  bool unityRuntimeContractAvailable = false;
+  bool unityRuntimePreflightChecked = false;
+  String? unityRuntimeWarning;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -373,6 +376,7 @@ class AppState extends ChangeNotifier {
       setParticipantsCount(participantsCount);
       bigWalkerStarted = false;
       winnerIndex = null;
+      await _ensureUnityRuntimePreflight();
       videoParticipants
         ..clear()
         ..addAll(List.generate(participantsCount, (index) => index == 0 ? 'You' : 'Player ${index + 1}'));
@@ -400,6 +404,7 @@ class AppState extends ChangeNotifier {
   Future<void> launchUnityBigWalker() async {
     if (currentGameId != 'big_walker_demo') return;
     unityBigWalkerError = null;
+    await _ensureUnityRuntimePreflight();
     final uri = Uri.tryParse(_unityBigWalkerUrlFromEnv);
     if (uri == null) {
       unityBigWalkerRunning = false;
@@ -412,23 +417,27 @@ class AppState extends ChangeNotifier {
     final runtimeMatchId = roomId ?? 'room_big_walker_demo';
     final runtimeDescriptor = _runtimeDescriptor();
     String runtimeSessionId;
-    try {
-      runtimeSessionId = await unityRuntimeSessionManager.validateSessionInit(
-        matchId: runtimeMatchId,
-        userId: runtimeUserId,
-        runtime: runtimeDescriptor,
-      );
-    } catch (error) {
-      unityBigWalkerRunning = false;
-      unityBigWalkerError = 'Runtime contract validation failed: $error';
-      notifyListeners();
-      return;
+    if (unityRuntimeContractAvailable) {
+      try {
+        runtimeSessionId = await unityRuntimeSessionManager.validateSessionInit(
+          matchId: runtimeMatchId,
+          userId: runtimeUserId,
+          runtime: runtimeDescriptor,
+        );
+      } catch (error) {
+        unityBigWalkerRunning = false;
+        unityBigWalkerError = 'Runtime contract validation failed: $error';
+        notifyListeners();
+        return;
+      }
+    } else {
+      runtimeSessionId = '';
     }
 
     final result = await unityRuntimeAdapter.launch(uri);
     unityBigWalkerRunning = result.ok;
     unityLaunchMode = result.mode;
-    unityRuntimeSessionId = result.ok ? runtimeSessionId : null;
+    unityRuntimeSessionId = result.ok && runtimeSessionId.isNotEmpty ? runtimeSessionId : null;
     if (result.ok) {
       roomLog.add('Unity Big Walker runtime launched (${result.mode.name}): $uri');
       await _emitUnityRuntimeEvent(
@@ -466,7 +475,7 @@ class AppState extends ChangeNotifier {
   };
 
   Future<void> _emitUnityRuntimeEvent(String eventName, {Map<String, dynamic> payload = const {}}) async {
-    if (userId == null || unityRuntimeSessionId == null) return;
+    if (!unityRuntimeContractAvailable || userId == null || unityRuntimeSessionId == null) return;
     try {
       await unityRuntimeSessionManager.emitLifecycleEvent(
         eventName: eventName,
@@ -478,6 +487,23 @@ class AppState extends ChangeNotifier {
       );
     } catch (error) {
       roomLog.add('Runtime event failed ($eventName): $error');
+    }
+  }
+
+  Future<void> _ensureUnityRuntimePreflight() async {
+    if (unityRuntimePreflightChecked) return;
+    unityRuntimePreflightChecked = true;
+    unityRuntimeWarning = null;
+    try {
+      final info = await api.runtimeSdkEvents();
+      final all = (info['all'] as List<dynamic>? ?? const []).map((e) => e.toString()).toSet();
+      unityRuntimeContractAvailable = all.contains('runtime.session.started') && all.contains('runtime.session.ended');
+      if (!unityRuntimeContractAvailable) {
+        unityRuntimeWarning = 'Runtime SDK endpoint доступен, но lifecycle events не объявлены. Телеметрия отключена.';
+      }
+    } catch (error) {
+      unityRuntimeContractAvailable = false;
+      unityRuntimeWarning = 'Runtime SDK недоступен ($error). Запуск продолжится без runtime telemetry.';
     }
   }
 
