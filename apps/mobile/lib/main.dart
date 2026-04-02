@@ -12,7 +12,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:animations/animations.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'i18n/strings.dart';
 import 'services/api_client.dart';
@@ -29,6 +28,8 @@ import 'features/gameplay/big_walker/big_walker_match_state.dart';
 import 'features/gameplay/big_walker/game_room_scene.dart';
 import 'features/gameplay/big_walker/animations/big_walker_motion.dart';
 import 'features/gameplay/big_walker/widgets/big_walker_room_overlay_widgets.dart';
+import 'features/gameplay/runtime/unity_runtime_adapter.dart';
+import 'features/gameplay/runtime/unity_runtime_session_manager.dart';
 part 'features/catalog/catalog_container_part.dart';
 part 'features/gameplay/room_screen_part.dart';
 part 'features/home/home_container_part.dart';
@@ -77,6 +78,8 @@ class AppState extends ChangeNotifier {
   final ApiClient api;
   final WsClient ws;
   late final AnalyticsClient analytics;
+  late final UnityRuntimeAdapter unityRuntimeAdapter = createUnityRuntimeAdapter();
+  late final UnityRuntimeSessionManager unityRuntimeSessionManager = UnityRuntimeSessionManager(api);
 
   String lang = 'ru';
   int tab = 0;
@@ -129,6 +132,8 @@ class AppState extends ChangeNotifier {
   int pawnSettleTick = 0;
   bool unityBigWalkerRunning = false;
   String? unityBigWalkerError;
+  UnityRuntimeLaunchMode unityLaunchMode = UnityRuntimeLaunchMode.inApp;
+  String? unityRuntimeSessionId;
 
   List<List<String?>> tileGrid = List.generate(4, (_) => List.filled(4, null));
   String selectedTile = 'A';
@@ -403,10 +408,33 @@ class AppState extends ChangeNotifier {
       return;
     }
 
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    unityBigWalkerRunning = launched;
-    if (launched) {
-      roomLog.add('Unity Big Walker runtime launched: $uri');
+    final runtimeUserId = userId ?? 'anonymous';
+    final runtimeMatchId = roomId ?? 'room_big_walker_demo';
+    final runtimeDescriptor = _runtimeDescriptor();
+    String runtimeSessionId;
+    try {
+      runtimeSessionId = await unityRuntimeSessionManager.validateSessionInit(
+        matchId: runtimeMatchId,
+        userId: runtimeUserId,
+        runtime: runtimeDescriptor,
+      );
+    } catch (error) {
+      unityBigWalkerRunning = false;
+      unityBigWalkerError = 'Runtime contract validation failed: $error';
+      notifyListeners();
+      return;
+    }
+
+    final result = await unityRuntimeAdapter.launch(uri);
+    unityBigWalkerRunning = result.ok;
+    unityLaunchMode = result.mode;
+    unityRuntimeSessionId = result.ok ? runtimeSessionId : null;
+    if (result.ok) {
+      roomLog.add('Unity Big Walker runtime launched (${result.mode.name}): $uri');
+      await _emitUnityRuntimeEvent(
+        'runtime.session.started',
+        payload: {'launchMode': result.mode.name, 'url': uri.toString()},
+      );
     } else {
       unityBigWalkerError = 'Не удалось открыть Unity runtime по адресу $uri';
     }
@@ -414,13 +442,43 @@ class AppState extends ChangeNotifier {
   }
 
   void returnToHomeFromUnityBigWalker() {
+    unawaited(_emitUnityRuntimeEvent('runtime.session.ended', payload: {'reason': 'return_home'}));
     unityBigWalkerRunning = false;
     unityBigWalkerError = null;
+    unityRuntimeSessionId = null;
     roomId = null;
     bigWalkerStarted = false;
     winnerIndex = null;
     tab = 0;
     notifyListeners();
+  }
+
+  Map<String, dynamic> _runtimeDescriptor() => {
+    'engine': 'unity',
+    'engineVersion': 'webgl-poc',
+    'platform': kIsWeb
+        ? 'web'
+        : switch (defaultTargetPlatform) {
+            TargetPlatform.android => 'android',
+            TargetPlatform.iOS => 'ios',
+            _ => 'desktop',
+          }
+  };
+
+  Future<void> _emitUnityRuntimeEvent(String eventName, {Map<String, dynamic> payload = const {}}) async {
+    if (userId == null || unityRuntimeSessionId == null) return;
+    try {
+      await unityRuntimeSessionManager.emitLifecycleEvent(
+        eventName: eventName,
+        userId: userId!,
+        sessionId: unityRuntimeSessionId!,
+        matchId: roomId ?? 'room_big_walker_demo',
+        runtime: _runtimeDescriptor(),
+        payload: payload,
+      );
+    } catch (error) {
+      roomLog.add('Runtime event failed ($eventName): $error');
+    }
   }
 
   Future<void> loadAdminAnalytics() async {
