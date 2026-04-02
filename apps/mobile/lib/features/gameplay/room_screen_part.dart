@@ -100,8 +100,8 @@ class _UnityBigWalkerRoom extends StatelessWidget {
                                 const SizedBox(height: 8),
                                 Text(
                                   state.unityBigWalkerRunning
-                                      ? 'Режим запуска: ${state.unityLaunchMode.name}. Для PoC используется in-app запуск по умолчанию.'
-                                      : 'Нажмите кнопку ниже, чтобы запустить Unity-игру в бесшовном режиме PoC.',
+                                      ? 'Режим запуска: ${state.unityLaunchMode.name}.'
+                                      : 'Нажмите кнопку ниже, чтобы запустить Unity-игру.',
                                   style: const TextStyle(
                                     color: BigWalkerTokens.textSecondary,
                                     fontSize: 14,

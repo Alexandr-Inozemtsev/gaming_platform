@@ -43,6 +43,7 @@ const String _unityBigWalkerUrlFromEnv = String.fromEnvironment(
   'UNITY_BIG_WALKER_URL',
   defaultValue: 'http://localhost:8080',
 );
+const String _unityWebGlBuildDirectory = 'WebGLBuild';
 const String regionMode = String.fromEnvironment('REGION_MODE', defaultValue: 'global');
 const String stunUrlsRaw = String.fromEnvironment('STUN_URLS', defaultValue: '');
 const String turnUrlsRaw = String.fromEnvironment('TURN_URLS', defaultValue: '');
@@ -405,7 +406,7 @@ class AppState extends ChangeNotifier {
     if (currentGameId != 'big_walker_demo') return;
     unityBigWalkerError = null;
     await _ensureUnityRuntimePreflight();
-    final uri = Uri.tryParse(_unityBigWalkerUrlFromEnv);
+    final uri = _resolveUnityRuntimeUri(_unityBigWalkerUrlFromEnv);
     if (uri == null) {
       unityBigWalkerRunning = false;
       unityBigWalkerError = 'Некорректный UNITY_BIG_WALKER_URL: $_unityBigWalkerUrlFromEnv';
@@ -448,6 +449,18 @@ class AppState extends ChangeNotifier {
       unityBigWalkerError = 'Не удалось открыть Unity runtime по адресу $uri';
     }
     notifyListeners();
+  }
+
+  Uri? _resolveUnityRuntimeUri(String rawUrl) {
+    final parsed = Uri.tryParse(rawUrl);
+    if (parsed == null || parsed.host.isEmpty) return null;
+    final path = parsed.path;
+    final hasRootOnlyPath = path.isEmpty || path == '/';
+    if (!hasRootOnlyPath) return parsed;
+
+    unityRuntimeWarning =
+        'UNITY_BIG_WALKER_URL указывает на корень сервера. Автоматически добавлен путь /$_unityWebGlBuildDirectory/.';
+    return parsed.replace(path: '/$_unityWebGlBuildDirectory/');
   }
 
   void returnToHomeFromUnityBigWalker() {
