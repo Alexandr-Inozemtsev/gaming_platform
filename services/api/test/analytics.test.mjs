@@ -59,3 +59,41 @@ test('analytics: track/list/dashboard и технические метрики',
   assert.equal(Array.isArray(dashboard.dauProxy), true);
   assert.equal(dashboard.technical.wsDisconnects >= 1, true);
 });
+
+test('analytics: runtime-sdk v1 события валидируются', () => {
+  const app = createApiApp({ config: { DEFAULT_LANG: 'ru' } });
+  const user = app.auth.register({ email: 'analytics-runtime@test.dev', password: 'secret01' });
+
+  const accepted = app.analytics.track({
+    eventName: 'runtime.session.started',
+    userId: user.id,
+    source: 'runtime',
+    payload: {
+      schemaVersion: 'runtime-sdk/v1',
+      sessionId: 'sess_runtime_001',
+      matchId: 'match_runtime_001',
+      runtime: { engine: 'unity', engineVersion: '2022.3.54f1', platform: 'android' },
+      ts: new Date().toISOString(),
+      payload: { scene: 'main' }
+    }
+  });
+  assert.equal(accepted.ok, true);
+
+  assert.throws(
+    () =>
+      app.analytics.track({
+        eventName: 'runtime.move.applied',
+        userId: user.id,
+        source: 'runtime',
+        payload: {
+          schemaVersion: 'runtime-sdk/v0',
+          sessionId: 'sess_runtime_001',
+          matchId: 'match_runtime_001',
+          runtime: { engine: 'unity', engineVersion: '2022.3.54f1', platform: 'android' },
+          ts: new Date().toISOString(),
+          payload: { moveId: 'm1' }
+        }
+      }),
+    /RUNTIME_SCHEMA_VERSION_UNSUPPORTED/
+  );
+});

@@ -100,8 +100,8 @@ class _UnityBigWalkerRoom extends StatelessWidget {
                                 const SizedBox(height: 8),
                                 Text(
                                   state.unityBigWalkerRunning
-                                      ? 'Игра открыта по UNITY_BIG_WALKER_URL. Вернитесь в приложение после завершения.'
-                                      : 'Нажмите кнопку ниже, чтобы запустить Unity-игру на платформе.',
+                                      ? 'Режим запуска: ${state.unityLaunchMode.name}. Для PoC используется in-app запуск по умолчанию.'
+                                      : 'Нажмите кнопку ниже, чтобы запустить Unity-игру в бесшовном режиме PoC.',
                                   style: const TextStyle(
                                     color: BigWalkerTokens.textSecondary,
                                     fontSize: 14,
@@ -116,6 +116,17 @@ class _UnityBigWalkerRoom extends StatelessWidget {
                                       color: Colors.redAccent,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                                if (state.unityRuntimeWarning != null) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    state.unityRuntimeWarning!,
+                                    style: const TextStyle(
+                                      color: AppTokens.editorWarning,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],

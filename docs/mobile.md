@@ -12,6 +12,13 @@
 - Анимации:
   - fade при переключении вкладок;
   - pulse-подсветка «твой ход».
+- Unity Big Walker launch PoC:
+  - введён runtime adapter с режимами запуска `in_app`/`external`;
+  - выделен `UnityRuntimeSessionManager` для session-init и lifecycle telemetry (очистка AppState);
+  - по умолчанию используется `in_app` (`LaunchMode.inAppBrowserView`) для более бесшовного UX.
+  - перед запуском выполняется `runtime-sdk/v1` валидация session-init payload;
+  - lifecycle события `runtime.session.started` / `runtime.session.ended` отправляются в analytics через runtime envelope.
+  - добавлен preflight check `/runtime-sdk/v1/events`: при недоступности contract endpoint запуск Unity не блокируется, но runtime telemetry отключается с явным warning в UI.
 
 ## Ограничения MVP
 - Для недоступного API список игр возвращается из fallback-мока.
@@ -22,3 +29,6 @@
 1. Поднять backend (`services/api`, `services/realtime`) и infra.
 2. Передать `--dart-define=API_BASE_URL=...` и `--dart-define=WS_URL=...`.
 3. Пройти сценарий: login -> catalog -> create room -> room -> store purchase -> settings language switch.
+4. Для Unity Big Walker при необходимости переключить режим запуска:
+   - `--dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app` (default)
+   - `--dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=external`
