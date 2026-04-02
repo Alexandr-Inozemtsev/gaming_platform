@@ -2,7 +2,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 const String _unityLaunchModeFromEnv = String.fromEnvironment(
   'UNITY_BIG_WALKER_LAUNCH_MODE',
-  defaultValue: 'in_app',
+  defaultValue: 'external',
 );
 
 enum UnityRuntimeLaunchMode { inApp, external }
