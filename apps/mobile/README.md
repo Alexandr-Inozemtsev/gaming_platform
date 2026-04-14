@@ -128,7 +128,12 @@ rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
   cd infra
   docker compose up -d
   ```
-  2. Запустите Flutter с явными `dart-define` для Android-эмулятора:
+  2. Вернитесь в Flutter-проект (`apps/mobile`), иначе получите `No pubspec.yaml file found`:
+  ```bash
+  cd ..
+  cd apps/mobile
+  ```
+  3. Запустите Flutter с явными `dart-define` для Android-эмулятора (важно: используйте реальные переносы строк, не вставляйте `\n` как текст):
   ```bash
   flutter run -d emulator-5554 \
     --dart-define=API_BASE_URL=http://10.0.2.2:3000 \
