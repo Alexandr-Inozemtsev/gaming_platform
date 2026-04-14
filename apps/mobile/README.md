@@ -143,3 +143,16 @@ rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
     --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app
   ```
   4. Если при открытии `10.0.2.2:18080` в эмуляторе браузер пишет `This site can't be reached`, значит Unity runtime не запущен на хост-машине (или слушает другой порт). Проверьте локальный процесс, который должен отдавать WebGL билд.
+
+### Быстрый чек-лист (Windows) для `:18080` — 3 команды
+```powershell
+# 1) Проверить, слушает ли кто-то порт 18080 на хосте
+netstat -ano | findstr :18080
+
+# 2) Проверить, отвечает ли endpoint локально (корень и типичный WebGL-путь)
+curl -I http://127.0.0.1:18080/
+curl -I http://127.0.0.1:18080/WebGLBuild/
+
+# 3) Из корня репозитория найти подсказки, откуда должен стартовать WebGL runtime
+rg -n "UNITY_BIG_WALKER_URL|18080|WebGLBuild|WebGL" README.md apps infra -S
+```
