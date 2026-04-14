@@ -171,3 +171,13 @@ py -m http.server 18080
 curl.exe -I http://127.0.0.1:18080/
 # в эмуляторе: http://10.0.2.2:18080/
 ```
+
+После `Serving HTTP on :: port 18080` оставьте это окно PowerShell открытым и в **новом** окне запустите Flutter:
+```powershell
+cd C:\Users\alexp\StudioProjects\gaming_platform\apps\mobile
+flutter run -d emulator-5554 `
+  --dart-define=API_BASE_URL=http://10.0.2.2:3000 `
+  --dart-define=WS_URL=ws://10.0.2.2:3001 `
+  --dart-define=UNITY_BIG_WALKER_URL=http://10.0.2.2:18080 `
+  --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app
+```
