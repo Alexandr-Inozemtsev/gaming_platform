@@ -122,3 +122,52 @@ flutter run -d emulator-5554
 rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
 ```
   После исправления выполните повторно `flutter clean && flutter pub get && flutter run`.
+- Если видите `SocketException ... address = 10.0.2.2` при старте, это означает, что мобильный клиент не может достучаться до backend API с хоста.
+  1. Поднимите локальную инфраструктуру из корня репозитория:
+  ```bash
+  cd infra
+  docker compose up -d
+  ```
+  > Важно: `docker compose up -d` в `infra/` поднимает API/WS/БД, но **не** поднимает Unity WebGL runtime на `:18080`.
+  2. Вернитесь в Flutter-проект (`apps/mobile`), иначе получите `No pubspec.yaml file found`:
+  ```bash
+  cd ..
+  cd apps/mobile
+  ```
+  3. Запустите Flutter с явными `dart-define` для Android-эмулятора (важно: используйте реальные переносы строк, не вставляйте `\n` как текст):
+  ```bash
+  flutter run -d emulator-5554 \
+    --dart-define=API_BASE_URL=http://10.0.2.2:3000 \
+    --dart-define=WS_URL=ws://10.0.2.2:3001 \
+    --dart-define=UNITY_BIG_WALKER_URL=http://10.0.2.2:18080 \
+    --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app
+  ```
+  4. Если при открытии `10.0.2.2:18080` в эмуляторе браузер пишет `This site can't be reached`, значит Unity runtime не запущен на хост-машине (или слушает другой порт). Проверьте локальный процесс, который должен отдавать WebGL билд.
+
+### Быстрый чек-лист (Windows) для `:18080` — 3 команды
+```powershell
+# 1) Проверить, слушает ли кто-то порт 18080 на хосте
+netstat -ano | findstr :18080
+
+# 2) Проверить, отвечает ли endpoint локально (в PowerShell используйте curl.exe, а не alias curl)
+curl.exe -I http://127.0.0.1:18080/
+curl.exe -I http://127.0.0.1:18080/WebGLBuild/
+
+# 3) Из корня репозитория найти подсказки, откуда должен стартовать WebGL runtime
+rg -n "UNITY_BIG_WALKER_URL|18080|WebGLBuild|WebGL" README.md apps infra -S
+```
+
+Если `curl.exe` на `127.0.0.1:18080` возвращает `Failed to connect`, значит на хосте никто не слушает порт `18080`.
+
+Минимальный способ быстро проверить запуск WebGL runtime локально:
+```powershell
+# 1) Перейти в папку, где лежит index.html Unity WebGL билда
+cd C:\path\to\unity_webgl_build_root
+
+# 2) Поднять простой HTTP-сервер на 18080
+py -m http.server 18080
+
+# 3) Проверить с хоста и эмулятора
+curl.exe -I http://127.0.0.1:18080/
+# в эмуляторе: http://10.0.2.2:18080/
+```
