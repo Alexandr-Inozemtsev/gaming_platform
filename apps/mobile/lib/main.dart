@@ -445,6 +445,15 @@ class AppState extends ChangeNotifier {
       runtimeSessionId = '';
     }
 
+    final connectivityError = await _probeUnityRuntimeEndpoint(uri);
+    if (connectivityError != null) {
+      unityBigWalkerRunning = false;
+      unityBigWalkerError =
+          'Unity runtime недоступен по адресу $uri. $connectivityError Проверьте, что сервер WebGL действительно запущен на хосте и порт проброшен в эмулятор через 10.0.2.2.';
+      notifyListeners();
+      return;
+    }
+
     final result = await unityRuntimeAdapter.launch(uri);
     unityBigWalkerRunning = result.ok;
     unityLaunchMode = result.mode;
@@ -471,6 +480,27 @@ class AppState extends ChangeNotifier {
     unityRuntimeWarning =
         'UNITY_BIG_WALKER_URL указывает на корень сервера. Автоматически добавлен путь /$_unityWebGlBuildDirectory/.';
     return parsed.replace(path: '/$_unityWebGlBuildDirectory/');
+  }
+
+  Future<String?> _probeUnityRuntimeEndpoint(Uri uri) async {
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
+    try {
+      final request = await client.getUrl(uri).timeout(const Duration(seconds: 4));
+      final response = await request.close().timeout(const Duration(seconds: 4));
+      await response.drain<void>();
+      if (response.statusCode >= 500) {
+        return 'Сервер вернул HTTP ${response.statusCode}.';
+      }
+      return null;
+    } on SocketException catch (error) {
+      return 'Сетевое соединение не установлено (${error.message}).';
+    } on TimeoutException {
+      return 'Таймаут при подключении (4s).';
+    } catch (error) {
+      return 'Ошибка проверки endpoint: $error.';
+    } finally {
+      client.close(force: true);
+    }
   }
 
   void returnToHomeFromUnityBigWalker() {

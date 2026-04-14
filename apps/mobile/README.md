@@ -128,6 +128,7 @@ rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
   cd infra
   docker compose up -d
   ```
+  > Важно: `docker compose up -d` в `infra/` поднимает API/WS/БД, но **не** поднимает Unity WebGL runtime на `:18080`.
   2. Вернитесь в Flutter-проект (`apps/mobile`), иначе получите `No pubspec.yaml file found`:
   ```bash
   cd ..
@@ -141,3 +142,4 @@ rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
     --dart-define=UNITY_BIG_WALKER_URL=http://10.0.2.2:18080 \
     --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app
   ```
+  4. Если при открытии `10.0.2.2:18080` в эмуляторе браузер пишет `This site can't be reached`, значит Unity runtime не запущен на хост-машине (или слушает другой порт). Проверьте локальный процесс, который должен отдавать WebGL билд.
