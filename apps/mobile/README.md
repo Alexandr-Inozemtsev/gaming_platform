@@ -122,3 +122,24 @@ flutter run -d emulator-5554
 rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
 ```
   После исправления выполните повторно `flutter clean && flutter pub get && flutter run`.
+- Если видите `SocketException ... address = 10.0.2.2` при старте, это означает, что мобильный клиент не может достучаться до backend API с хоста.
+  1. Поднимите локальную инфраструктуру из корня репозитория:
+  ```bash
+  cd infra
+  docker compose up -d
+  ```
+  > Важно: `docker compose up -d` в `infra/` поднимает API/WS/БД, но **не** поднимает Unity WebGL runtime на `:18080`.
+  2. Вернитесь в Flutter-проект (`apps/mobile`), иначе получите `No pubspec.yaml file found`:
+  ```bash
+  cd ..
+  cd apps/mobile
+  ```
+  3. Запустите Flutter с явными `dart-define` для Android-эмулятора (важно: используйте реальные переносы строк, не вставляйте `\n` как текст):
+  ```bash
+  flutter run -d emulator-5554 \
+    --dart-define=API_BASE_URL=http://10.0.2.2:3000 \
+    --dart-define=WS_URL=ws://10.0.2.2:3001 \
+    --dart-define=UNITY_BIG_WALKER_URL=http://10.0.2.2:18080 \
+    --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app
+  ```
+  4. Если при открытии `10.0.2.2:18080` в эмуляторе браузер пишет `This site can't be reached`, значит Unity runtime не запущен на хост-машине (или слушает другой порт). Проверьте локальный процесс, который должен отдавать WebGL билд.
