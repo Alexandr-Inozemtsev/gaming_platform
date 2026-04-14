@@ -122,3 +122,17 @@ flutter run -d emulator-5554
 rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
 ```
   После исправления выполните повторно `flutter clean && flutter pub get && flutter run`.
+- Если видите `SocketException ... address = 10.0.2.2` при старте, это означает, что мобильный клиент не может достучаться до backend API с хоста.
+  1. Поднимите локальную инфраструктуру из корня репозитория:
+  ```bash
+  cd infra
+  docker compose up -d
+  ```
+  2. Запустите Flutter с явными `dart-define` для Android-эмулятора:
+  ```bash
+  flutter run -d emulator-5554 \
+    --dart-define=API_BASE_URL=http://10.0.2.2:3000 \
+    --dart-define=WS_URL=ws://10.0.2.2:3001 \
+    --dart-define=UNITY_BIG_WALKER_URL=http://10.0.2.2:18080 \
+    --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app
+  ```
