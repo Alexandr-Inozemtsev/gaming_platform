@@ -156,3 +156,18 @@ curl.exe -I http://127.0.0.1:18080/WebGLBuild/
 # 3) Из корня репозитория найти подсказки, откуда должен стартовать WebGL runtime
 rg -n "UNITY_BIG_WALKER_URL|18080|WebGLBuild|WebGL" README.md apps infra -S
 ```
+
+Если `curl.exe` на `127.0.0.1:18080` возвращает `Failed to connect`, значит на хосте никто не слушает порт `18080`.
+
+Минимальный способ быстро проверить запуск WebGL runtime локально:
+```powershell
+# 1) Перейти в папку, где лежит index.html Unity WebGL билда
+cd C:\path\to\unity_webgl_build_root
+
+# 2) Поднять простой HTTP-сервер на 18080
+py -m http.server 18080
+
+# 3) Проверить с хоста и эмулятора
+curl.exe -I http://127.0.0.1:18080/
+# в эмуляторе: http://10.0.2.2:18080/
+```
