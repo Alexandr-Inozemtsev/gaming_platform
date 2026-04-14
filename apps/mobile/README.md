@@ -149,9 +149,9 @@ rg -n "^(<<<<<<<|=======|>>>>>>>)" apps/mobile/lib
 # 1) Проверить, слушает ли кто-то порт 18080 на хосте
 netstat -ano | findstr :18080
 
-# 2) Проверить, отвечает ли endpoint локально (корень и типичный WebGL-путь)
-curl -I http://127.0.0.1:18080/
-curl -I http://127.0.0.1:18080/WebGLBuild/
+# 2) Проверить, отвечает ли endpoint локально (в PowerShell используйте curl.exe, а не alias curl)
+curl.exe -I http://127.0.0.1:18080/
+curl.exe -I http://127.0.0.1:18080/WebGLBuild/
 
 # 3) Из корня репозитория найти подсказки, откуда должен стартовать WebGL runtime
 rg -n "UNITY_BIG_WALKER_URL|18080|WebGLBuild|WebGL" README.md apps infra -S
