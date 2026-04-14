@@ -181,3 +181,18 @@ flutter run -d emulator-5554 `
   --dart-define=UNITY_BIG_WALKER_URL=http://10.0.2.2:18080 `
   --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app
 ```
+
+Если в WebView видите ошибку `Unable to load file Build/WebGLBuild.framework.js`, значит `index.html` ссылается на несуществующий файл сборки.
+
+Проверьте артефакты в папке билда:
+```powershell
+cd C:\unity_builds\big_walker_webgl
+Get-ChildItem .\Build
+Select-String -Path .\index.html -Pattern "Build/.*framework.js|Build/.*data|Build/.*wasm"
+```
+
+Что должно совпадать:
+- имя файлов в `Build\` (например `WebGLBuild.framework.js`, `WebGLBuild.data`, `WebGLBuild.wasm`);
+- ссылки в `index.html` на эти же имена.
+
+Если имена не совпадают — пересоберите Unity WebGL или исправьте ссылки в `index.html` под фактические имена файлов в `Build\`.
