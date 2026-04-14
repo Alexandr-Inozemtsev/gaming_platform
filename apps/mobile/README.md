@@ -162,7 +162,7 @@ rg -n "UNITY_BIG_WALKER_URL|18080|WebGLBuild|WebGL" README.md apps infra -S
 Минимальный способ быстро проверить запуск WebGL runtime локально:
 ```powershell
 # 1) Перейти в папку, где лежит index.html Unity WebGL билда
-cd C:\path\to\unity_webgl_build_root
+cd C:\unity_builds\big_walker_webgl
 
 # 2) Поднять простой HTTP-сервер на 18080
 py -m http.server 18080
