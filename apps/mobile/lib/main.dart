@@ -5,6 +5,7 @@
 // Важно при изменении: держать сетевую логику в AppState/сервисах и не переносить сервер-правила напрямую в UI без синхронизации с backend.
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -223,21 +224,30 @@ class AppState extends ChangeNotifier {
       }
       notifyListeners();
     });
-    games = await api.games();
-    if (!games.any((item) => (item as Map<String, dynamic>)['id'] == 'big_walker_demo')) {
-      games = [
-        {
-          'id': 'big_walker_demo',
-          'title': 'Большая бродилка',
-          'description': 'Путешествие по сказочным землям'
-        },
-        ...games
-      ];
+    try {
+      games = await api.games();
+      if (!games.any((item) => (item as Map<String, dynamic>)['id'] == 'big_walker_demo')) {
+        games = [
+          {
+            'id': 'big_walker_demo',
+            'title': 'Большая бродилка',
+            'description': 'Путешествие по сказочным землям'
+          },
+          ...games
+        ];
+      }
+      campaigns = await api.campaigns();
+      final skuResponse = await api.storeSkus();
+      skus = skuResponse['items'] as List<dynamic>? ?? const [];
+      analytics.enqueue(eventName: 'store_view', payload: {'phase': 'init'});
+    } on SocketException catch (error) {
+      authError =
+          'Нет соединения с API ($apiBaseUrl). Для Android-эмулятора запустите backend на хосте и используйте --dart-define=API_BASE_URL=http://10.0.2.2:3000. Подробности: ${error.message}';
+    } on HttpException catch (error) {
+      authError = 'Сервер API недоступен ($apiBaseUrl): ${error.message}';
+    } catch (error) {
+      authError = 'Ошибка инициализации данных: $error';
     }
-    campaigns = await api.campaigns();
-    final skuResponse = await api.storeSkus();
-    skus = skuResponse['items'] as List<dynamic>? ?? const [];
-    analytics.enqueue(eventName: 'store_view', payload: {'phase': 'init'});
     notifyListeners();
   }
 
@@ -1112,6 +1122,7 @@ class MainShell extends StatelessWidget {
       body: Column(
         children: [
           ReconnectBanner(visible: state.wsOffline, text: 'Проблемы с соединением. Пытаемся переподключиться...'),
+          ReconnectBanner(visible: state.authError != null, text: state.authError ?? ''),
           if (state.tab != 4)
             Padding(
               padding: AppLayout.safeAwarePadding(context, horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
