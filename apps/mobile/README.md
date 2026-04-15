@@ -213,6 +213,31 @@ flutter run -d emulator-5554
 
 Если всё равно не помогает — в Android Studio откройте Device Manager и сделайте `Wipe Data` для эмулятора.
 
+Если в эмуляторе Unity-заставка висит (лого и полоска загрузки без прогресса):
+
+1. Смотрите логи в окне `py -m http.server 18080` — должны быть успешные `200` на файлы из `WebGLBuild/Build/`.
+2. Проверьте, что в билде есть ожидаемые артефакты:
+```powershell
+cd C:\unity_builds\big_walker_webgl
+Get-ChildItem .\WebGLBuild\Build
+curl.exe -I http://127.0.0.1:18080/WebGLBuild/Build/WebGLBuild.framework.js
+curl.exe -I http://127.0.0.1:18080/WebGLBuild/Build/WebGLBuild.data
+curl.exe -I http://127.0.0.1:18080/WebGLBuild/Build/WebGLBuild.wasm
+```
+3. Если в билде файлы только в сжатом виде (`.br`, `.gz`, `.unityweb`) и загрузка зависает, пересоберите Unity WebGL с:
+   - `Compression Format = Disabled`, или
+   - `Decompression Fallback = On` (в Publishing Settings),
+   затем повторно поднимите сервер.
+4. Для отладки можно запускать во внешнем браузере:
+```powershell
+cd C:\Users\alexp\StudioProjects\gaming_platform\apps\mobile
+flutter run -d emulator-5554 `
+  --dart-define=UNITY_BIG_WALKER_URL=http://10.0.2.2:18080 `
+  --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=external
+```
+
+Если видите `No pubspec.yaml file found`, значит команда запущена не из `apps/mobile`.
+
 Если в WebView видите ошибку `Unable to load file Build/WebGLBuild.framework.js`, значит `index.html` ссылается на несуществующий файл сборки.
 
 Проверьте артефакты в папке билда:

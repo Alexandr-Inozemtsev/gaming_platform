@@ -494,6 +494,16 @@ class AppState extends ChangeNotifier {
       if (response.statusCode >= 500) {
         return 'Сервер вернул HTTP ${response.statusCode}.';
       }
+      final frameworkUri = uri.resolve('Build/WebGLBuild.framework.js');
+      final frameworkRequest = await client.getUrl(frameworkUri).timeout(const Duration(seconds: 4));
+      final frameworkResponse = await frameworkRequest.close().timeout(const Duration(seconds: 4));
+      await frameworkResponse.drain<void>();
+      if (frameworkResponse.statusCode == 404) {
+        return 'Не найден обязательный файл $frameworkUri (HTTP 404). Проверьте, что сервер отдаёт путь /WebGLBuild/Build/WebGLBuild.framework.js.';
+      }
+      if (frameworkResponse.statusCode >= 500) {
+        return 'Сервер вернул HTTP ${frameworkResponse.statusCode} для $frameworkUri.';
+      }
       return null;
     } on SocketException catch (error) {
       return 'Сетевое соединение не установлено (${error.message}).';
