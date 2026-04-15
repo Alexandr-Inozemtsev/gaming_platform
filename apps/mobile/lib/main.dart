@@ -5,6 +5,7 @@
 // Важно при изменении: держать сетевую логику в AppState/сервисах и не переносить сервер-правила напрямую в UI без синхронизации с backend.
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -223,21 +224,30 @@ class AppState extends ChangeNotifier {
       }
       notifyListeners();
     });
-    games = await api.games();
-    if (!games.any((item) => (item as Map<String, dynamic>)['id'] == 'big_walker_demo')) {
-      games = [
-        {
-          'id': 'big_walker_demo',
-          'title': 'Большая бродилка',
-          'description': 'Путешествие по сказочным землям'
-        },
-        ...games
-      ];
+    try {
+      games = await api.games();
+      if (!games.any((item) => (item as Map<String, dynamic>)['id'] == 'big_walker_demo')) {
+        games = [
+          {
+            'id': 'big_walker_demo',
+            'title': 'Большая бродилка',
+            'description': 'Путешествие по сказочным землям'
+          },
+          ...games
+        ];
+      }
+      campaigns = await api.campaigns();
+      final skuResponse = await api.storeSkus();
+      skus = skuResponse['items'] as List<dynamic>? ?? const [];
+      analytics.enqueue(eventName: 'store_view', payload: {'phase': 'init'});
+    } on SocketException catch (error) {
+      authError =
+          'Нет соединения с API ($apiBaseUrl). Для Android-эмулятора запустите backend на хосте и используйте --dart-define=API_BASE_URL=http://10.0.2.2:3000. Подробности: ${error.message}';
+    } on HttpException catch (error) {
+      authError = 'Сервер API недоступен ($apiBaseUrl): ${error.message}';
+    } catch (error) {
+      authError = 'Ошибка инициализации данных: $error';
     }
-    campaigns = await api.campaigns();
-    final skuResponse = await api.storeSkus();
-    skus = skuResponse['items'] as List<dynamic>? ?? const [];
-    analytics.enqueue(eventName: 'store_view', payload: {'phase': 'init'});
     notifyListeners();
   }
 
@@ -435,6 +445,15 @@ class AppState extends ChangeNotifier {
       runtimeSessionId = '';
     }
 
+    final connectivityError = await _probeUnityRuntimeEndpoint(uri);
+    if (connectivityError != null) {
+      unityBigWalkerRunning = false;
+      unityBigWalkerError =
+          'Unity runtime недоступен по адресу $uri. $connectivityError Проверьте, что сервер WebGL действительно запущен на хосте и порт проброшен в эмулятор через 10.0.2.2.';
+      notifyListeners();
+      return;
+    }
+
     final result = await unityRuntimeAdapter.launch(uri);
     unityBigWalkerRunning = result.ok;
     unityLaunchMode = result.mode;
@@ -461,6 +480,40 @@ class AppState extends ChangeNotifier {
     unityRuntimeWarning =
         'UNITY_BIG_WALKER_URL указывает на корень сервера. Автоматически добавлен путь /$_unityWebGlBuildDirectory/.';
     return parsed.replace(path: '/$_unityWebGlBuildDirectory/');
+  }
+
+  Future<String?> _probeUnityRuntimeEndpoint(Uri uri) async {
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
+    try {
+      final request = await client.getUrl(uri).timeout(const Duration(seconds: 4));
+      final response = await request.close().timeout(const Duration(seconds: 4));
+      await response.drain<void>();
+      if (response.statusCode == 404) {
+        return 'Сервер ответил HTTP 404. Частая причина: сервер запущен из папки WebGLBuild вместо родительской директории, содержащей папку WebGLBuild.';
+      }
+      if (response.statusCode >= 500) {
+        return 'Сервер вернул HTTP ${response.statusCode}.';
+      }
+      final frameworkUri = uri.resolve('Build/WebGLBuild.framework.js');
+      final frameworkRequest = await client.getUrl(frameworkUri).timeout(const Duration(seconds: 4));
+      final frameworkResponse = await frameworkRequest.close().timeout(const Duration(seconds: 4));
+      await frameworkResponse.drain<void>();
+      if (frameworkResponse.statusCode == 404) {
+        return 'Не найден обязательный файл $frameworkUri (HTTP 404). Проверьте, что сервер отдаёт путь /WebGLBuild/Build/WebGLBuild.framework.js.';
+      }
+      if (frameworkResponse.statusCode >= 500) {
+        return 'Сервер вернул HTTP ${frameworkResponse.statusCode} для $frameworkUri.';
+      }
+      return null;
+    } on SocketException catch (error) {
+      return 'Сетевое соединение не установлено (${error.message}).';
+    } on TimeoutException {
+      return 'Таймаут при подключении (4s).';
+    } catch (error) {
+      return 'Ошибка проверки endpoint: $error.';
+    } finally {
+      client.close(force: true);
+    }
   }
 
   void returnToHomeFromUnityBigWalker() {
@@ -1112,6 +1165,7 @@ class MainShell extends StatelessWidget {
       body: Column(
         children: [
           ReconnectBanner(visible: state.wsOffline, text: 'Проблемы с соединением. Пытаемся переподключиться...'),
+          ReconnectBanner(visible: state.authError != null, text: state.authError ?? ''),
           if (state.tab != 4)
             Padding(
               padding: AppLayout.safeAwarePadding(context, horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
