@@ -39,6 +39,8 @@ Copy-Item -Recurse -Force .\unity\big_walker_starter\Assets\Scripts\* "C:\Person
 5. Нажмите `Play` — появится минимальная игра с кнопкой `Бросить кубик`.
    - если `Play` не запускается: откройте `Console` и исправьте красные ошибки (warnings можно игнорировать).
    - если кнопка видна, но не нажимается: убедитесь, что в Hierarchy есть `EventSystem` (скрипт добавляет его автоматически в новой версии).
+   - если в Console ошибка `InvalidOperationException ... switched active Input handling to Input System package`:
+     обновите скрипты из этого репозитория (новая версия автоматически подбирает правильный UI Input Module).
 
 ## Сборка WebGL (для запуска из Flutter)
 1. `File` → `Build Profiles`
