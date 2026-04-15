@@ -161,19 +161,13 @@ rg -n "UNITY_BIG_WALKER_URL|18080|WebGLBuild|WebGL" README.md apps infra -S
 
 Минимальный способ быстро проверить запуск WebGL runtime локально:
 ```powershell
-# 1) Найти реальную папку билда (если точный путь неизвестен)
-Get-ChildItem C:\unity_builds -Recurse -File -Filter index.html |
-  Select-String -Pattern "framework.js|\.data|\.wasm" -List |
-  Select-Object -ExpandProperty Path
+# 1) Перейти в ПАПКУ-РОДИТЕЛЬ (где есть подпапка WebGLBuild)
+cd C:\unity_builds\big_walker_webgl
 
-# 2) Перейти в папку, где реально лежит найденный index.html
-cd C:\path\to\actual\webgl\build
-
-# Важно: это должна быть родительская папка, в которой есть подпапка WebGLBuild
-# (а не сама папка WebGLBuild)
+# 2) Проверить, что подпапка WebGLBuild действительно есть
 Get-ChildItem
 
-# 3) Поднять простой HTTP-сервер на 18080
+# 3) Поднять простой HTTP-сервер на 18080 (держите это окно открытым)
 py -m http.server 18080
 
 # 4) Проверить с хоста и эмулятора
@@ -181,7 +175,17 @@ curl.exe -I http://127.0.0.1:18080/
 # в эмуляторе: http://10.0.2.2:18080/
 ```
 
-После `Serving HTTP on :: port 18080` оставьте это окно PowerShell открытым и в **новом** окне запустите Flutter:
+### Что открывать в первом окне и что во втором
+
+**Окно 1 (PowerShell #1):** Unity WebGL сервер.
+```powershell
+cd C:\unity_builds\big_walker_webgl
+py -m http.server 18080
+```
+
+После `Serving HTTP on :: port 18080` оставьте это окно PowerShell открытым.
+
+**Окно 2 (PowerShell #2):** запуск Flutter-приложения:
 ```powershell
 cd C:\Users\alexp\StudioProjects\gaming_platform\apps\mobile
 flutter run -d emulator-5554 `
