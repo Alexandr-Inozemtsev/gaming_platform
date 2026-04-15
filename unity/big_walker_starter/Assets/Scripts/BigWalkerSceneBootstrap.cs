@@ -28,7 +28,7 @@ public class BigWalkerSceneBootstrap : MonoBehaviour
 
     private static void EnsureLight()
     {
-        if (FindObjectOfType<Light>() != null) return;
+        if (Object.FindFirstObjectByType<Light>() != null) return;
 
         var lightGo = new GameObject("Directional Light");
         var light = lightGo.AddComponent<Light>();
@@ -39,7 +39,7 @@ public class BigWalkerSceneBootstrap : MonoBehaviour
 
     private static void EnsureController()
     {
-        if (FindObjectOfType<BigWalkerGameController>() != null) return;
+        if (Object.FindFirstObjectByType<BigWalkerGameController>() != null) return;
 
         var controllerGo = new GameObject("BigWalkerGameController");
         controllerGo.AddComponent<BigWalkerGameController>();

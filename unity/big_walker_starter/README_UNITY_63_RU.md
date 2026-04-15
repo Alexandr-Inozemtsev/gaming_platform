@@ -12,12 +12,33 @@
 2. Откройте папку проекта в проводнике и скопируйте папку `Assets/Scripts` из этого каталога:
    - из: `unity/big_walker_starter/Assets/Scripts`
    - в: `<ваш Unity проект>/Assets/Scripts`
+   - вариант через PowerShell:
+```powershell
+# запускать в PowerShell из корня репозитория gaming_platform
+Copy-Item -Recurse -Force .\unity\big_walker_starter\Assets\Scripts\* "<ПУТЬ_К_UNITY_ПРОЕКТУ>\Assets\Scripts\"
+```
+Пример для вашего случая:
+```powershell
+# 1) Перейти в корень репозитория (где есть папка unity/)
+cd C:\Users\alexp\StudioProjects\gaming_platform
+
+# 2) Проверить, что исходная папка со скриптами существует
+Test-Path .\unity\big_walker_starter\Assets\Scripts
+
+# 3) Создать целевую папку и скопировать файлы
+New-Item -ItemType Directory -Force "C:\Personal\UnityGame\BigWalkerStarter\Assets\Scripts" | Out-Null
+Copy-Item -Recurse -Force .\unity\big_walker_starter\Assets\Scripts\* "C:\Personal\UnityGame\BigWalkerStarter\Assets\Scripts\"
+```
 3. В Unity дождитесь импорта скриптов.
 4. В `Hierarchy`:
    - `Right Click` → `Create Empty`
    - назовите объект `Bootstrap`
    - в `Inspector` нажмите `Add Component` → добавьте `BigWalkerSceneBootstrap`.
+   - если не видно `Inspector`: `Window` → `General` → `Inspector`.
+   - если не видно `Hierarchy`: `Window` → `General` → `Hierarchy`.
 5. Нажмите `Play` — появится минимальная игра с кнопкой `Бросить кубик`.
+   - если `Play` не запускается: откройте `Console` и исправьте красные ошибки (warnings можно игнорировать).
+   - если кнопка видна, но не нажимается: убедитесь, что в Hierarchy есть `EventSystem` (скрипт добавляет его автоматически в новой версии).
 
 ## Сборка WebGL (для запуска из Flutter)
 1. `File` → `Build Profiles`
@@ -50,3 +71,11 @@ flutter run -d emulator-5554 `
 - арт/анимации,
 - полноценные правила,
 - синхронизация с backend матча.
+
+## Режим “проведи меня пошагово”
+
+Если идёте с ассистентом вживую, двигайтесь так:
+1. Выполните только шаг №1 из раздела `Шаги (Unity 6.3)`.
+2. Напишите: `готово 1`.
+3. Затем делайте шаг №2 и пишите: `готово 2`.
+4. Продолжайте в таком формате до сборки и запуска.

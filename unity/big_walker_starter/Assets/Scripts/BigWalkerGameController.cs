@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
@@ -67,6 +68,8 @@ public class BigWalkerGameController : MonoBehaviour
 
     private void BuildHud()
     {
+        EnsureEventSystem();
+
         var canvasGo = new GameObject("HUD_Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         var canvas = canvasGo.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -119,6 +122,12 @@ public class BigWalkerGameController : MonoBehaviour
         rollTextRect.anchorMax = Vector2.one;
         rollTextRect.offsetMin = Vector2.zero;
         rollTextRect.offsetMax = Vector2.zero;
+    }
+
+    private static void EnsureEventSystem()
+    {
+        if (Object.FindFirstObjectByType<EventSystem>() != null) return;
+        _ = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
     }
 
     private static GameObject CreateUiElement(string name, Transform parent)
