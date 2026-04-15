@@ -184,6 +184,7 @@ py -m http.server 18080
 ```
 
 После `Serving HTTP on :: port 18080` оставьте это окно PowerShell открытым.
+Это и есть признак, что локальный WebGL-сервер запущен успешно.
 
 **Окно 2 (PowerShell #2):** запуск Flutter-приложения:
 ```powershell
@@ -194,6 +195,23 @@ flutter run -d emulator-5554 `
   --dart-define=UNITY_BIG_WALKER_URL=http://10.0.2.2:18080 `
   --dart-define=UNITY_BIG_WALKER_LAUNCH_MODE=in_app
 ```
+
+Если в логах есть `INSTALL_FAILED_INSUFFICIENT_STORAGE`, это ошибка нехватки места в эмуляторе Android.
+
+Важно: если после этого Flutter пишет `Uninstalling old version...` и затем приложение запускается (появились VM Service/DevTools ссылки), текущий запуск уже успешен.
+
+Если ошибка повторяется постоянно:
+```powershell
+# удалить приложение из эмулятора
+adb uninstall com.example.tabletopplatform_mobile
+
+# очистить сборку и поставить заново
+flutter clean
+flutter pub get
+flutter run -d emulator-5554
+```
+
+Если всё равно не помогает — в Android Studio откройте Device Manager и сделайте `Wipe Data` для эмулятора.
 
 Если в WebView видите ошибку `Unable to load file Build/WebGLBuild.framework.js`, значит `index.html` ссылается на несуществующий файл сборки.
 
