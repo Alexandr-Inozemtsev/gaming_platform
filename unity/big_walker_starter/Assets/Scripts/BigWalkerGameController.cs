@@ -15,6 +15,8 @@ public class BigWalkerGameController : MonoBehaviour
     [SerializeField] private int playersCount = 2;
     [SerializeField] private float cellSpacing = 1.6f;
     [SerializeField] private float pawnHeight = 0.55f;
+    [SerializeField] private float cameraHeight = 12f;
+    [SerializeField] private float cameraMoveDuration = 0.35f;
 
     private readonly List<Transform> _trackCells = new();
     private readonly List<Transform> _pawns = new();
@@ -31,6 +33,7 @@ public class BigWalkerGameController : MonoBehaviour
         BuildTrack();
         BuildPawns();
         BuildHud();
+        FocusCameraInstant(_currentPlayer);
         UpdateHud("Игра готова. Ход игрока 1");
     }
 
@@ -161,6 +164,7 @@ public class BigWalkerGameController : MonoBehaviour
     {
         _positions[_currentPlayer] = next;
         yield return MovePawnAnimated(_currentPlayer, next, 0.35f);
+        yield return MoveCameraAnimated(_currentPlayer);
 
         if (next >= trackLength - 1)
         {
@@ -172,6 +176,7 @@ public class BigWalkerGameController : MonoBehaviour
 
         int previousPlayer = _currentPlayer;
         _currentPlayer = (_currentPlayer + 1) % playersCount;
+        yield return MoveCameraAnimated(_currentPlayer);
         UpdateHud($"Игрок {previousPlayer + 1}: {dice}. Ход игрока {_currentPlayer + 1}");
         _rollButton.interactable = true;
     }
@@ -201,6 +206,48 @@ public class BigWalkerGameController : MonoBehaviour
         }
 
         pawn.position = end;
+    }
+
+    private void FocusCameraInstant(int playerIndex)
+    {
+        var camera = Camera.main;
+        if (camera == null) return;
+        (Vector3 targetPos, Vector3 targetLook) = GetCameraTargets(playerIndex);
+        camera.transform.position = targetPos;
+        camera.transform.LookAt(targetLook);
+    }
+
+    private IEnumerator MoveCameraAnimated(int playerIndex)
+    {
+        var camera = Camera.main;
+        if (camera == null) yield break;
+
+        (Vector3 targetPos, Vector3 targetLook) = GetCameraTargets(playerIndex);
+        Vector3 startPos = camera.transform.position;
+        Quaternion startRot = camera.transform.rotation;
+        Quaternion targetRot = Quaternion.LookRotation(targetLook - targetPos);
+
+        float elapsed = 0f;
+        while (elapsed < cameraMoveDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / cameraMoveDuration);
+            camera.transform.position = Vector3.Lerp(startPos, targetPos, t);
+            camera.transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
+            yield return null;
+        }
+
+        camera.transform.position = targetPos;
+        camera.transform.rotation = targetRot;
+    }
+
+    private (Vector3 pos, Vector3 lookAt) GetCameraTargets(int playerIndex)
+    {
+        int index = Mathf.Clamp(_positions[playerIndex], 0, _trackCells.Count - 1);
+        float focusX = _trackCells[index].position.x + 0.5f;
+        Vector3 targetPos = new Vector3(focusX + 3.5f, cameraHeight, -cameraHeight * 0.62f);
+        Vector3 targetLook = new Vector3(focusX, 0f, 0f);
+        return (targetPos, targetLook);
     }
 
     private void HighlightWinner(int winnerIndex)

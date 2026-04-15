@@ -21,9 +21,9 @@ public class BigWalkerSceneBootstrap : MonoBehaviour
         var camera = camGo.AddComponent<Camera>();
         camGo.tag = "MainCamera";
         camera.clearFlags = CameraClearFlags.Skybox;
-        camera.fieldOfView = 42f;
-        camGo.transform.position = new Vector3(16f, 16f, -20f);
-        camGo.transform.LookAt(new Vector3(16f, 0f, 0f));
+        camera.fieldOfView = 35f;
+        camGo.transform.position = new Vector3(7f, 12f, -8f);
+        camGo.transform.LookAt(new Vector3(3f, 0f, 0f));
     }
 
     private static void EnsureLight()
