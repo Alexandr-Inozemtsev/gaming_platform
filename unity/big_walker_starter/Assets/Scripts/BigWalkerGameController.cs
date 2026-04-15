@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -127,7 +128,15 @@ public class BigWalkerGameController : MonoBehaviour
     private static void EnsureEventSystem()
     {
         if (Object.FindFirstObjectByType<EventSystem>() != null) return;
-        _ = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+        var eventSystemGo = new GameObject("EventSystem", typeof(EventSystem));
+        var inputSystemModuleType = Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+        if (inputSystemModuleType != null)
+        {
+            eventSystemGo.AddComponent(inputSystemModuleType);
+            return;
+        }
+
+        eventSystemGo.AddComponent<StandaloneInputModule>();
     }
 
     private static GameObject CreateUiElement(string name, Transform parent)
