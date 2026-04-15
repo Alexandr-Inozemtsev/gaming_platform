@@ -21,8 +21,10 @@ public class BigWalkerGameController : MonoBehaviour
     private readonly List<Transform> _trackCells = new();
     private readonly List<Transform> _pawns = new();
     private int[] _positions = System.Array.Empty<int>();
+    private Transform _dice = null!;
     private int _currentPlayer;
     private bool _finished;
+    private bool _rollingDice;
 
     private Text _statusText = null!;
     private Button _rollButton = null!;
@@ -31,6 +33,7 @@ public class BigWalkerGameController : MonoBehaviour
     private void Start()
     {
         BuildTrack();
+        BuildDice();
         BuildPawns();
         BuildHud();
         FocusCameraInstant(_currentPlayer);
@@ -68,6 +71,17 @@ public class BigWalkerGameController : MonoBehaviour
             _pawns.Add(pawn.transform);
             MovePawn(i, 0);
         }
+    }
+
+    private void BuildDice()
+    {
+        var diceGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        diceGo.name = "Dice";
+        diceGo.transform.localScale = Vector3.one * 0.9f;
+        diceGo.transform.position = new Vector3(1.2f, 0.7f, -1.6f);
+        var renderer = diceGo.GetComponent<Renderer>();
+        renderer.material.color = new Color(0.93f, 0.95f, 0.98f);
+        _dice = diceGo.transform;
     }
 
     private void BuildHud()
@@ -153,11 +167,19 @@ public class BigWalkerGameController : MonoBehaviour
     {
         if (_finished) return;
         if (!_rollButton.interactable) return;
-
-        int dice = UnityEngine.Random.Range(1, 7);
-        int next = Mathf.Min(_positions[_currentPlayer] + dice, trackLength - 1);
+        if (_rollingDice) return;
         _rollButton.interactable = false;
-        StartCoroutine(ApplyTurn(dice, next));
+        StartCoroutine(RollAndApplyTurn());
+    }
+
+    private IEnumerator RollAndApplyTurn()
+    {
+        _rollingDice = true;
+        int dice = UnityEngine.Random.Range(1, 7);
+        yield return AnimateDiceRoll(dice, 0.75f);
+        int next = Mathf.Min(_positions[_currentPlayer] + dice, trackLength - 1);
+        _rollingDice = false;
+        yield return ApplyTurn(dice, next);
     }
 
     private IEnumerator ApplyTurn(int dice, int next)
@@ -206,6 +228,43 @@ public class BigWalkerGameController : MonoBehaviour
         }
 
         pawn.position = end;
+    }
+
+    private IEnumerator AnimateDiceRoll(int finalValue, float duration)
+    {
+        if (_dice == null) yield break;
+
+        Quaternion startRot = _dice.rotation;
+        Quaternion endRot = GetDiceRotationForValue(finalValue);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            _dice.rotation = Quaternion.Euler(
+                Mathf.Lerp(0f, 720f, t) + Mathf.LerpAngle(startRot.eulerAngles.x, endRot.eulerAngles.x, t),
+                Mathf.Lerp(0f, 900f, t) + Mathf.LerpAngle(startRot.eulerAngles.y, endRot.eulerAngles.y, t),
+                Mathf.Lerp(0f, 540f, t) + Mathf.LerpAngle(startRot.eulerAngles.z, endRot.eulerAngles.z, t)
+            );
+            yield return null;
+        }
+
+        _dice.rotation = endRot;
+    }
+
+    private static Quaternion GetDiceRotationForValue(int value)
+    {
+        return value switch
+        {
+            1 => Quaternion.Euler(0f, 0f, 0f),        // top 1
+            2 => Quaternion.Euler(0f, 0f, 90f),       // top 2
+            3 => Quaternion.Euler(90f, 0f, 0f),       // top 3
+            4 => Quaternion.Euler(-90f, 0f, 0f),      // top 4
+            5 => Quaternion.Euler(0f, 0f, -90f),      // top 5
+            6 => Quaternion.Euler(180f, 0f, 0f),      // top 6
+            _ => Quaternion.identity
+        };
     }
 
     private void FocusCameraInstant(int playerIndex)

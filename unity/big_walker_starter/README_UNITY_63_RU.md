@@ -42,6 +42,7 @@ Copy-Item -Recurse -Force .\unity\big_walker_starter\Assets\Scripts\* "C:\Person
    - если в Console ошибка `InvalidOperationException ... switched active Input handling to Input System package`:
      обновите скрипты из этого репозитория (новая версия автоматически подбирает правильный UI Input Module).
    - в новой версии есть базовая анимация движения фишек (короткий "подскок" при ходе).
+   - добавлена анимация броска кубика с фиксацией итоговой грани (1..6).
    - камера автоматически смещается к активной фишке, чтобы ходы были видны лучше.
 
 ## Сборка WebGL (для запуска из Flutter)
