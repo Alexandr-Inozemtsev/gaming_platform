@@ -488,6 +488,9 @@ class AppState extends ChangeNotifier {
       final request = await client.getUrl(uri).timeout(const Duration(seconds: 4));
       final response = await request.close().timeout(const Duration(seconds: 4));
       await response.drain<void>();
+      if (response.statusCode == 404) {
+        return 'Сервер ответил HTTP 404. Частая причина: сервер запущен из папки WebGLBuild вместо родительской директории, содержащей папку WebGLBuild.';
+      }
       if (response.statusCode >= 500) {
         return 'Сервер вернул HTTP ${response.statusCode}.';
       }

@@ -169,6 +169,10 @@ Get-ChildItem C:\unity_builds -Recurse -File -Filter index.html |
 # 2) Перейти в папку, где реально лежит найденный index.html
 cd C:\path\to\actual\webgl\build
 
+# Важно: это должна быть родительская папка, в которой есть подпапка WebGLBuild
+# (а не сама папка WebGLBuild)
+Get-ChildItem
+
 # 3) Поднять простой HTTP-сервер на 18080
 py -m http.server 18080
 
@@ -199,5 +203,6 @@ Select-String -Path .\index.html -Pattern "Build/.*framework.js|Build/.*data|Bui
 Что должно совпадать:
 - имя файлов в `Build\` (например `WebGLBuild.framework.js`, `WebGLBuild.data`, `WebGLBuild.wasm`);
 - ссылки в `index.html` на эти же имена.
+- если URL в приложении `.../WebGLBuild/`, то сервер должен быть поднят из **родительской** папки, где существует путь `.\WebGLBuild\Build\...`.
 
 Если имена не совпадают — пересоберите Unity WebGL или исправьте ссылки в `index.html` под фактические имена файлов в `Build\`.
