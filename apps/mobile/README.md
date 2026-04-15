@@ -161,13 +161,18 @@ rg -n "UNITY_BIG_WALKER_URL|18080|WebGLBuild|WebGL" README.md apps infra -S
 
 Минимальный способ быстро проверить запуск WebGL runtime локально:
 ```powershell
-# 1) Перейти в папку, где лежит index.html Unity WebGL билда
-cd C:\unity_builds\big_walker_webgl
+# 1) Найти реальную папку билда (если точный путь неизвестен)
+Get-ChildItem C:\unity_builds -Recurse -File -Filter index.html |
+  Select-String -Pattern "framework.js|\.data|\.wasm" -List |
+  Select-Object -ExpandProperty Path
 
-# 2) Поднять простой HTTP-сервер на 18080
+# 2) Перейти в папку, где реально лежит найденный index.html
+cd C:\path\to\actual\webgl\build
+
+# 3) Поднять простой HTTP-сервер на 18080
 py -m http.server 18080
 
-# 3) Проверить с хоста и эмулятора
+# 4) Проверить с хоста и эмулятора
 curl.exe -I http://127.0.0.1:18080/
 # в эмуляторе: http://10.0.2.2:18080/
 ```
@@ -186,7 +191,7 @@ flutter run -d emulator-5554 `
 
 Проверьте артефакты в папке билда:
 ```powershell
-cd C:\unity_builds\big_walker_webgl
+cd C:\path\to\actual\webgl\build
 Get-ChildItem .\Build
 Select-String -Path .\index.html -Pattern "Build/.*framework.js|Build/.*data|Build/.*wasm"
 ```
