@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -127,9 +127,9 @@ public class BigWalkerGameController : MonoBehaviour
 
     private static void EnsureEventSystem()
     {
-        if (Object.FindFirstObjectByType<EventSystem>() != null) return;
+        if (UnityEngine.Object.FindFirstObjectByType<EventSystem>() != null) return;
         var eventSystemGo = new GameObject("EventSystem", typeof(EventSystem));
-        var inputSystemModuleType = Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+        var inputSystemModuleType = System.Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
         if (inputSystemModuleType != null)
         {
             eventSystemGo.AddComponent(inputSystemModuleType);
@@ -149,24 +149,31 @@ public class BigWalkerGameController : MonoBehaviour
     private void OnRollClicked()
     {
         if (_finished) return;
+        if (!_rollButton.interactable) return;
 
-        int dice = Random.Range(1, 7);
+        int dice = UnityEngine.Random.Range(1, 7);
         int next = Mathf.Min(_positions[_currentPlayer] + dice, trackLength - 1);
+        _rollButton.interactable = false;
+        StartCoroutine(ApplyTurn(dice, next));
+    }
+
+    private IEnumerator ApplyTurn(int dice, int next)
+    {
         _positions[_currentPlayer] = next;
-        MovePawn(_currentPlayer, next);
+        yield return MovePawnAnimated(_currentPlayer, next, 0.35f);
 
         if (next >= trackLength - 1)
         {
             _finished = true;
-            _rollButton.interactable = false;
             UpdateHud($"Игрок {_currentPlayer + 1} выбросил {dice} и победил!");
             HighlightWinner(_currentPlayer);
-            return;
+            yield break;
         }
 
         int previousPlayer = _currentPlayer;
         _currentPlayer = (_currentPlayer + 1) % playersCount;
         UpdateHud($"Игрок {previousPlayer + 1}: {dice}. Ход игрока {_currentPlayer + 1}");
+        _rollButton.interactable = true;
     }
 
     private void MovePawn(int playerIndex, int cellIndex)
@@ -174,6 +181,26 @@ public class BigWalkerGameController : MonoBehaviour
         var cellPosition = _trackCells[cellIndex].position;
         float xOffset = playerIndex * 0.45f;
         _pawns[playerIndex].position = new Vector3(cellPosition.x + xOffset, pawnHeight, 0f);
+    }
+
+    private IEnumerator MovePawnAnimated(int playerIndex, int cellIndex, float duration)
+    {
+        var pawn = _pawns[playerIndex];
+        var start = pawn.position;
+        var cellPosition = _trackCells[cellIndex].position;
+        var end = new Vector3(cellPosition.x + playerIndex * 0.45f, pawnHeight, 0f);
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float arc = Mathf.Sin(t * Mathf.PI) * 0.25f;
+            pawn.position = Vector3.Lerp(start, end, t) + Vector3.up * arc;
+            yield return null;
+        }
+
+        pawn.position = end;
     }
 
     private void HighlightWinner(int winnerIndex)
