@@ -36,14 +36,27 @@ Copy-Item -Recurse -Force .\unity\big_walker_starter\Assets\Scripts\* "C:\Person
    - в `Inspector` нажмите `Add Component` → добавьте `BigWalkerSceneBootstrap`.
    - если не видно `Inspector`: `Window` → `General` → `Inspector`.
    - если не видно `Hierarchy`: `Window` → `General` → `Hierarchy`.
-5. Нажмите `Play` — появится минимальная игра с кнопкой `Бросить кубик`.
+5. Нажмите `Play` — появится экран выбора фишки (6 вариантов), выбора числа игроков (2..6) и кнопка `START GAME`.
    - если `Play` не запускается: откройте `Console` и исправьте красные ошибки (warnings можно игнорировать).
    - если кнопка видна, но не нажимается: убедитесь, что в Hierarchy есть `EventSystem` (скрипт добавляет его автоматически в новой версии).
    - если в Console ошибка `InvalidOperationException ... switched active Input handling to Input System package`:
      обновите скрипты из этого репозитория (новая версия автоматически подбирает правильный UI Input Module).
-   - в новой версии есть базовая анимация движения фишек (короткий "подскок" при ходе).
+   - в новой версии есть пошаговая анимация движения фишек по клеткам (подскок + squash/stretch).
    - добавлена анимация броска кубика с фиксацией итоговой грани (1..6).
    - камера автоматически смещается к активной фишке, чтобы ходы были видны лучше.
+
+## Как подключить свои 3D ассеты персонажей (вместо примитивов)
+`BigWalkerGameController` поддерживает 6 опциональных слотов ассетов (`Character Assets (optional)`).
+
+1. Импортируйте ваши FBX/Prefab модели в Unity (`Assets/Art/Characters/...`).
+2. Откройте объект `BigWalkerGameController` в `Hierarchy`.
+3. В `Inspector` найдите блок `Character Assets (optional)` и установите `Size = 6`.
+4. Для каждого элемента (0..5) задайте:
+   - `Title` (имя архетипа),
+   - `Character Prefab` (ваш prefab модели),
+   - `World Scale` (масштаб на поле),
+   - `World Rotation Euler` (базовый поворот).
+5. Нажмите `Play`: при наличии `Character Prefab` будет создана 3D-модель; если слот пустой — используется fallback-примитив.
 
 ## Сборка WebGL (для запуска из Flutter)
 1. `File` → `Build Profiles`
