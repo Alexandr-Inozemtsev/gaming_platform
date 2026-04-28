@@ -359,9 +359,8 @@ public class BigWalkerGameController : MonoBehaviour
             return pawn;
         }
 
-        var fallbackPawn = GameObject.CreatePrimitive(archetype.Primitive);
-        fallbackPawn.name = $"Pawn_{playerIndex + 1}_{archetype.Title}";
-        fallbackPawn.transform.localScale = GetPawnScale(archetype.Primitive);
+        var fallbackPawn = BigWalkerPawnFactory.CreateStylizedPawn(archetypeIndex, $"Pawn_{playerIndex + 1}_{archetype.Title}");
+        fallbackPawn.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
         ApplyPawnColors(fallbackPawn.transform, archetype);
         return fallbackPawn;
     }

@@ -58,6 +58,8 @@ Copy-Item -Recurse -Force .\unity\big_walker_starter\Assets\Scripts\* "C:\Person
    - `World Rotation Euler` (базовый поворот).
 5. Нажмите `Play`: при наличии `Character Prefab` будет создана 3D-модель; если слот пустой — используется fallback-примитив.
 
+> Обновление: fallback теперь не «голый примитив», а составная стилизованная 3D-фишка (дракон/сова/кот/имп/ледяной волк/лиса), собранная из нескольких primitive-мешей кодом.
+
 ## Сборка WebGL (для запуска из Flutter)
 1. `File` → `Build Profiles`
 2. Выберите `Web` → `Active`
