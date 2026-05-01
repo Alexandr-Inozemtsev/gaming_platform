@@ -135,3 +135,4 @@ cd <path-to-repo>/unity/big_walker_starter/scripts
 1. В Unity нажмите `Assets -> Reimport All`.
 2. Убедитесь, что в `Assets` больше нет старых копий `BigWalkerGameController.cs` вне `Assets/Scripts`.
 3. Перезапустите `Play`.
+4. Проверьте вывод bash-скрипта: если он пишет `Wrong BigWalkerGameController copied`, значит скрипт был запущен не из актуального репозитория/папки.
