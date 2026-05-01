@@ -36,14 +36,29 @@ Copy-Item -Recurse -Force .\unity\big_walker_starter\Assets\Scripts\* "C:\Person
    - в `Inspector` нажмите `Add Component` → добавьте `BigWalkerSceneBootstrap`.
    - если не видно `Inspector`: `Window` → `General` → `Inspector`.
    - если не видно `Hierarchy`: `Window` → `General` → `Hierarchy`.
-5. Нажмите `Play` — появится минимальная игра с кнопкой `Бросить кубик`.
+5. Нажмите `Play` — появится экран выбора фишки (6 вариантов), выбора числа игроков (2..6) и кнопка `START GAME`.
    - если `Play` не запускается: откройте `Console` и исправьте красные ошибки (warnings можно игнорировать).
    - если кнопка видна, но не нажимается: убедитесь, что в Hierarchy есть `EventSystem` (скрипт добавляет его автоматически в новой версии).
    - если в Console ошибка `InvalidOperationException ... switched active Input handling to Input System package`:
      обновите скрипты из этого репозитория (новая версия автоматически подбирает правильный UI Input Module).
-   - в новой версии есть базовая анимация движения фишек (короткий "подскок" при ходе).
+   - в новой версии есть пошаговая анимация движения фишек по клеткам (подскок + squash/stretch).
    - добавлена анимация броска кубика с фиксацией итоговой грани (1..6).
    - камера автоматически смещается к активной фишке, чтобы ходы были видны лучше.
+
+## Как подключить свои 3D ассеты персонажей (вместо примитивов)
+`BigWalkerGameController` поддерживает 6 опциональных слотов ассетов (`Character Assets (optional)`).
+
+1. Импортируйте ваши FBX/Prefab модели в Unity (`Assets/Art/Characters/...`).
+2. Откройте объект `BigWalkerGameController` в `Hierarchy`.
+3. В `Inspector` найдите блок `Character Assets (optional)` и установите `Size = 6`.
+4. Для каждого элемента (0..5) задайте:
+   - `Title` (имя архетипа),
+   - `Character Prefab` (ваш prefab модели),
+   - `World Scale` (масштаб на поле),
+   - `World Rotation Euler` (базовый поворот).
+5. Нажмите `Play`: при наличии `Character Prefab` будет создана 3D-модель; если слот пустой — используется fallback-примитив.
+
+> Обновление: fallback теперь не «голый примитив», а составная стилизованная 3D-фишка (дракон/сова/кот/имп/ледяной волк/лиса), собранная из нескольких primitive-мешей кодом.
 
 ## Сборка WebGL (для запуска из Flutter)
 1. `File` → `Build Profiles`
@@ -84,3 +99,54 @@ flutter run -d emulator-5554 `
 2. Напишите: `готово 1`.
 3. Затем делайте шаг №2 и пишите: `готово 2`.
 4. Продолжайте в таком формате до сборки и запуска.
+
+## Автоперенос изменений в ваш Unity-проект (скриптом)
+
+Добавлены готовые скрипты синхронизации:
+- `unity/big_walker_starter/scripts/sync_to_unity_project.ps1` (Windows PowerShell)
+- `unity/big_walker_starter/scripts/sync_to_unity_project.sh` (macOS/Linux bash)
+
+### PowerShell (Windows)
+```powershell
+cd <путь_к_репозиторию>\unity\big_walker_starter\scripts
+.\sync_to_unity_project.ps1 -UnityProjectPath "C:\Personal\UnityGame\BigWalkerStarter" -CleanTarget -CreateBootstrapSceneHint
+```
+
+### PowerShell (сам забирает из репозитория и переносит в Unity)
+Если не хотите вручную раскладывать скрипт рядом с репозиторием, используйте:
+- `unity/big_walker_starter/scripts/pull_and_sync_to_unity.ps1`
+
+Пример с локальным репозиторием:
+```powershell
+.\pull_and_sync_to_unity.ps1 -UnityProjectPath "C:\Personal\UnityGame\BigWalkerStarter" -RepoSource "C:\Users\alexp\StudioProjects\gaming_platform"
+```
+
+Пример с git URL:
+```powershell
+.\pull_and_sync_to_unity.ps1 -UnityProjectPath "C:\Personal\UnityGame\BigWalkerStarter" -RepoSource "https://github.com/<org>/gaming_platform.git"
+```
+
+### Bash (macOS/Linux)
+```bash
+cd <path-to-repo>/unity/big_walker_starter/scripts
+./sync_to_unity_project.sh "/Users/me/Unity/BigWalkerStarter" --clean
+```
+
+### Bash (готовый файл для скачивания)
+Если нужен отдельный файл, используйте:
+- `unity/big_walker_starter/scripts/push_to_unity_project.sh`
+
+Пример:
+```bash
+cd <path-to-repo>/unity/big_walker_starter/scripts
+./push_to_unity_project.sh "/Users/me/Unity/BigWalkerStarter"
+```
+Скрипт всегда делает полную перезаливку: удаляет `Assets/Scripts` в Unity-проекте и копирует туда актуальные файлы из starter.
+
+Важно: скрипт также удаляет старые `BigWalker*.cs` по всей папке `Assets`, чтобы не осталось дублей старой логики.
+
+Если после запуска всё ещё видите старый HUD (`Бросить кубик` сразу без `Select Players`):
+1. В Unity нажмите `Assets -> Reimport All`.
+2. Убедитесь, что в `Assets` больше нет старых копий `BigWalkerGameController.cs` вне `Assets/Scripts`.
+3. Перезапустите `Play`.
+4. Проверьте вывод bash-скрипта: если он пишет `Wrong BigWalkerGameController copied`, значит скрипт был запущен не из актуального репозитория/папки.
