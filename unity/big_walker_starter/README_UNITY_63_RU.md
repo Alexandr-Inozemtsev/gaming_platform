@@ -117,3 +117,17 @@ cd <путь_к_репозиторию>\unity\big_walker_starter\scripts
 cd <path-to-repo>/unity/big_walker_starter/scripts
 ./sync_to_unity_project.sh "/Users/me/Unity/BigWalkerStarter" --clean
 ```
+
+### Bash (готовый файл для скачивания)
+Если нужен отдельный файл, используйте:
+- `unity/big_walker_starter/scripts/push_to_unity_project.sh`
+
+Пример:
+```bash
+cd <path-to-repo>/unity/big_walker_starter/scripts
+./push_to_unity_project.sh "/Users/me/Unity/BigWalkerStarter" --clean
+```
+
+Режимы:
+- `--dry-run` — показать действия без копирования.
+- `--clean` — очистить целевую `Assets/Scripts` перед копированием.
