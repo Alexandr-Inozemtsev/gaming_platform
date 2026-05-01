@@ -128,3 +128,10 @@ cd <path-to-repo>/unity/big_walker_starter/scripts
 ./push_to_unity_project.sh "/Users/me/Unity/BigWalkerStarter"
 ```
 Скрипт всегда делает полную перезаливку: удаляет `Assets/Scripts` в Unity-проекте и копирует туда актуальные файлы из starter.
+
+Важно: скрипт также удаляет старые `BigWalker*.cs` по всей папке `Assets`, чтобы не осталось дублей старой логики.
+
+Если после запуска всё ещё видите старый HUD (`Бросить кубик` сразу без `Select Players`):
+1. В Unity нажмите `Assets -> Reimport All`.
+2. Убедитесь, что в `Assets` больше нет старых копий `BigWalkerGameController.cs` вне `Assets/Scripts`.
+3. Перезапустите `Play`.
