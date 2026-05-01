@@ -112,6 +112,20 @@ cd <путь_к_репозиторию>\unity\big_walker_starter\scripts
 .\sync_to_unity_project.ps1 -UnityProjectPath "C:\Personal\UnityGame\BigWalkerStarter" -CleanTarget -CreateBootstrapSceneHint
 ```
 
+### PowerShell (сам забирает из репозитория и переносит в Unity)
+Если не хотите вручную раскладывать скрипт рядом с репозиторием, используйте:
+- `unity/big_walker_starter/scripts/pull_and_sync_to_unity.ps1`
+
+Пример с локальным репозиторием:
+```powershell
+.\pull_and_sync_to_unity.ps1 -UnityProjectPath "C:\Personal\UnityGame\BigWalkerStarter" -RepoSource "C:\Users\alexp\StudioProjects\gaming_platform"
+```
+
+Пример с git URL:
+```powershell
+.\pull_and_sync_to_unity.ps1 -UnityProjectPath "C:\Personal\UnityGame\BigWalkerStarter" -RepoSource "https://github.com/<org>/gaming_platform.git"
+```
+
 ### Bash (macOS/Linux)
 ```bash
 cd <path-to-repo>/unity/big_walker_starter/scripts
