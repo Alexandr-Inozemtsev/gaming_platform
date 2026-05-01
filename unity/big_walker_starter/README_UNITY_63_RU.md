@@ -125,9 +125,6 @@ cd <path-to-repo>/unity/big_walker_starter/scripts
 Пример:
 ```bash
 cd <path-to-repo>/unity/big_walker_starter/scripts
-./push_to_unity_project.sh "/Users/me/Unity/BigWalkerStarter" --clean
+./push_to_unity_project.sh "/Users/me/Unity/BigWalkerStarter"
 ```
-
-Режимы:
-- `--dry-run` — показать действия без копирования.
-- `--clean` — очистить целевую `Assets/Scripts` перед копированием.
+Скрипт всегда делает полную перезаливку: удаляет `Assets/Scripts` в Unity-проекте и копирует туда актуальные файлы из starter.
