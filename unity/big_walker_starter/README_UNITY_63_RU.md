@@ -99,3 +99,21 @@ flutter run -d emulator-5554 `
 2. Напишите: `готово 1`.
 3. Затем делайте шаг №2 и пишите: `готово 2`.
 4. Продолжайте в таком формате до сборки и запуска.
+
+## Автоперенос изменений в ваш Unity-проект (скриптом)
+
+Добавлены готовые скрипты синхронизации:
+- `unity/big_walker_starter/scripts/sync_to_unity_project.ps1` (Windows PowerShell)
+- `unity/big_walker_starter/scripts/sync_to_unity_project.sh` (macOS/Linux bash)
+
+### PowerShell (Windows)
+```powershell
+cd <путь_к_репозиторию>\unity\big_walker_starter\scripts
+.\sync_to_unity_project.ps1 -UnityProjectPath "C:\Personal\UnityGame\BigWalkerStarter" -CleanTarget -CreateBootstrapSceneHint
+```
+
+### Bash (macOS/Linux)
+```bash
+cd <path-to-repo>/unity/big_walker_starter/scripts
+./sync_to_unity_project.sh "/Users/me/Unity/BigWalkerStarter" --clean
+```
