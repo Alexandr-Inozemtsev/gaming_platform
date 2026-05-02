@@ -462,7 +462,7 @@ public class BigWalkerGameController : MonoBehaviour
                 float stretch = 1f + Mathf.Sin(t * Mathf.PI) * 0.08f;
 
                 pawn.position = Vector3.Lerp(start, end, t) + Vector3.up * arc;
-                pawn.localScale = GetPawnScaleForPlayer(playerIndex) * new Vector3(stretch, 1f / stretch, stretch);
+                pawn.localScale = Vector3.Scale(GetPawnScaleForPlayer(playerIndex), new Vector3(stretch, 1f / stretch, stretch));
                 pawn.Rotate(Vector3.up, 230f * Time.deltaTime, Space.World);
 
                 yield return null;
