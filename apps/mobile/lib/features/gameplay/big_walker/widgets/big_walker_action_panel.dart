@@ -31,40 +31,65 @@ class BigWalkerActionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final canRoll = isStarted && !isRollingDice && !hasWinner;
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(BigWalkerTokens.space10),
       decoration: BoxDecoration(
         gradient: BigWalkerTokens.panelGradient,
         borderRadius: BorderRadius.circular(BigWalkerTokens.panelRadius),
         border: Border.all(color: BigWalkerTokens.panelBorder),
         boxShadow: BigWalkerTokens.panelShadow,
       ),
-      child: Row(
-        children: [
-          _DiceArea(isRollingDice: isRollingDice, diceValue: diceValue),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  isStarted ? 'Ход игрока ${currentPlayerIndex + 1} · Раунд $turnNumber' : 'Ожидание старта матча',
-                  style: const TextStyle(
-                    color: BigWalkerTokens.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _RollButton(
-                  label: _label(canRoll),
-                  active: canRoll || !isStarted || hasWinner,
-                  onTap: canRoll ? onRollDice : onStartMatch,
-                ),
-              ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 560;
+          final infoText = Text(
+            isStarted ? 'Ход игрока ${currentPlayerIndex + 1} · Раунд $turnNumber' : 'Ожидание старта матча',
+            style: const TextStyle(
+              color: BigWalkerTokens.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
-          ),
-        ],
+          );
+          final rollButton = _RollButton(
+            label: _label(canRoll),
+            active: canRoll || !isStarted || hasWinner,
+            onTap: canRoll ? onRollDice : onStartMatch,
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _DiceArea(isRollingDice: isRollingDice, diceValue: diceValue),
+                    const SizedBox(width: BigWalkerTokens.space12),
+                    Expanded(child: infoText),
+                  ],
+                ),
+                const SizedBox(height: BigWalkerTokens.space10),
+                rollButton,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              _DiceArea(isRollingDice: isRollingDice, diceValue: diceValue),
+              const SizedBox(width: BigWalkerTokens.space12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    infoText,
+                    const SizedBox(height: BigWalkerTokens.space8),
+                    rollButton,
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -86,21 +111,26 @@ class _RollButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        height: BigWalkerTokens.actionButtonHeight,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: active ? BigWalkerTokens.rollButtonGradient : BigWalkerTokens.panelGradient,
-          border: Border.all(color: active ? BigWalkerTokens.accentAmber : BigWalkerTokens.panelBorder),
-          boxShadow: active ? BigWalkerTokens.buttonGlow : null,
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(color: active ? Colors.black : BigWalkerTokens.textMuted, fontWeight: FontWeight.w800, fontSize: 16),
+    return Semantics(
+      button: true,
+      enabled: active,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(BigWalkerTokens.cardRadius),
+        child: Ink(
+          height: BigWalkerTokens.actionButtonHeight,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(BigWalkerTokens.cardRadius),
+            gradient: active ? BigWalkerTokens.rollButtonGradient : BigWalkerTokens.panelGradient,
+            border: Border.all(color: active ? BigWalkerTokens.accentAmber : BigWalkerTokens.panelBorder),
+            boxShadow: active ? BigWalkerTokens.buttonGlow : null,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(color: active ? Colors.black : BigWalkerTokens.textMuted, fontWeight: FontWeight.w800, fontSize: 16),
+            ),
           ),
         ),
       ),
